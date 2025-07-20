@@ -1,4 +1,4 @@
-namespace Kalorhytm.Contracts
+namespace Kalorhytm.Contracts.Models
 {
     public class DailyNutritionModel
     {
@@ -19,9 +19,9 @@ namespace Kalorhytm.Contracts
             TotalProtein = MealEntries.Sum(me => me.TotalProtein);
             TotalCarbohydrates = MealEntries.Sum(me => me.TotalCarbohydrates);
             TotalFat = MealEntries.Sum(me => me.TotalFat);
-            TotalFiber = MealEntries.Sum(me => (me.Food.Fiber * me.Quantity) / me.Food.ServingSize);
-            TotalSugar = MealEntries.Sum(me => (me.Food.Sugar * me.Quantity) / me.Food.ServingSize);
-            TotalSodium = MealEntries.Sum(me => (me.Food.Sodium * me.Quantity) / me.Food.ServingSize);
+            TotalFiber = MealEntries.Sum(me => me.Food.Fiber * me.Quantity / me.Food.ServingSize);
+            TotalSugar = MealEntries.Sum(me => me.Food.Sugar * me.Quantity / me.Food.ServingSize);
+            TotalSodium = MealEntries.Sum(me => me.Food.Sodium * me.Quantity / me.Food.ServingSize);
         }
     }
 }

@@ -1,24 +1,23 @@
 using Kalorhytm.Contracts;
-using Kalorhytm.Infrastructure;
-using Microsoft.EntityFrameworkCore;
+using Kalorhytm.Contracts.Models;
+using Kalorhytm.Domain.Enums;
+using Kalorhytm.Domain.Repositories;
+using Kalorhytm.Logic.Interfaces;
 
-namespace Kalorhytm.Logic.Services
+namespace Kalorhytm.Logic.UseCases
 {
-    public class GetDailyNutritionService : IGetDailyNutritionService
+    public class GetDailyNutritionUseCase : IGetDailyNutritionUseCase
     {
-        private readonly InMemoryDbContext _kalorhytmDbContext;
+        private readonly IMealEntryRepository _mealEntryRepository;
 
-        public GetDailyNutritionService(InMemoryDbContext kalorhytmDbContext)
+        public GetDailyNutritionUseCase(IMealEntryRepository mealEntryRepository)
         {
-            _kalorhytmDbContext = kalorhytmDbContext;
+            _mealEntryRepository = mealEntryRepository;
         }
 
         public async Task<DailyNutritionModel> ExecuteAsync(DateTime date)
         {
-            var entries = await _kalorhytmDbContext.MealEntries
-                .Include(me => me.Food)
-                .Where(me => me.Date.Date == date.Date)
-                .ToListAsync();
+            var entries = await _mealEntryRepository.GetByDateAsync(date);
 
             var mealEntries = entries.Select(entry => new MealEntryModel
             {
@@ -53,9 +52,4 @@ namespace Kalorhytm.Logic.Services
             return dailyNutrition;
         }
     }
-
-    public interface IGetDailyNutritionService
-    {
-        Task<DailyNutritionModel> ExecuteAsync(DateTime date);
-    }
-}
+} 

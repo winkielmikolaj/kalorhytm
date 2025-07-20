@@ -25,4 +25,8 @@
     <ProjectReference Include="..\Kalorhytm.Domain\Kalorhytm.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Repositories\" />
+  </ItemGroup>
+
 </Project>

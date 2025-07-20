@@ -1,6 +1,7 @@
 using Kalorhytm.Contracts;
+using Kalorhytm.Contracts.Models;
 
-namespace Kalorhytm.Logic.Services
+namespace Kalorhytm.Logic.Interfaces
 {
     public interface IUSDAFoodService
     {

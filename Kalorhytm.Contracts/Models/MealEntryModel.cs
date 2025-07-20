@@ -1,4 +1,7 @@
-﻿namespace Kalorhytm.Contracts
+﻿using Kalorhytm.Contracts.Models;
+using Kalorhytm.Domain.Enums;
+
+namespace Kalorhytm.Contracts
 {
     public class MealEntryModel
     {

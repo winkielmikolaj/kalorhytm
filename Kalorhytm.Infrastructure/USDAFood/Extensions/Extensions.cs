@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Refit;
-using Kalorhytm.Infrastructure.USDAFood;
 
 namespace Kalorhytm.Infrastructure.USDAFood.Extensions
 {

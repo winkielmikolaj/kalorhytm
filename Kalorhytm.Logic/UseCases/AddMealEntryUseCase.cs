@@ -1,22 +1,28 @@
 using Kalorhytm.Contracts;
+using Kalorhytm.Contracts.Models;
 using Kalorhytm.Domain;
-using Kalorhytm.Infrastructure;
-using Kalorhytm.Infrastructure.USDAFood;
-using Kalorhytm.Logic.Services;
-using Microsoft.Extensions.Configuration;
+using Kalorhytm.Domain.Enums;
+using Kalorhytm.Domain.Repositories;
+using Kalorhytm.Logic.Interfaces;
 
-namespace Kalorhytm.Logic.Services
+namespace Kalorhytm.Logic.UseCases
 {
-    public class AddMealService : IAddMealService
+    public class AddMealEntryUseCase : IAddMealEntryUseCase
     {
         private readonly IUSDAFoodService _usdaFoodService;
-        private readonly InMemoryDbContext _kalorhytmDbContext;
+        private readonly IFoodRepository _foodRepository;
+        private readonly IMealEntryRepository _mealEntryRepository;
 
-        public AddMealService(IUSDAFoodService usdaFoodService, InMemoryDbContext kalorhytmDbContext)
+        public AddMealEntryUseCase(
+            IUSDAFoodService usdaFoodService,
+            IFoodRepository foodRepository,
+            IMealEntryRepository mealEntryRepository)
         {
             _usdaFoodService = usdaFoodService;
-            _kalorhytmDbContext = kalorhytmDbContext;
+            _foodRepository = foodRepository;
+            _mealEntryRepository = mealEntryRepository;
         }
+
         public async Task<MealEntryModel> ExecuteAsync(int foodId, double quantity, MealType mealType, DateTime date)
         {
             var food = await _usdaFoodService.GetFoodByIdAsync(foodId);
@@ -24,7 +30,7 @@ namespace Kalorhytm.Logic.Services
                 throw new ArgumentException("Food not found");
 
             // Sprawdź czy FoodEntity już istnieje w bazie
-            var existingFood = await _kalorhytmDbContext.FoodEntities.FindAsync(foodId);
+            var existingFood = await _foodRepository.GetByIdAsync(foodId);
             if (existingFood == null)
             {
                 // Dodaj nowe FoodEntity
@@ -42,7 +48,7 @@ namespace Kalorhytm.Logic.Services
                     Unit = food.Unit,
                     ServingSize = food.ServingSize
                 };
-                _kalorhytmDbContext.FoodEntities.Add(foodEntity);
+                await _foodRepository.AddAsync(foodEntity);
             }
 
             var mealEntry = new MealEntryEntity
@@ -52,8 +58,7 @@ namespace Kalorhytm.Logic.Services
                 MealType = (Domain.Enums.MealType)mealType,
                 Date = date
             };
-            _kalorhytmDbContext.MealEntries.Add(mealEntry);
-            await _kalorhytmDbContext.SaveChangesAsync();
+            await _mealEntryRepository.AddAsync(mealEntry);
 
             return new MealEntryModel
             {
@@ -72,7 +77,7 @@ namespace Kalorhytm.Logic.Services
                 throw new ArgumentException("Food cannot be null");
 
             // Sprawdź czy FoodEntity już istnieje w bazie
-            var existingFood = await _kalorhytmDbContext.FoodEntities.FindAsync(food.FoodId);
+            var existingFood = await _foodRepository.GetByIdAsync(food.FoodId);
             if (existingFood == null)
             {
                 // Dodaj nowe FoodEntity
@@ -90,7 +95,7 @@ namespace Kalorhytm.Logic.Services
                     Unit = food.Unit,
                     ServingSize = food.ServingSize
                 };
-                _kalorhytmDbContext.FoodEntities.Add(foodEntity);
+                await _foodRepository.AddAsync(foodEntity);
             }
 
             var mealEntry = new MealEntryEntity
@@ -100,8 +105,8 @@ namespace Kalorhytm.Logic.Services
                 MealType = (Domain.Enums.MealType)mealType,
                 Date = date
             };
-            _kalorhytmDbContext.MealEntries.Add(mealEntry);
-            await _kalorhytmDbContext.SaveChangesAsync();
+            await _mealEntryRepository.AddAsync(mealEntry);
+
             return new MealEntryModel
             {
                 MealEntryId = mealEntry.MealEntryId,
@@ -113,10 +118,4 @@ namespace Kalorhytm.Logic.Services
             };
         }
     }
-
-    public interface IAddMealService
-    {
-        Task<MealEntryModel> ExecuteAsync(int foodId, double quantity, MealType mealType, DateTime date);
-        Task<MealEntryModel> ExecuteAsync(FoodModel food, double quantity, MealType mealType, DateTime date);
-    }
-}
+} 
