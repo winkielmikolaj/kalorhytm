@@ -1,12 +1,14 @@
 using Kalorhytm.Infrastructure.Extensions;
 using Kalorhytm.Infrastructure.USDAFood.Extensions;
 using Kalorhytm.Logic.Services;
+using Kalorhytm.Logic.UseCases;
 using Kalorhytm.WebApp.Components;
 using Kalorhytm.WebApp.Components.Account;
 using Kalorhytm.Infrastructure;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore;
+using Kalorhytm.Logic.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -46,9 +48,9 @@ builder.Services.AddInfrastructure();
 builder.Services.AddScoped<IUSDAFoodService, USDAFoodService>();
 
 // Register use cases
-builder.Services.AddScoped<IGetDailyNutritionService, GetDailyNutritionService>();
-builder.Services.AddScoped<ISearchFoodsService, SearchFoodsService>();
-builder.Services.AddScoped<IAddMealService, AddMealService>();
+builder.Services.AddScoped<IGetDailyNutritionUseCase, GetDailyNutritionUseCase>();
+builder.Services.AddScoped<ISearchFoodsUseCase, SearchFoodsUseCase>();
+builder.Services.AddScoped<IAddMealEntryUseCase, AddMealEntryUseCase>();
 
 var app = builder.Build();
 

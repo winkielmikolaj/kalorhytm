@@ -17,4 +17,8 @@
     <ProjectReference Include="..\Kalorhytm.Contracts\Kalorhytm.Contracts.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="UseCases\" />
+  </ItemGroup>
+
 </Project>

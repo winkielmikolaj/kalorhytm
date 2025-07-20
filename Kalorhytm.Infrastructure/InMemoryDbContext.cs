@@ -1,10 +1,5 @@
 ﻿using Kalorhytm.Domain;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Kalorhytm.Infrastructure
 {
@@ -12,7 +7,7 @@ namespace Kalorhytm.Infrastructure
     {
         public InMemoryDbContext(DbContextOptions<InMemoryDbContext> options) : base(options)
         {
-            
+
         }
 
         public DbSet<FoodEntity> FoodEntities { get; set; }

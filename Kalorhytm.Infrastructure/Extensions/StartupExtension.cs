@@ -1,11 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
+using Kalorhytm.Domain.Repositories;
+using Kalorhytm.Infrastructure.Repositories;
 
 namespace Kalorhytm.Infrastructure.Extensions
 {
@@ -14,6 +10,10 @@ namespace Kalorhytm.Infrastructure.Extensions
         public static IServiceCollection AddInfrastructure(this IServiceCollection serviceCollection)
         {
             serviceCollection.AddDbContext<InMemoryDbContext>(opt => opt.UseInMemoryDatabase("KalorhytmDb"));
+
+            // Register repositories
+            serviceCollection.AddScoped<IFoodRepository, FoodRepository>();
+            serviceCollection.AddScoped<IMealEntryRepository, MealEntryRepository>();
 
             return serviceCollection;
         }
