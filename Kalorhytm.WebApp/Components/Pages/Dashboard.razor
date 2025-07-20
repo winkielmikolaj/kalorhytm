@@ -206,22 +206,17 @@
 
     private async Task SearchFoods()
     {
-        if (!string.IsNullOrWhiteSpace(_searchTerm))
+        try
         {
-            try
-            {
-                searchResults = await SearchFoodsUseCase.ExecuteAsync(_searchTerm);
-                StateHasChanged();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error searching foods: {ex.Message}");
-            }
+            // Zawsze wykonuj wyszukiwanie, nawet dla pustego terminu
+            searchResults = await SearchFoodsUseCase.ExecuteAsync(_searchTerm);
+            await InvokeAsync(StateHasChanged);
         }
-        else
+        catch (Exception ex)
         {
+            Console.WriteLine($"Error searching foods: {ex.Message}");
             searchResults.Clear();
-            StateHasChanged();
+            await InvokeAsync(StateHasChanged);
         }
     }
 
@@ -230,7 +225,7 @@
     private void SelectFood(FoodModel foodModel)
     {
         selectedFood = foodModel;
-        StateHasChanged();
+        InvokeAsync(StateHasChanged);
     }
 
     private async Task AddMealEntry()
@@ -251,7 +246,7 @@
                 searchResults.Clear();
                 
                 // Force UI update
-                StateHasChanged();
+                await InvokeAsync(StateHasChanged);
                 Console.WriteLine("UI updated");
             }
             catch (Exception ex)

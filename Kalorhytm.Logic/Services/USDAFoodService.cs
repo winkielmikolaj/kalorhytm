@@ -21,18 +21,24 @@ namespace Kalorhytm.Logic.Services
         {
             try
             {
+                Console.WriteLine($"SearchFoodsAsync called with searchTerm: '{searchTerm}'");
+                
                 if (string.IsNullOrWhiteSpace(_apiKey))
                 {
+                    Console.WriteLine("No API key, using demo foods");
                     return GetDemoFoods(searchTerm);
                 }
 
+                Console.WriteLine("Using USDA API for search");
                 var searchResponse = await _usdaFoodClient.SearchFoodsAsync(_apiKey, searchTerm);
                 
                 if (searchResponse?.Foods == null)
                 {
+                    Console.WriteLine("No foods returned from USDA API");
                     return new List<FoodModel>();
                 }
 
+                Console.WriteLine($"USDA API returned {searchResponse.Foods.Count} foods");
                 var foods = new List<FoodModel>();
                 foreach (var usdaFood in searchResponse.Foods.Take(10)) // Limit to 10 results
                 {
@@ -43,11 +49,13 @@ namespace Kalorhytm.Logic.Services
                     }
                 }
 
+                Console.WriteLine($"Returning {foods.Count} converted foods");
                 return foods;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error searching USDA foods: {ex.Message}");
+                Console.WriteLine("Falling back to demo foods");
                 return GetDemoFoods(searchTerm);
             }
         }
@@ -114,6 +122,8 @@ namespace Kalorhytm.Logic.Services
 
         private List<FoodModel> GetDemoFoods(string searchTerm)
         {
+            Console.WriteLine($"GetDemoFoods called with searchTerm: '{searchTerm}'");
+            
             var demoFoods = new List<FoodModel>
             {
                 new FoodModel { FoodId = 1, Name = "Apple, raw, with skin", Calories = 52, Protein = 0.3, Carbohydrates = 14, Fat = 0.2, Fiber = 2.4, Sugar = 10.4, Sodium = 1, Unit = "100g", ServingSize = 100 },
@@ -128,7 +138,22 @@ namespace Kalorhytm.Logic.Services
                 new FoodModel { FoodId = 10, Name = "Avocado, raw, all commercial varieties", Calories = 160, Protein = 2, Carbohydrates = 9, Fat = 15, Fiber = 7, Sugar = 0.7, Sodium = 7, Unit = "100g", ServingSize = 100 }
             };
 
-            return demoFoods.Where(f => f.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)).ToList();
+            // Jeśli fraza wyszukiwania jest pusta, zwróć wszystkie produkty
+            if (string.IsNullOrWhiteSpace(searchTerm))
+            {
+                Console.WriteLine("Search term is empty, returning all demo foods");
+                return demoFoods;
+            }
+
+            // Wyszukuj produkty, które zawierają frazę wyszukiwania w nazwie
+            // lub zaczynają się od frazy wyszukiwania
+            var filteredFoods = demoFoods.Where(f => 
+                f.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                f.Name.StartsWith(searchTerm, StringComparison.OrdinalIgnoreCase)
+            ).ToList();
+            
+            Console.WriteLine($"Demo foods search returned {filteredFoods.Count} results for term '{searchTerm}'");
+            return filteredFoods;
         }
     }
 } 

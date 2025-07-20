@@ -20,13 +20,10 @@ namespace Kalorhytm.Logic.Services
 
         public async Task<List<FoodModel>> ExecuteAsync(string searchTerm)
         {
-            if (string.IsNullOrWhiteSpace(searchTerm))
-            {
-                return new List<FoodModel>();
-            }
-
             try
             {
+                // Zawsze przekazuj frazę wyszukiwania do serwisu USDA
+                // Serwis USDA obsłuży pustą frazę odpowiednio
                 return await _usdaFoodService.SearchFoodsAsync(searchTerm);
             }
             catch (Exception ex)
