@@ -1,4 +1,4 @@
-namespace Kalorhytm.Domain
+namespace Kalorhytm.Domain.Entities
 {
     public class FoodEntity
     {

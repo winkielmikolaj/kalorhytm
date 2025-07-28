@@ -1,5 +1,5 @@
-using Kalorhytm.Domain;
-using Kalorhytm.Domain.Repositories;
+using Kalorhytm.Domain.Entities;
+using Kalorhytm.Domain.Interfaces.IRepositories;
 using Microsoft.EntityFrameworkCore;
 
 namespace Kalorhytm.Infrastructure.Repositories
