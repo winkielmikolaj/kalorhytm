@@ -5,6 +5,6 @@ namespace Kalorhytm.Logic.Interfaces.IBodyMeasurementGoalUseCases
 {
     public interface IGetBodyMeasurementGoalUseCase
     {
-        Task<List<BodyMeasurementGoalModel>> ExecuteAsync(Guid userId, BodyMeasurementType type, DateTime from, DateTime to);
+        Task<List<BodyMeasurementGoalModel>> ExecuteAsync(string userId, BodyMeasurementType type, DateTime from, DateTime to);
     }
 }

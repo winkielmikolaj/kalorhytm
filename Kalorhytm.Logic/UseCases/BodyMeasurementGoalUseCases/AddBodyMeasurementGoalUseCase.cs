@@ -1,4 +1,5 @@
 using Kalorhytm.Contracts.Models;
+using Kalorhytm.Domain.Entities.BodyMeasurements;
 using Kalorhytm.Domain.Interfaces.IRepositories;
 using Kalorhytm.Logic.Interfaces.IBodyMeasurementGoalUseCases;
 
@@ -13,9 +14,23 @@ namespace Kalorhytm.Logic.UseCases.BodyMeasurementGoalUseCases
             _measurementGoalRepository = measurementGoalRepository;
         }
 
-        public async Task<BodyMeasurementGoalModel> ExecuteAsync(BodyMeasurementGoalModel bodyMeasurementGoal)
+        public async Task<BodyMeasurementGoalModel> ExecuteAsync(BodyMeasurementGoalModel model)
         {
-            throw new NotImplementedException();
+            var entity = new BodyMeasurementGoalEntity
+            {
+                UserId = model.UserId,
+                Type = model.Type,
+                TargetValue = model.TargetValue,
+                EffectiveFrom = model.EffectiveFrom,
+                EffectiveTo = model.EffectiveTo,
+            };
+
+            await _measurementGoalRepository.AddAsync(entity);
+
+            model.Id = entity.Id;
+
+            return model;
         }
+
     }
 }

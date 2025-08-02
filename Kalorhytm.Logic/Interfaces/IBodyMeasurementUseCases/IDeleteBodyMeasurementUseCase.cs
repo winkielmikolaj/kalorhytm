@@ -4,6 +4,6 @@ namespace Kalorhytm.Logic.Interfaces
 {
     public interface IDeleteBodyMeasurementUseCase
     {
-        Task<BodyMeasurementModel> ExecuteAsync(Guid id);
+        Task<BodyMeasurementModel> ExecuteAsync(int id);
     }
 }

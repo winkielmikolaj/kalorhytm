@@ -8,7 +8,7 @@ namespace Kalorhytm.Domain.Interfaces.IRepositories
         Task<BodyMeasurementEntity?> GetByIdAsync(int id);
         Task<List<BodyMeasurementEntity>> GetAllAsync();
         
-        Task<List<BodyMeasurementEntity>> GetInRangeAsync(Guid userId, BodyMeasurementType type, DateTime from, DateTime to);
+        Task<List<BodyMeasurementEntity>> GetInRangeAsync(string userId, BodyMeasurementType type, DateTime from, DateTime to);
 
         Task AddAsync(BodyMeasurementEntity entity);
         

@@ -24,7 +24,7 @@ namespace Kalorhytm.Infrastructure.Repositories
             return await _context.BodyMeasurementGoals.ToListAsync();
         }
 
-        public async Task<List<BodyMeasurementGoalEntity>> GetInRangeAsync(Guid userId, BodyMeasurementType type, DateTime from, DateTime to)
+        public async Task<List<BodyMeasurementGoalEntity>> GetInRangeAsync(string userId, BodyMeasurementType type, DateTime from, DateTime to)
         {
             return await _context.BodyMeasurementGoals
                 .Where(g => g.UserId == userId

@@ -15,7 +15,7 @@ namespace Kalorhytm.Logic.UseCases.BodyMeasurementUseCases
             _measurementRepository = measurementRepository;
         }
 
-        public async Task<List<BodyMeasurementModel>> ExecuteAsync(Guid userId, BodyMeasurementType type, DateTime from, DateTime to)
+        public async Task<List<BodyMeasurementModel>> ExecuteAsync(string userId, BodyMeasurementType type, DateTime from, DateTime to)
         {
             var measurements = await _measurementRepository.GetInRangeAsync(userId, type, from, to);
 

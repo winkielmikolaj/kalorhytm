@@ -15,7 +15,17 @@ namespace Kalorhytm.Logic.UseCases.BodyMeasurementUseCases
         
         public async Task<BodyMeasurementModel> ExecuteAsync(BodyMeasurementModel bodyMeasurement)
         {
-            throw new NotImplementedException();
+            var existingGoal = await _measurementRepository.GetByIdAsync(bodyMeasurement.Id);
+            if (existingGoal == null)
+                throw new InvalidOperationException("Pomiar nie został znaleziony.");
+            
+            existingGoal.Type = bodyMeasurement.Type;
+            existingGoal.Value = bodyMeasurement.Value;
+            existingGoal.MeasurementDate = bodyMeasurement.MeasurementDate;
+            
+            await _measurementRepository.UpdateAsync(existingGoal);
+
+            return bodyMeasurement;
         }
     }
 }

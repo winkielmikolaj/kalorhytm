@@ -24,7 +24,7 @@ namespace Kalorhytm.Infrastructure.Repositories
             return await _context.BodyMeasurements .ToListAsync();
         }
 
-        public async Task<List<BodyMeasurementEntity>> GetInRangeAsync(Guid userId, BodyMeasurementType type, DateTime from, DateTime to)
+        public async Task<List<BodyMeasurementEntity>> GetInRangeAsync(string userId, BodyMeasurementType type, DateTime from, DateTime to)
         {
             return await _context.BodyMeasurements
                 .Where(m => m.UserId == userId
@@ -50,10 +50,10 @@ namespace Kalorhytm.Infrastructure.Repositories
 
         public async Task DeleteAsync(int id)
         {
-            var BodyMeasurement = await GetByIdAsync(id);
-            if (BodyMeasurement != null)
+            var bodyMeasurement = await GetByIdAsync(id);
+            if (bodyMeasurement != null)
             {
-                _context.BodyMeasurements.Remove(BodyMeasurement);
+                _context.BodyMeasurements.Remove(bodyMeasurement);
                 await _context.SaveChangesAsync();
             }
         }

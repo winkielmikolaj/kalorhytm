@@ -11,6 +11,7 @@ namespace Kalorhytm.Infrastructure.Persistence.Configurations
             builder.ToTable("BodyMeasurements");
 
             builder.HasKey(b => b.Id);
+            builder.Property(g => g.Id).ValueGeneratedOnAdd();
 
             builder.Property(b => b.UserId)
                 .IsRequired();

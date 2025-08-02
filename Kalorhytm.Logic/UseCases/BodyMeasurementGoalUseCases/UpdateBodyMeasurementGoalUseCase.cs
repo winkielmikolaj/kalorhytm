@@ -15,7 +15,17 @@ namespace Kalorhytm.Logic.UseCases.BodyMeasurementGoalUseCases
 
         public async Task<BodyMeasurementGoalModel> ExecuteAsync(BodyMeasurementGoalModel bodyMeasurementGoal)
         {
-            throw new NotImplementedException();
+            var existingGoal = await _measurementGoalRepository.GetByIdAsync(bodyMeasurementGoal.Id);
+            if (existingGoal == null)
+                throw new InvalidOperationException("Cel nie został znaleziony.");
+            
+            existingGoal.Type = bodyMeasurementGoal.Type;
+            existingGoal.TargetValue = bodyMeasurementGoal.TargetValue;
+            existingGoal.EffectiveFrom = bodyMeasurementGoal.EffectiveFrom;
+            existingGoal.EffectiveTo = bodyMeasurementGoal.EffectiveTo;
+            
+            await _measurementGoalRepository.UpdateAsync(existingGoal);
+
             return bodyMeasurementGoal;
         }
     }
