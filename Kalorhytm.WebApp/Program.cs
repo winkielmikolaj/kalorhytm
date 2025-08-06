@@ -9,6 +9,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore;
 using Kalorhytm.Logic.Interfaces;
+using Kalorhytm.Logic.Interfaces.IBodyMeasurementGoalUseCases;
+using Kalorhytm.Logic.UseCases.BodyMeasurementGoalUseCases;
+using Kalorhytm.Logic.UseCases.BodyMeasurementUseCases;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,13 +31,16 @@ builder.Services.AddAuthentication(options =>
     .AddIdentityCookies();
 builder.Services.AddAuthorization();
 
-var connectionString = builder.Configuration.GetConnectionString("ApplicationDbContextConnection") ?? throw new InvalidOperationException("Connection string 'ApplicationDbContextConnection' not found.");
+builder.Services.AddHttpContextAccessor();
 
-builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
+//var connectionString = builder.Configuration.GetConnectionString("ApplicationDbContextConnection") ?? throw new InvalidOperationException("Connection string 'ApplicationDbContextConnection' not found.");
+
+builder.Services.AddDbContext<InMemoryDbContext>(opt => opt.UseInMemoryDatabase("KalorhytmDb"));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
-    .AddEntityFrameworkStores<ApplicationDbContext>()
+builder.Services.AddIdentityCore<ApplicationUser>(options => { options.SignIn.RequireConfirmedAccount = true; })
+    .AddRoles<IdentityRole>()
+    .AddEntityFrameworkStores<InMemoryDbContext>()
     .AddSignInManager()
     .AddDefaultTokenProviders();
 
@@ -52,7 +58,30 @@ builder.Services.AddScoped<IGetDailyNutritionUseCase, GetDailyNutritionUseCase>(
 builder.Services.AddScoped<ISearchFoodsUseCase, SearchFoodsUseCase>();
 builder.Services.AddScoped<IAddMealEntryUseCase, AddMealEntryUseCase>();
 
+// Body Measurement Use Cases
+builder.Services.AddScoped<IGetBodyMeasurementUseCase, GetBodyMeasurementUseCase>();
+builder.Services.AddScoped<IAddBodyMeasurementUseCase, AddBodyMeasurementUseCase>();
+builder.Services.AddScoped<IUpdateBodyMeasurementUseCase, UpdateBodyMeasurementUseCase>();
+builder.Services.AddScoped<IDeleteBodyMeasurementUseCase, DeleteBodyMeasurementUseCase>();
+// Body Measurement Goal Use Cases
+builder.Services.AddScoped<IGetBodyMeasurementGoalUseCase, GetBodyMeasurementGoalUseCase>();
+builder.Services.AddScoped<IAddBodyMeasurementGoalUseCase, AddBodyMeasurementGoalUseCase>();
+builder.Services.AddScoped<IUpdateBodyMeasurementGoalUseCase, UpdateBodyMeasurementGoalUseCase>();
+builder.Services.AddScoped<IDeleteBodyMeasurementGoalUseCase, DeleteBodyMeasurementGoalUseCase>();
+
 var app = builder.Build();
+
+// Seeding
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+
+    var context = services.GetRequiredService<InMemoryDbContext>();
+    var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
+    var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+
+    await AppSeeder.SeedAsync(context, userManager, roleManager);
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

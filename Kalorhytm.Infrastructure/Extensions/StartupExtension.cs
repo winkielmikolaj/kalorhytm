@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Kalorhytm.Domain.Repositories;
+using Kalorhytm.Domain.Interfaces.IRepositories;
 using Kalorhytm.Infrastructure.Repositories;
 
 namespace Kalorhytm.Infrastructure.Extensions
@@ -14,6 +14,9 @@ namespace Kalorhytm.Infrastructure.Extensions
             // Register repositories
             serviceCollection.AddScoped<IFoodRepository, FoodRepository>();
             serviceCollection.AddScoped<IMealEntryRepository, MealEntryRepository>();
+            
+            serviceCollection.AddScoped<IBodyMeasurementRepository, BodyMeasurementRepository>();
+            serviceCollection.AddScoped<IBodyMeasurementGoalRepository, BodyMeasurementGoalRepository>();
 
             return serviceCollection;
         }

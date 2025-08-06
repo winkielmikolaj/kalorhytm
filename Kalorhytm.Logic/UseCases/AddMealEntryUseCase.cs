@@ -1,8 +1,9 @@
 using Kalorhytm.Contracts;
 using Kalorhytm.Contracts.Models;
 using Kalorhytm.Domain;
+using Kalorhytm.Domain.Entities;
 using Kalorhytm.Domain.Enums;
-using Kalorhytm.Domain.Repositories;
+using Kalorhytm.Domain.Interfaces.IRepositories;
 using Kalorhytm.Logic.Interfaces;
 
 namespace Kalorhytm.Logic.UseCases

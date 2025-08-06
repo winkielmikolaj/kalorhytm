@@ -1,6 +1,7 @@
+using Kalorhytm.Domain.Entities;
 using Kalorhytm.Domain.Enums;
 
-namespace Kalorhytm.Domain.Repositories
+namespace Kalorhytm.Domain.Interfaces.IRepositories
 {
     public interface IMealEntryRepository
     {

@@ -1,4 +1,6 @@
-namespace Kalorhytm.Domain.Repositories
+using Kalorhytm.Domain.Entities;
+
+namespace Kalorhytm.Domain.Interfaces.IRepositories
 {
     public interface IFoodRepository
     {

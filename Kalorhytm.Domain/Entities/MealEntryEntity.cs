@@ -1,6 +1,6 @@
 using Kalorhytm.Domain.Enums;
 
-namespace Kalorhytm.Domain
+namespace Kalorhytm.Domain.Entities
 {
     public class MealEntryEntity
     {

@@ -1,0 +1,328 @@
+@page "/measurements"
+@rendermode InteractiveServer
+
+@using System.Security.Claims
+@using Kalorhytm.Contracts.Models
+@using Kalorhytm.Domain.Enums
+@using Kalorhytm.Logic.Interfaces
+@using Kalorhytm.Logic.Interfaces.IBodyMeasurementGoalUseCases
+@using Kalorhytm.Logic.UseCases.BodyMeasurementUseCases
+@using Microsoft.AspNetCore.Authorization
+
+@inject AuthenticationStateProvider _AuthenticationStateProvider
+@inject IGetBodyMeasurementUseCase GetBodyMeasurementUseCase
+@inject IGetBodyMeasurementGoalUseCase GetBodyMeasurementGoalUseCase
+@inject IAddBodyMeasurementUseCase AddBodyMeasurementUseCase
+@inject IAddBodyMeasurementGoalUseCase AddBodyMeasurementGoalUseCase
+@inject IDeleteBodyMeasurementUseCase DeleteBodyMeasurementUseCase
+@inject IDeleteBodyMeasurementGoalUseCase DeleteBodyMeasurementGoalUseCase
+@inject IUpdateBodyMeasurementUseCase UpdateBodyMeasurementUseCase
+@inject IUpdateBodyMeasurementGoalUseCase UpdateBodyMeasurementGoalUseCase
+
+@* @attribute [Authorize] *@
+
+@if(isProcessing)
+{
+    <div class="position-absolute w-75 h-75 d-flex flex-column align-items-center bg-white justify-content-center">
+        <h2 color="black">Loading...</h2>
+    </div>
+}
+else
+{
+    <PageTitle>Body Measurements</PageTitle>
+
+    <h3 class="text-xl font-semibold mb-4">Measurements</h3>
+
+    <div class="mb-4">
+        <label>Measurement Type:</label>
+        <select @bind="selectedType" class="form-select">
+            @foreach (var type in Enum.GetValues<BodyMeasurementType>())
+            {
+                <option value="@type">@type</option>
+            }
+        </select>
+    </div>
+    
+    <div class="mb-4">
+        <label>Measurement Date Range:</label>
+        <select @bind="selectedRange" class="form-select">
+            @foreach (var option in preselectedDateRanges)
+            {
+                <option value="@option.Key">@option.Key</option>
+            }
+        </select>
+    </div>
+    
+    @if (selectedRange == "Własna Data")
+    {
+        <div class="mb-4">
+            <label>Data od:</label>
+            <input type="date" class="form-control" @bind="customStartDate" />
+            
+        @if (customStartDate != default)
+        {
+            <label class="mt-2">Data do:</label>
+            <input type="date" class="form-control" @bind="customEndDate" min="@customStartDate.ToString("yyyy-MM-dd")" />
+        }
+        </div>
+    }
+    
+    // TODO: dane w tabeli jako klikalne divy - wyswietla modal z opcja edycji
+    // TODO: dane na wykresie
+    
+    <button class="btn btn-primary mb-4" @onclick="LoadBodyMeasurements">Pokaż dane w tabeli</button>
+    
+    <button class="btn btn-primary mb-4">Pokaż dane na wykresie</button>
+    
+    <button class="btn btn-primary mb-4" @onclick="() => ShowModal(ModalType.Measurement)">Dodaj Pomiar</button>
+
+    <button class="btn btn-primary mb-4" @onclick="() => ShowModal(ModalType.Goal)">Dodaj Cel</button>
+
+    @if (showModal)
+    {
+        <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999;">
+            <div class="bg-white rounded-lg p-6 w-96 mx-4 shadow-xl">
+                <button @onclick="CloseModal"
+                        class="absolute top-2 right-2 text-black hover:text-green-600 dark:hover:text-pink-400">
+                    ✕
+                </button>
+
+
+                @if (currentModal == ModalType.Measurement)
+                {
+                    <h3 class="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Dodaj Pomiar</h3>
+                    <div class="flex flex-row space-x-4">
+                        <div>
+                            <label class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Typ pomiaru</label>
+                            <select @bind="newMeasurement.Type"
+                                    class="border border-gray-300 rounded-lg px-3 py-2 w-full">
+                                @foreach (var type in Enum.GetValues<BodyMeasurementType>())
+                                {
+                                    <option value="@type">@type</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Wartość</label>
+                            <input type="number" @bind="newMeasurement.Value"
+                                   class="border border-gray-300 rounded-lg px-3 py-2 w-full" />
+                        </div>
+
+                        <div>
+                            <label class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Data pomiaru</label>
+                            <input type="date" @bind="newMeasurementDate"
+                                   class="border border-gray-300 rounded-lg px-3 py-2 w-full" />
+                        </div>
+
+                        <div>
+                            <button @onclick="AddMeasurement" class="btn btn-primary mb-4">Zapisz Pomiar</button>
+                        </div>
+                    </div>
+                }
+
+                else if (currentModal == ModalType.Goal)
+                {
+                    <h3 class="text-xl font-semibold mb-4 text-gray-800 dark:text-black">Dodaj Cel</h3>
+                    <div class="flex flex-row space-x-4">
+                        <div>
+                            <label class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Typ pomiaru</label>
+                            <select @bind="newMeasurementGoal.Type"
+                                    class="border border-gray-300 rounded-lg px-3 py-2 w-full">
+                                @foreach (var type in Enum.GetValues<BodyMeasurementType>())
+                                {
+                                    <option value="@type">@type</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Wartosc docelowa</label>
+                            <input @bind="newMeasurementGoal.TargetValue" type="number" placeholder="Wartość docelowa" class="border border-gray-300 rounded-lg px-3 py-2 w-full"/>
+                        </div>
+
+                        <div>
+                            <label class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Data Od</label>
+                            <input type="date" @bind="newMeasurementGoal.EffectiveFrom" placeholder="Od" class="border border-gray-300 rounded-lg px-3 py-2 w-full"/>
+                        </div>
+
+                        <div>
+                            <label class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Data Do</label>
+                            <input @bind="newMeasurementGoal.EffectiveTo" type="date" placeholder="Do" min="@newMeasurementGoal.EffectiveFrom.ToString("yyyy-MM-dd")" class="border border-gray-300 rounded-lg px-3 py-2 w-full"/>
+                        </div>
+                        <button @onclick="AddGoal" class="btn btn-primary mb-4">Zapisz Cel</button>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+    
+    
+    @if (BodyMeasurements != null && BodyMeasurements.Any())
+    {
+        <h4 class="text-lg font-semibold mt-6 mb-2">Pomiary i cele</h4>
+        <table class="table-auto w-full border border-gray-300 bg-white shadow-sm rounded-lg">
+            <thead class="bg-gray-100 text-gray-700">
+            <tr>
+                <th class="border px-4 py-2 text-left">Typ</th>
+                <th class="border px-4 py-2 text-left">Wartość</th>
+                <th class="border px-4 py-2 text-left">Data</th>
+                <th class="border px-4 py-2 text-left">Cel</th>
+                <th class="border px-4 py-2 text-left">Od</th>
+                <th class="border px-4 py-2 text-left">Do</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var m in BodyMeasurements.OrderByDescending(m => m.MeasurementDate))
+            {
+                var goal = BodyMeasurementGoals?
+                    .FirstOrDefault(g =>
+                        g.Type == m.Type &&
+                        g.EffectiveFrom <= m.MeasurementDate &&
+                        (g.EffectiveTo == null || g.EffectiveTo >= m.MeasurementDate));
+
+                <tr @onclick="() => EditMeasurement(m)"
+                    class="border-b cursor-pointer hover:bg-gray-800 transition-colors duration-200">
+                    <td class="border px-4 py-2">@m.Type</td>
+                    <td class="border px-4 py-2">@m.Value</td>
+                    <td class="border px-4 py-2">@m.MeasurementDate.ToString("yyyy-MM-dd")</td>
+                    <td class="border px-4 py-2">@((goal != null) ? goal.TargetValue.ToString() : "-")</td>
+                    <td class="border px-4 py-2">@((goal != null) ? goal.EffectiveFrom.ToString("yyyy-MM-dd") : "-")</td>
+                    <td class="border px-4 py-2">@((goal?.EffectiveTo != null) ? goal.EffectiveTo?.ToString("yyyy-MM-dd") : "-")</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p class="text-gray-600">Brak danych pomiarowych dla wybranego zakresu.</p>
+    }
+}
+
+@code{
+    private bool isProcessing { get; set; } = true;
+    private string userId { get; set; }
+    private bool showModal = false;
+    private ModalType currentModal;
+    
+    private BodyMeasurementType selectedType { get; set; } = BodyMeasurementType.MasaCiala;
+    private string selectedRange = "1 miesiąc";
+    
+    private DateTime customStartDate = DateTime.UtcNow;
+    private DateTime customEndDate = DateTime.UtcNow;
+    private DateTime newMeasurementDate = DateTime.UtcNow;
+    private DateTime addMeasurementStartDate = DateTime.UtcNow;
+    
+    private Dictionary<string, Func<(DateTime From, DateTime To)>> preselectedDateRanges;
+    private List<BodyMeasurementModel> BodyMeasurements;
+    private List<BodyMeasurementGoalModel> BodyMeasurementGoals;
+
+    private BodyMeasurementModel newMeasurement = new();
+    private BodyMeasurementGoalModel newMeasurementGoal = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await _AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        
+        preselectedDateRanges = new Dictionary<string, Func<(DateTime From, DateTime To)>>()
+        {
+            { "1 miesiąc", () => (DateTime.UtcNow.AddMonths(-1), DateTime.UtcNow) },
+            { "3 miesiące", () => (DateTime.UtcNow.AddMonths(-3), DateTime.UtcNow) },
+            { "6 miesięcy", () => (DateTime.UtcNow.AddMonths(-6), DateTime.UtcNow) },
+            { "12 miesięcy", () => (DateTime.UtcNow.AddMonths(-12), DateTime.UtcNow) },
+            { "Od początku", () => (DateTime.MinValue, DateTime.UtcNow) },
+            { "Własna Data", () => (customStartDate, customEndDate)}
+            // zmienic minvalue na date zalozenia konta
+        };
+        isProcessing = false;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadBodyMeasurements();
+            isProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadBodyMeasurements()
+    {
+        isProcessing = true;
+
+        var (from, to) = selectedRange == "customDate"
+            ? (customStartDate, customEndDate)
+            : preselectedDateRanges[selectedRange]();
+
+        BodyMeasurements = await GetBodyMeasurementUseCase.ExecuteAsync(userId, selectedType, from, to);
+        BodyMeasurementGoals = await GetBodyMeasurementGoalUseCase.ExecuteAsync(userId, selectedType, from, to);
+
+        isProcessing = false;
+    }
+
+    
+    private async Task AddMeasurement()
+    {
+        newMeasurement.UserId = userId;
+        newMeasurement.MeasurementDate = newMeasurementDate;
+
+        await AddBodyMeasurementUseCase.ExecuteAsync(newMeasurement);
+        
+        BodyMeasurements.Add(newMeasurement);
+        showModal = false;
+        StateHasChanged();
+    }
+
+    private async Task AddGoal()
+    {
+        newMeasurementGoal.UserId = userId;
+        await AddBodyMeasurementGoalUseCase.ExecuteAsync(newMeasurementGoal);
+        
+        BodyMeasurementGoals.Add(newMeasurementGoal);
+        showModal = false;
+        StateHasChanged();
+    }
+    
+    private void ShowModal(ModalType type)
+    {
+        currentModal = type;
+        showModal = true;
+        StateHasChanged();
+    }
+
+    private void CloseModal()
+    {
+        showModal = false;
+        InvokeAsync(StateHasChanged);
+    }
+    
+    private enum ModalType
+    {
+        Measurement,
+        Goal,
+        Edit
+    }
+    
+    private void EditMeasurement(BodyMeasurementModel m)
+    {
+        newMeasurement = new BodyMeasurementModel
+        {
+            Id = m.Id,
+            Type = m.Type,
+            Value = m.Value,
+            MeasurementDate = m.MeasurementDate,
+            UserId = m.UserId
+        };
+
+        newMeasurementDate = m.MeasurementDate;
+        currentModal = ModalType.Edit;
+        showModal = true;
+        StateHasChanged();
+    }
+
+}
