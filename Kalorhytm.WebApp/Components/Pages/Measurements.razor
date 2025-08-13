@@ -8,6 +8,7 @@
 @using Kalorhytm.Logic.Interfaces.IBodyMeasurementGoalUseCases
 @using Kalorhytm.Logic.UseCases.BodyMeasurementUseCases
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.CodeAnalysis.Elfie.Model
 
 @inject AuthenticationStateProvider _AuthenticationStateProvider
 @inject IGetBodyMeasurementUseCase GetBodyMeasurementUseCase
@@ -67,8 +68,11 @@ else
         </div>
     }
     
-    // TODO: dane w tabeli jako klikalne divy - wyswietla modal z opcja edycji
     // TODO: dane na wykresie
+    // TODO: uporzadkowac kod - pousuwac niepotrzebne wlasciwosci, uzyc blazorwych komponentow zamiast htmlowych
+    // TODO: weryfikacja inputu
+    // TODO: uporzadkowac daty - usunac utcnow z modelu i ustawiac w tym pliku
+    // TODO: QuickGrid zamiast tabeli 
     
     <button class="btn btn-primary mb-4" @onclick="LoadBodyMeasurements">Pokaż dane w tabeli</button>
     
@@ -80,53 +84,55 @@ else
 
     @if (showModal)
     {
-        <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999;">
-            <div class="bg-white rounded-lg p-6 w-96 mx-4 shadow-xl">
+        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
+            <div class="bg-white rounded-lg p-6 w-96 mx-4 shadow-xl relative">
                 <button @onclick="CloseModal"
-                        class="absolute top-2 right-2 text-black hover:text-green-600 dark:hover:text-pink-400">
-                    ✕
+                        class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 bg-transparent border-none cursor-pointer">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
                 </button>
-
 
                 @if (currentModal == ModalType.Measurement)
                 {
-                    <h3 class="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Dodaj Pomiar</h3>
-                    <div class="flex flex-row space-x-4">
-                        <div>
-                            <label class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Typ pomiaru</label>
-                            <select @bind="newMeasurement.Type"
-                                    class="border border-gray-300 rounded-lg px-3 py-2 w-full">
-                                @foreach (var type in Enum.GetValues<BodyMeasurementType>())
-                                {
-                                    <option value="@type">@type</option>
-                                }
-                            </select>
-                        </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4">Dodaj Pomiar</h3>
+                        <label class="">Typ pomiaru</label>
+                        <select @bind="newMeasurement.Type"
+                                class="border border-gray-300 rounded-lg px-3 py-2 w-full">
+                            @foreach (var type in Enum.GetValues<BodyMeasurementType>())
+                            {
+                                <option value="@type">@type</option>
+                            }
+                        </select>
 
-                        <div>
-                            <label class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Wartość</label>
+                        <div class="mt-4">
+                            <label class="font-medium block mb-1">Wartość</label>
                             <input type="number" @bind="newMeasurement.Value"
-                                   class="border border-gray-300 rounded-lg px-3 py-2 w-full" />
+                                   class="border border-gray-300 rounded-lg px-3 py-2 w-full"/>
                         </div>
 
-                        <div>
-                            <label class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Data pomiaru</label>
+                        <div class="mt-4">
+                            <label class="block mb-1">Data pomiaru</label>
                             <input type="date" @bind="newMeasurementDate"
-                                   class="border border-gray-300 rounded-lg px-3 py-2 w-full" />
+                                   class="border border-gray-300 rounded-lg px-3 py-2 w-full"/>
                         </div>
 
-                        <div>
-                            <button @onclick="AddMeasurement" class="btn btn-primary mb-4">Zapisz Pomiar</button>
+                        <div class="mt-6">
+                            <button @onclick="AddMeasurement"
+                                    class="flex-1 bg-blue-500 text-white px-4 py-2 rounded-md border-none cursor-pointer hover:bg-blue-600 transition">
+                                Zapisz Pomiar
+                            </button>
                         </div>
                     </div>
                 }
-
                 else if (currentModal == ModalType.Goal)
                 {
-                    <h3 class="text-xl font-semibold mb-4 text-gray-800 dark:text-black">Dodaj Cel</h3>
-                    <div class="flex flex-row space-x-4">
+                    <h3 class="text-xl font-semibold mb-4">Dodaj Cel</h3>
+                    <div class="">
                         <div>
-                            <label class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Typ pomiaru</label>
+                            <label class="block mb-1">Typ celu</label>
                             <select @bind="newMeasurementGoal.Type"
                                     class="border border-gray-300 rounded-lg px-3 py-2 w-full">
                                 @foreach (var type in Enum.GetValues<BodyMeasurementType>())
@@ -136,21 +142,63 @@ else
                             </select>
                         </div>
 
-                        <div>
-                            <label class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Wartosc docelowa</label>
-                            <input @bind="newMeasurementGoal.TargetValue" type="number" placeholder="Wartość docelowa" class="border border-gray-300 rounded-lg px-3 py-2 w-full"/>
+                        <div class="mt-4">
+                            <label class="">Wartość docelowa</label>
+                            <input @bind="newMeasurementGoal.TargetValue" type="number" placeholder="Wartość docelowa"
+                                   class="border border-gray-300 rounded-lg px-3 py-2 w-full"/>
                         </div>
 
-                        <div>
-                            <label class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Data Od</label>
-                            <input type="date" @bind="newMeasurementGoal.EffectiveFrom" placeholder="Od" class="border border-gray-300 rounded-lg px-3 py-2 w-full"/>
+                        <div class="mt-4">
+                            <label class="">Data Od</label>
+                            <input type="date" @bind="newMeasurementGoal.EffectiveFrom"
+                                   class="border border-gray-300 rounded-lg px-3 py-2 w-full"/>
                         </div>
 
-                        <div>
-                            <label class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Data Do</label>
-                            <input @bind="newMeasurementGoal.EffectiveTo" type="date" placeholder="Do" min="@newMeasurementGoal.EffectiveFrom.ToString("yyyy-MM-dd")" class="border border-gray-300 rounded-lg px-3 py-2 w-full"/>
+                        <div class="mt-4">
+                            <label class="">Data Do</label>
+                            <input @bind="newMeasurementGoal.EffectiveTo" type="date"
+                                   min="@newMeasurementGoal.EffectiveFrom.ToString("yyyy-MM-dd")"
+                                   class="border border-gray-300 rounded-lg px-3 py-2 w-full"/>
                         </div>
-                        <button @onclick="AddGoal" class="btn btn-primary mb-4">Zapisz Cel</button>
+
+                        <div class="mt-6">
+                            <button @onclick="AddGoal"
+                                    class="flex-1 bg-blue-500 text-white px-4 py-2 rounded-md border-none cursor-pointer hover:bg-blue-600 transition">
+                                Zapisz Cel
+                            </button>
+                        </div>
+                    </div>
+                }
+                else if (currentModal == ModalType.Edit)
+                {
+                    <h3 class="text-lg font-semibold mb-4">Edytuj Pomiar</h3>
+                    <div>
+                        <label class="block mb-1">Typ pomiaru</label>
+                        <input type="text" value="@newMeasurement.Type" disabled
+                               class="border border-gray-300 rounded-lg px-3 py-2 w-full bg-gray-100" />
+                    </div>
+
+                    <div class="mt-4">
+                        <label class="block mb-1">Wartość</label>
+                        <input type="number" @bind="newMeasurement.Value"
+                               class="border border-gray-300 rounded-lg px-3 py-2 w-full" />
+                    </div>
+
+                    <div class="mt-4">
+                        <label class="block mb-1">Data pomiaru</label>
+                        <input type="date" @bind="newMeasurement.MeasurementDate"
+                               class="border border-gray-300 rounded-lg px-3 py-2 w-full" />
+                    </div>
+
+                    <div class="mt-6 flex gap-2">
+                        <button @onclick="SaveEditedMeasurement"
+                                class="flex-1 bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition">
+                            Zapisz zmiany
+                        </button>
+                        <button @onclick="DeleteMeasurement"
+                                class="flex-1 bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition">
+                            Usuń
+                        </button>
                     </div>
                 }
             </div>
@@ -324,5 +372,35 @@ else
         showModal = true;
         StateHasChanged();
     }
+    
+    private async Task SaveEditedMeasurement()
+    {
+        await UpdateBodyMeasurementUseCase.ExecuteAsync(newMeasurement);
+        
+        var index = BodyMeasurements.FindIndex(b => b.Id == newMeasurement.Id);
+        if (index >= 0)
+        {
+            BodyMeasurements[index] = new BodyMeasurementModel
+            {
+                Id = newMeasurement.Id,
+                Type = newMeasurement.Type,
+                Value = newMeasurement.Value,
+                MeasurementDate = newMeasurement.MeasurementDate,
+                UserId = newMeasurement.UserId
+            };
+        }
 
+        CloseModal();
+        StateHasChanged();
+    }
+
+    private async Task DeleteMeasurement()
+    {
+        await DeleteBodyMeasurementUseCase.ExecuteAsync(newMeasurement.Id);
+        
+        BodyMeasurements.RemoveAll(b => b.Id == newMeasurement.Id);
+
+        CloseModal();
+        StateHasChanged();
+    }
 }

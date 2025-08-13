@@ -8,7 +8,7 @@ namespace Kalorhytm.Contracts.Models
         public string UserId { get; set; }
         public BodyMeasurementType Type { get; set; }
         public double TargetValue { get; set; }
-        public DateTime EffectiveFrom  { get; set; }
-        public DateTime? EffectiveTo { get; set; }
+        public DateTime EffectiveFrom { get; set; } = DateTime.UtcNow;
+        public DateTime? EffectiveTo { get; set; } = DateTime.UtcNow;
     }
 }
