@@ -78,9 +78,9 @@ else
     
     <button class="btn btn-primary mb-4">Pokaż dane na wykresie</button>
     
-    <button class="btn btn-primary mb-4" @onclick="() => ShowModal(ModalType.Measurement)">Dodaj Pomiar</button>
+    <button class="btn btn-primary mb-4" @onclick="() => ShowModal(ModalType.AddMeasurement)">Dodaj Pomiar</button>
 
-    <button class="btn btn-primary mb-4" @onclick="() => ShowModal(ModalType.Goal)">Dodaj Cel</button>
+    <button class="btn btn-primary mb-4" @onclick="() => ShowModal(ModalType.AddGoal)">Dodaj Cel</button>
 
     @if (showModal)
     {
@@ -94,7 +94,7 @@ else
                     </svg>
                 </button>
 
-                @if (currentModal == ModalType.Measurement)
+                @if (currentModal == ModalType.AddMeasurement)
                 {
                     <div>
                         <h3 class="text-lg font-semibold mb-4">Dodaj Pomiar</h3>
@@ -127,7 +127,7 @@ else
                         </div>
                     </div>
                 }
-                else if (currentModal == ModalType.Goal)
+                else if (currentModal == ModalType.AddGoal)
                 {
                     <h3 class="text-xl font-semibold mb-4">Dodaj Cel</h3>
                     <div class="">
@@ -169,7 +169,7 @@ else
                         </div>
                     </div>
                 }
-                else if (currentModal == ModalType.Edit)
+                else if (currentModal == ModalType.EditMeasurement)
                 {
                     <h3 class="text-lg font-semibold mb-4">Edytuj Pomiar</h3>
                     <div>
@@ -201,7 +201,46 @@ else
                         </button>
                     </div>
                 }
+                else if (currentModal == ModalType.EditGoal)
+                {
+                    <h3 class="text-lg font-semibold mb-4">Edytuj Cel</h3>
+                    <div>
+                        <label class="block mb-1">Typ Celu</label>
+                        <input type="text" value="@newMeasurementGoal.Type" disabled
+                               class="border border-gray-300 rounded-lg px-3 py-2 w-full bg-gray-100" />
+                    </div>
+
+                    <div class="mt-4">
+                        <label class="block mb-1">Wartość</label>
+                        <input type="number" @bind="newMeasurementGoal.TargetValue"
+                               class="border border-gray-300 rounded-lg px-3 py-2 w-full" />
+                    </div>
+
+                    <div class="mt-4">
+                        <label class="block mb-1">Data od:</label>
+                        <input type="date" @bind="newMeasurementGoal.EffectiveFrom"
+                               class="border border-gray-300 rounded-lg px-3 py-2 w-full" />
+                    </div>
+                    
+                    <div class="mt-4">
+                        <label class="block mb-1">Data do:</label>
+                        <input type="date" @bind="newMeasurementGoal.EffectiveTo"
+                               class="border border-gray-300 rounded-lg px-3 py-2 w-full" />
+                    </div>
+
+                    <div class="mt-6 flex gap-2">
+                        <button @onclick="SaveEditedGoal"
+                                class="flex-1 bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition">
+                            Zapisz zmiany
+                        </button>
+                        <button @onclick="DeleteGoal"
+                                class="flex-1 bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition">
+                            Usuń
+                        </button>
+                    </div>
+                }
             </div>
+            
         </div>
     }
     
@@ -229,14 +268,19 @@ else
                         g.EffectiveFrom <= m.MeasurementDate &&
                         (g.EffectiveTo == null || g.EffectiveTo >= m.MeasurementDate));
 
-                <tr @onclick="() => EditMeasurement(m)"
-                    class="border-b cursor-pointer hover:bg-gray-800 transition-colors duration-200">
-                    <td class="border px-4 py-2">@m.Type</td>
-                    <td class="border px-4 py-2">@m.Value</td>
-                    <td class="border px-4 py-2">@m.MeasurementDate.ToString("yyyy-MM-dd")</td>
-                    <td class="border px-4 py-2">@((goal != null) ? goal.TargetValue.ToString() : "-")</td>
-                    <td class="border px-4 py-2">@((goal != null) ? goal.EffectiveFrom.ToString("yyyy-MM-dd") : "-")</td>
-                    <td class="border px-4 py-2">@((goal?.EffectiveTo != null) ? goal.EffectiveTo?.ToString("yyyy-MM-dd") : "-")</td>
+                <tr class="border-b">
+                    <td class="border px-4 py-2 cursor-pointer hover:bg-gray-500"
+                        @onclick="() => EditMeasurement(m)">@m.Type</td>
+                    <td class="border px-4 py-2 cursor-pointer hover:bg-gray-500"
+                        @onclick="() => EditMeasurement(m)">@m.Value</td>
+                    <td class="border px-4 py-2 cursor-pointer hover:bg-gray-500"
+                        @onclick="() => EditMeasurement(m)">@m.MeasurementDate.ToString("yyyy-MM-dd")</td>
+                    <td class="border px-4 py-2 cursor-pointer hover:bg-gray-500"
+                        @onclick="() => EditMeasurement(m)">@((goal != null) ? goal.TargetValue.ToString() : "-")</td>
+                    <td class="border px-4 py-2 cursor-pointer hover:bg-gray-500"
+                        @onclick="() => EditGoal(goal)">@((goal != null) ? goal.EffectiveFrom.ToString("yyyy-MM-dd") : "-")</td>
+                    <td class="border px-4 py-2 cursor-pointer hover:bg-gray-500"
+                        @onclick="() => EditGoal(goal)">@((goal?.EffectiveTo != null) ? goal.EffectiveTo?.ToString("yyyy-MM-dd") : "-")</td>
                 </tr>
             }
             </tbody>
@@ -351,9 +395,10 @@ else
     
     private enum ModalType
     {
-        Measurement,
-        Goal,
-        Edit
+        AddMeasurement,
+        AddGoal,
+        EditMeasurement,
+        EditGoal
     }
     
     private void EditMeasurement(BodyMeasurementModel m)
@@ -368,7 +413,7 @@ else
         };
 
         newMeasurementDate = m.MeasurementDate;
-        currentModal = ModalType.Edit;
+        currentModal = ModalType.EditMeasurement;
         showModal = true;
         StateHasChanged();
     }
@@ -399,6 +444,55 @@ else
         await DeleteBodyMeasurementUseCase.ExecuteAsync(newMeasurement.Id);
         
         BodyMeasurements.RemoveAll(b => b.Id == newMeasurement.Id);
+
+        CloseModal();
+        StateHasChanged();
+    }
+    
+    private void EditGoal(BodyMeasurementGoalModel g)
+    {
+        newMeasurementGoal = new BodyMeasurementGoalModel()
+        {
+            Id = g.Id,
+            UserId = g.UserId,
+            Type = g.Type, 
+            TargetValue = g.TargetValue,
+            EffectiveFrom = g.EffectiveFrom,
+            EffectiveTo = g.EffectiveTo
+        };
+        
+        currentModal = ModalType.EditGoal;
+        showModal = true;
+        StateHasChanged();
+    }
+    
+    private async Task SaveEditedGoal()
+    {
+        await UpdateBodyMeasurementGoalUseCase.ExecuteAsync(newMeasurementGoal);
+        
+        var index = BodyMeasurementGoals.FindIndex(g => g.Id == newMeasurementGoal.Id);
+        if (index >= 0)
+        {
+            BodyMeasurementGoals[index] = new BodyMeasurementGoalModel
+            {
+                Id = newMeasurementGoal.Id,
+                UserId = newMeasurementGoal.UserId,
+                Type = newMeasurementGoal.Type,
+                TargetValue = newMeasurementGoal.TargetValue,
+                EffectiveFrom = newMeasurementGoal.EffectiveFrom,
+                EffectiveTo = newMeasurementGoal.EffectiveTo
+            };
+        }
+
+        CloseModal();
+        StateHasChanged();
+    }
+
+    private async Task DeleteGoal()
+    {
+        await DeleteBodyMeasurementGoalUseCase.ExecuteAsync(newMeasurementGoal.Id);
+        
+        BodyMeasurementGoals.RemoveAll(g => g.Id == newMeasurementGoal.Id);
 
         CloseModal();
         StateHasChanged();
