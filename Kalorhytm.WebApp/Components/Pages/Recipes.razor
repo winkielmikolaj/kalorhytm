@@ -1,0 +1,61 @@
+﻿@page "/recipes"
+@rendermode InteractiveServer
+@using Kalorhytm.Logic.Interfaces
+@inject ISpoonacularRecipesService RecipesService
+
+<h3 class="mb-3">Search Recipes by Ingredients</h3>
+
+<div class="mb-3">
+    <input @bind="ingredientsInput" class="form-control" placeholder="Enter ingredients (comma separated)" />
+</div>
+<div class="mb-3">
+    <button class="btn btn-primary" @onclick="SearchRecipes">Search</button>
+</div>
+
+@if (recipes == null)
+{
+    <p>Enter ingredients to search for recipes.</p>
+}
+else if (recipes.Count == 0)
+{
+    <p>No recipes found.</p>
+}
+else
+{
+    <div class="row">
+        @foreach (var recipe in recipes)
+        {
+            <div class="col-md-4 mb-3">
+                <div class="card">
+                    <img class="card-img-top" src="@recipe.ImageUrl" alt="@recipe.Title" />
+                    <div class="card-body">
+                        <h5 class="card-title">@recipe.Title</h5>
+                        <p><b>Likes:</b> @recipe.Likes</p>
+                        <p>
+                            <b>Used:</b> @string.Join(", ", recipe.UsedIngredients)<br />
+                            <b>Missing:</b> @string.Join(", ", recipe.MissedIngredients)
+                        </p>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private string ingredientsInput = "apples, flour, sugar";
+    private List<Kalorhytm.Contracts.Models.RecipeModel> recipes;
+    
+    private async Task SearchRecipes()
+    {
+        Console.WriteLine($"szukanie przepisow for:{ingredientsInput}");
+        
+        recipes = await RecipesService.SearchRecipesByIngredientsAsync(
+            ingredientsInput.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToList(),
+            number: 5,
+            ranking: 1,
+            ignorePantry: true);
+
+        Console.WriteLine($"mam {recipes.Count} recipes");
+    }
+}
