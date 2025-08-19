@@ -46,12 +46,16 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => { options.SignIn.Re
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
-// Add HttpClient for USDA API
+// Add HttpClient for USDA API and SpoonacularApi
 builder.Services.AddUSDAFood();
+builder.Services.AddSpoonacularRecipes();
+
+
 builder.Services.AddInfrastructure();
 
-// Register USDA Food Service
+// Register USDA Food Service and SpoonacularApi
 builder.Services.AddScoped<IUSDAFoodService, USDAFoodService>();
+builder.Services.AddScoped<ISpoonacularRecipesService, SpoonacularRecipesService>();
 
 // Register use cases
 builder.Services.AddScoped<IGetDailyNutritionUseCase, GetDailyNutritionUseCase>();
