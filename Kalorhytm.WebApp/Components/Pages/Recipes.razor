@@ -2,8 +2,10 @@
 @rendermode InteractiveServer
 
 
+@using Kalorhytm.Contracts.Models.MyFridge
 @using Kalorhytm.Logic.Interfaces
 @inject ISpoonacularRecipesService RecipesService
+@inject IAddBodyMeasurementUseCase AddBodyMeasurementUseCase
 
 
 <h3 class="mb-3">Search Recipes by Ingredients</h3>
@@ -46,9 +48,45 @@ else
     </div>
 }
 
+<h3 class="mt-4">My Fridge</h3>
+
+<div class="mb-3">
+    <input @bind="newIngredient" class="form-control" placeholder="Add ingredient name..." />
+</div>
+<div class="mb-3">
+    <button class="btn btn-success" @onclick="AddIngredient">Add to Fridge</button>
+</div>
+
+@if (myFridgeItems == null)
+{
+    <p>Loading fridge...</p>
+}
+else if (myFridgeItems.Count == 0)
+{
+    <p>Your fridge is empty.</p>
+}
+else
+{
+    <ul class="list-group">
+        @foreach (var item in myFridgeItems)
+        {
+            <li class="list-group-item">@item.Name</li>
+        }
+    </ul>
+}
+
+
 @code {
+    
+    //api
     private string ingredientsInput = "apples, flour, sugar";
     private List<Kalorhytm.Contracts.Models.RecipeModel> recipes;
+    
+    //myFridge
+    private string newIngredient = "";
+    private List<MyFridgeModel> myFridgeItems = new();
+    
+    //todo potrzebuje dodac jeszcze jeden use case zeby zrobic testy zapisu do bazy danych --> GetAllAsync
     
     private async Task SearchRecipes()
     {
