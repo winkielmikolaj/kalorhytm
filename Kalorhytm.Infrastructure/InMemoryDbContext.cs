@@ -1,6 +1,7 @@
 ﻿using Kalorhytm.Domain;
 using Kalorhytm.Domain.Entities;
 using Kalorhytm.Domain.Entities.BodyMeasurements;
+using Kalorhytm.Domain.Entities.MyFridge;
 using Kalorhytm.Domain.Enums;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -20,6 +21,9 @@ namespace Kalorhytm.Infrastructure
         
         public DbSet<BodyMeasurementEntity> BodyMeasurements { get; set; }
         public DbSet<BodyMeasurementGoalEntity> BodyMeasurementGoals { get; set; }
+        
+        
+        public DbSet<MyFridgeEntity> MyFridges { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
