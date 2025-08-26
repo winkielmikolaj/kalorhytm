@@ -4,8 +4,13 @@
 
 @using Kalorhytm.Contracts.Models.MyFridge
 @using Kalorhytm.Logic.Interfaces
+@using Kalorhytm.Logic.Interfaces.IMyFridgeUseCases
+@using Kalorhytm.Logic.UseCases.MyFridgeUseCases
 @inject ISpoonacularRecipesService RecipesService
-@inject IAddBodyMeasurementUseCase AddBodyMeasurementUseCase
+@inject IAddIngredientUseCase AddIngredientUseCase
+@inject IGetIngredientUseCase GetIngredientUseCase
+
+
 
 
 <h3 class="mb-3">Search Recipes by Ingredients</h3>
@@ -54,30 +59,25 @@ else
     <input @bind="newIngredient" class="form-control" placeholder="Add ingredient name..." />
 </div>
 <div class="mb-3">
-    <button class="btn btn-success">Add to Fridge</button>
+    <button class="btn btn-success" @onclick="AddIngredientsToFridge" >Add to Fridge</button>
 </div>
 
-@if (myFridgeItems == null)
+<button class="btn btn-success" @onclick="OpenningFridge">Open Fridge</button>
+
+@if (buttonForOpenningFridge == true)
 {
-    <p>Loading fridge...</p>
-}
-else if (myFridgeItems.Count == 0)
-{
-    <p>Your fridge is empty.</p>
-}
-else
-{
-    <ul class="list-group">
-        @foreach (var item in myFridgeItems)
+    <ul class="list-group mt-3">
+        @foreach (var ingredient in myFridgeItems)
         {
-            <li class="list-group-item">@item.Name</li>
+            <li class="list-group-item">@ingredient.Name</li>
         }
     </ul>
 }
 
 
 @code {
-    
+
+    private bool isProcessing { get; set; } = true;
     //api
     private string ingredientsInput = "apples, flour, sugar";
     private List<Kalorhytm.Contracts.Models.RecipeModel> recipes;
@@ -85,9 +85,63 @@ else
     //myFridge
     private string newIngredient = "";
     private List<MyFridgeModel> myFridgeItems = new();
+    private MyFridgeModel newFridgeModel = new();
+    private int Id { get; set; }
+    private string Name { get; set; }
+    private bool buttonForOpenningFridge = false;
     
     //todo potrzebuje dodac jeszcze jeden use case zeby zrobic testy zapisu do bazy danych --> GetAllAsync
     
+    //zapisywanie skladnikow do bazy danych(lodówki)
+
+    //protected override Task OnInitializedAsync()
+    //{
+    //    isProcessing = false;
+        
+    //}
+
+    private void OpenningFridge()
+    {
+        buttonForOpenningFridge = true;
+    }
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadMyFridge();
+            isProcessing = true;
+            StateHasChanged();
+
+        }
+    }
+
+    private async Task LoadMyFridge()
+    {
+        isProcessing = true;
+
+        myFridgeItems = await GetIngredientUseCase.ExecuteAsync();
+
+        isProcessing = false;
+        StateHasChanged();
+    }
+    
+    private async Task AddIngredientsToFridge()
+    {
+        var model = new MyFridgeModel
+        {
+            Name = newIngredient
+        };
+        
+        var saved = await AddIngredientUseCase.ExecuteAsync(model);
+        
+        myFridgeItems.Add(saved);
+        newIngredient = "";
+        StateHasChanged();
+    }
+    
+    
+    //szukanie przepisow z api
     private async Task SearchRecipes()
     {
         Console.WriteLine($"szukanie przepisow for:{ingredientsInput}");

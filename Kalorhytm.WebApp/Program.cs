@@ -77,7 +77,8 @@ builder.Services.AddScoped<IDeleteBodyMeasurementGoalUseCase, DeleteBodyMeasurem
 
 //Adding ingredients to my fridge Use Cases
 builder.Services.AddScoped<IAddIngredientUseCase, AddIngredientUseCase>();
-//todo usuwanie z lodowki
+//todo wyswietlanie z lodowki
+builder.Services.AddScoped<IGetIngredientUseCase, GetIngredientUseCase>();
 //todo edytowanie nazw lodowki
 //todo usuwanie z lodowki
 

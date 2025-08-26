@@ -22,6 +22,7 @@ namespace Kalorhytm.Logic.UseCases.MyFridgeUseCases
             await _myFridge.AddAsync(entity);
             
             model.Id = entity.Id;
+            model.Name = entity.Name;
 
             return model;
         }
