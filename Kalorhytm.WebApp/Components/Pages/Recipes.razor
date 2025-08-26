@@ -43,10 +43,7 @@
 
 <h3 class="mb-3">Search Recipes by Ingredients</h3>
 
-<div class="mb-3">
-    <p>Test lustrowania pozdrawiam</p>
-    <input @bind="ingredientsInput" class="form-control" placeholder="Enter ingredients (comma separated)"/>
-</div>
+
 <div class="mb-3">
     <button class="btn btn-primary" @onclick="SearchRecipes">Search</button>
 </div>
@@ -172,11 +169,14 @@ else
     //szukanie przepisow z api
     private async Task SearchRecipes()
     {
-        Console.WriteLine($"szukanie przepisow for:{ingredientsInput}");
+        var fridgeItems = await GetIngredientUseCase.ExecuteAsync();
+        var ingredients = fridgeItems.Select(i => i.Name).ToList();
+        
+        Console.WriteLine($"szukanie przepisow for:{ingredients}");
         
         recipes = await RecipesService.SearchRecipesByIngredientsAsync(
-            ingredientsInput.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToList(),
-            number: 5,
+            ingredients,
+            number: 20,
             ranking: 1,
             ignorePantry: true);
 
