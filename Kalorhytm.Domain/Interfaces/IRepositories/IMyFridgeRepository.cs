@@ -10,6 +10,8 @@ namespace Kalorhytm.Domain.Interfaces.IRepositories
         
         Task UpdateAsync(MyFridgeEntity myFridge);
         
+        Task<MyFridgeEntity?> GetByIdAsync(int id);
+        
         Task DeleteAsync(int id);
     }
 }

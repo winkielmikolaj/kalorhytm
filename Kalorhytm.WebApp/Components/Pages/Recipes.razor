@@ -9,7 +9,35 @@
 @inject ISpoonacularRecipesService RecipesService
 @inject IAddIngredientUseCase AddIngredientUseCase
 @inject IGetIngredientUseCase GetIngredientUseCase
+@inject IDeleteIngredientUseCase DeleteIngredientUseCase
 
+
+
+
+<h3 class="mt-4">My Fridge</h3>
+
+<div class="mb-3">
+    <input @bind="newIngredient" class="form-control" placeholder="Add ingredient name..." />
+</div>
+<div class="mb-3">
+    <button class="btn btn-success" @onclick="AddIngredientsToFridge" >Add to Fridge</button>
+</div>
+
+<button class="btn btn-success" @onclick="OpenFridge">Open Fridge</button>
+<button class="btn btn-danger" @onclick="CloseFridge">Close Fridge</button>
+
+
+@if (buttonForOpenningFridge == true)
+{
+    <ul class="list-group mt-3">
+        @foreach (var ingredient in myFridgeItems)
+        {
+            <li class="list-group-item">@ingredient.Name
+                <button class="btn btn-danger" @onclick="() => DeleteIngredientFromFridge(ingredient.Id)">Delete</button>
+            </li>
+        }
+    </ul>
+}
 
 
 
@@ -53,27 +81,6 @@ else
     </div>
 }
 
-<h3 class="mt-4">My Fridge</h3>
-
-<div class="mb-3">
-    <input @bind="newIngredient" class="form-control" placeholder="Add ingredient name..." />
-</div>
-<div class="mb-3">
-    <button class="btn btn-success" @onclick="AddIngredientsToFridge" >Add to Fridge</button>
-</div>
-
-<button class="btn btn-success" @onclick="OpenningFridge">Open Fridge</button>
-
-@if (buttonForOpenningFridge == true)
-{
-    <ul class="list-group mt-3">
-        @foreach (var ingredient in myFridgeItems)
-        {
-            <li class="list-group-item">@ingredient.Name</li>
-        }
-    </ul>
-}
-
 
 @code {
 
@@ -88,9 +95,8 @@ else
     private MyFridgeModel newFridgeModel = new();
     private int Id { get; set; }
     private string Name { get; set; }
-    private bool buttonForOpenningFridge = false;
+    private bool buttonForOpenningFridge;
     
-    //todo potrzebuje dodac jeszcze jeden use case zeby zrobic testy zapisu do bazy danych --> GetAllAsync
     
     //zapisywanie skladnikow do bazy danych(lodówki)
 
@@ -100,9 +106,14 @@ else
         
     //}
 
-    private void OpenningFridge()
+    private void OpenFridge()
     {
         buttonForOpenningFridge = true;
+    }
+
+    private void CloseFridge()
+    {
+        buttonForOpenningFridge = false;
     }
     
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -138,8 +149,25 @@ else
         myFridgeItems.Add(saved);
         newIngredient = "";
         StateHasChanged();
+        
+        Console.WriteLine($"Product with id {saved.Id} was saved");
     }
-    
+
+    private async Task DeleteIngredientFromFridge(int id)
+    {
+        Console.WriteLine($"Deleting item id = {id}");
+        
+        var deleted = await DeleteIngredientUseCase.ExecuteAsync(id);
+
+        if (deleted == null)
+        {
+            Console.WriteLine($"Item with id {id} was not fount in your fridge");
+        }
+        
+        myFridgeItems.RemoveAll(b => b.Id == id);
+        
+        StateHasChanged();
+    }
     
     //szukanie przepisow z api
     private async Task SearchRecipes()

@@ -13,6 +13,11 @@ namespace Kalorhytm.Infrastructure.Repositories
             _context = context;
         }
 
+        public async Task<MyFridgeEntity?> GetByIdAsync(int id)
+        {
+            return await _context.MyFridges.FindAsync(id);
+        }
+
         public async Task<List<MyFridgeEntity>> GetMyFridgesAsync()
         {
             return await _context.MyFridges.ToListAsync();
