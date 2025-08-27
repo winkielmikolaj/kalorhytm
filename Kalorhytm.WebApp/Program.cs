@@ -10,8 +10,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore;
 using Kalorhytm.Logic.Interfaces;
 using Kalorhytm.Logic.Interfaces.IBodyMeasurementGoalUseCases;
+using Kalorhytm.Logic.Interfaces.IMyFridgeUseCases;
 using Kalorhytm.Logic.UseCases.BodyMeasurementGoalUseCases;
 using Kalorhytm.Logic.UseCases.BodyMeasurementUseCases;
+using Kalorhytm.Logic.UseCases.MyFridgeUseCases;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -72,6 +74,13 @@ builder.Services.AddScoped<IGetBodyMeasurementGoalUseCase, GetBodyMeasurementGoa
 builder.Services.AddScoped<IAddBodyMeasurementGoalUseCase, AddBodyMeasurementGoalUseCase>();
 builder.Services.AddScoped<IUpdateBodyMeasurementGoalUseCase, UpdateBodyMeasurementGoalUseCase>();
 builder.Services.AddScoped<IDeleteBodyMeasurementGoalUseCase, DeleteBodyMeasurementGoalUseCase>();
+
+//Adding ingredients to my fridge Use Cases
+builder.Services.AddScoped<IAddIngredientUseCase, AddIngredientUseCase>();
+//displaying fridge use case
+builder.Services.AddScoped<IGetIngredientUseCase, GetIngredientUseCase>();
+//deleting products from fridge use case
+builder.Services.AddScoped<IDeleteIngredientUseCase, DeleteIngredientUseCase>();
 
 var app = builder.Build();
 

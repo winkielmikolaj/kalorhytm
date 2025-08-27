@@ -18,6 +18,11 @@ namespace Kalorhytm.Infrastructure.Extensions
             serviceCollection.AddScoped<IBodyMeasurementRepository, BodyMeasurementRepository>();
             serviceCollection.AddScoped<IBodyMeasurementGoalRepository, BodyMeasurementGoalRepository>();
 
+            serviceCollection.AddScoped<IMyFridgeRepository, MyFridgeRepository>();
+            
+            //Adding Ingredients to MyFridge
+            serviceCollection.AddScoped<IMyFridgeRepository, MyFridgeRepository>();
+
             return serviceCollection;
         }
     }

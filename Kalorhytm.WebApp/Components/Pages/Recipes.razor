@@ -1,13 +1,49 @@
 ﻿@page "/recipes"
 @rendermode InteractiveServer
+
+
+@using Kalorhytm.Contracts.Models.MyFridge
 @using Kalorhytm.Logic.Interfaces
+@using Kalorhytm.Logic.Interfaces.IMyFridgeUseCases
+@using Kalorhytm.Logic.UseCases.MyFridgeUseCases
 @inject ISpoonacularRecipesService RecipesService
+@inject IAddIngredientUseCase AddIngredientUseCase
+@inject IGetIngredientUseCase GetIngredientUseCase
+@inject IDeleteIngredientUseCase DeleteIngredientUseCase
+
+
+
+
+<h3 class="mt-4">My Fridge</h3>
+
+<div class="mb-3">
+    <input @bind="newIngredient" class="form-control" placeholder="Add ingredient name..." />
+</div>
+<div class="mb-3">
+    <button class="btn btn-success" @onclick="AddIngredientsToFridge" >Add to Fridge</button>
+</div>
+
+<button class="btn btn-success" @onclick="OpenFridge">Open Fridge</button>
+<button class="btn btn-danger" @onclick="CloseFridge">Close Fridge</button>
+
+
+@if (buttonForOpenningFridge == true)
+{
+    <ul class="list-group mt-3">
+        @foreach (var ingredient in myFridgeItems)
+        {
+            <li class="list-group-item">@ingredient.Name
+                <button class="btn btn-danger" @onclick="() => DeleteIngredientFromFridge(ingredient.Id)">Delete</button>
+            </li>
+        }
+    </ul>
+}
+
+
 
 <h3 class="mb-3">Search Recipes by Ingredients</h3>
 
-<div class="mb-3">
-    <input @bind="ingredientsInput" class="form-control" placeholder="Enter ingredients (comma separated)" />
-</div>
+
 <div class="mb-3">
     <button class="btn btn-primary" @onclick="SearchRecipes">Search</button>
 </div>
@@ -42,17 +78,105 @@ else
     </div>
 }
 
+
 @code {
+
+    private bool isProcessing { get; set; } = true;
+    //api
     private string ingredientsInput = "apples, flour, sugar";
     private List<Kalorhytm.Contracts.Models.RecipeModel> recipes;
     
+    //myFridge
+    private string newIngredient = "";
+    private List<MyFridgeModel> myFridgeItems = new();
+    private MyFridgeModel newFridgeModel = new();
+    private int Id { get; set; }
+    private string Name { get; set; }
+    private bool buttonForOpenningFridge;
+    
+    
+    //zapisywanie skladnikow do bazy danych(lodówki)
+
+    //protected override Task OnInitializedAsync()
+    //{
+    //    isProcessing = false;
+        
+    //}
+
+    private void OpenFridge()
+    {
+        buttonForOpenningFridge = true;
+    }
+
+    private void CloseFridge()
+    {
+        buttonForOpenningFridge = false;
+    }
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadMyFridge();
+            isProcessing = true;
+            StateHasChanged();
+
+        }
+    }
+
+    private async Task LoadMyFridge()
+    {
+        isProcessing = true;
+
+        myFridgeItems = await GetIngredientUseCase.ExecuteAsync();
+
+        isProcessing = false;
+        StateHasChanged();
+    }
+    
+    private async Task AddIngredientsToFridge()
+    {
+        var model = new MyFridgeModel
+        {
+            Name = newIngredient
+        };
+        
+        var saved = await AddIngredientUseCase.ExecuteAsync(model);
+        
+        myFridgeItems.Add(saved);
+        newIngredient = "";
+        StateHasChanged();
+        
+        Console.WriteLine($"Product with id {saved.Id} was saved");
+    }
+
+    private async Task DeleteIngredientFromFridge(int id)
+    {
+        Console.WriteLine($"Deleting item id = {id}");
+        
+        var deleted = await DeleteIngredientUseCase.ExecuteAsync(id);
+
+        if (deleted == null)
+        {
+            Console.WriteLine($"Item with id {id} was not fount in your fridge");
+        }
+        
+        myFridgeItems.RemoveAll(b => b.Id == id);
+        
+        StateHasChanged();
+    }
+    
+    //szukanie przepisow z api
     private async Task SearchRecipes()
     {
-        Console.WriteLine($"szukanie przepisow for:{ingredientsInput}");
+        var fridgeItems = await GetIngredientUseCase.ExecuteAsync();
+        var ingredients = fridgeItems.Select(i => i.Name).ToList();
+        
+        Console.WriteLine($"szukanie przepisow for:{ingredients}");
         
         recipes = await RecipesService.SearchRecipesByIngredientsAsync(
-            ingredientsInput.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToList(),
-            number: 5,
+            ingredients,
+            number: 20,
             ranking: 1,
             ignorePantry: true);
 
