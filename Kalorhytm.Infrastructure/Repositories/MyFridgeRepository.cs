@@ -37,9 +37,10 @@ namespace Kalorhytm.Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task DeleteAsync(int id)
+        public async Task DeleteAsync(int id, string userId)
         {
-            var productToDelete = await _context.MyFridges.FindAsync(id);
+            var productToDelete = await _context.MyFridges.FirstOrDefaultAsync
+                (x => x.Id == id && x.UserId == userId);
             if (productToDelete != null)
             {
                 _context.MyFridges.Remove(productToDelete);

@@ -111,10 +111,9 @@ else
 
         userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-        Console.WriteLine($"uzytkownik jest odczytany{authState.User}");
-        
-       isProcessing = false;
-        
+        Console.WriteLine($"uzytkownik jest odczytany {userId}");
+    
+        await LoadMyFridge(); //przeladowanie lodowki
     }
 
     private void OpenFridge()
@@ -127,16 +126,16 @@ else
         buttonForOpenningFridge = false;
     }
     
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            await LoadMyFridge();
-            isProcessing = true;
-            StateHasChanged();
-
-        }
-    }
+    // protected override async Task OnAfterRenderAsync(bool firstRender)
+    // {
+    //     if (firstRender)
+    //     {
+    //         await LoadMyFridge();
+    //         isProcessing = true;
+    //         StateHasChanged();
+    //
+    //     }
+    // }
 
     private async Task LoadMyFridge()
     {
@@ -170,14 +169,17 @@ else
     {
         Console.WriteLine($"Deleting item id = {id}");
         
-        var deleted = await DeleteIngredientUseCase.ExecuteAsync(id);
+        var deleted = await DeleteIngredientUseCase.ExecuteAsync(id, userId);
 
-        if (deleted == null)
+        if (deleted != null)
         {
-            Console.WriteLine($"Item with id {id} was not fount in your fridge");
+            myFridgeItems.RemoveAll(b => b.Id == deleted.Id);
+            StateHasChanged();
         }
-        
-        myFridgeItems.RemoveAll(b => b.Id == id);
+        else
+        {
+            Console.WriteLine($"Item with id {id} not found or doesn't belong to user {userId}");
+        }
         
         StateHasChanged();
     }

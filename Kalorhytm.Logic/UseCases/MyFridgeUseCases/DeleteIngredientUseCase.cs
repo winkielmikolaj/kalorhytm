@@ -2,6 +2,7 @@
 using Kalorhytm.Contracts.Models.MyFridge;
 using Kalorhytm.Logic.Interfaces.IMyFridgeUseCases;
 using Kalorhytm.Domain.Interfaces.IRepositories;
+using Microsoft.AspNetCore.Identity;
 
 namespace Kalorhytm.Logic.UseCases.MyFridgeUseCases
 {
@@ -14,16 +15,18 @@ namespace Kalorhytm.Logic.UseCases.MyFridgeUseCases
             _myFridgeRepository = myFridgeRepository;
         }
 
-        public async Task<MyFridgeModel?> ExecuteAsync(int id)
+        public async Task<MyFridgeModel?> ExecuteAsync(int id, string userId)
         {
-           await _myFridgeRepository.GetByIdAsync(id);
+           var entity = await _myFridgeRepository.GetByIdAsync(id);
 
-           if (id != null)
-           { 
-               await _myFridgeRepository.DeleteAsync(id);
+           if (entity == null || entity.UserId != userId)
+           {
+               return null;
            }
 
-           return null;
+           await _myFridgeRepository.DeleteAsync(id, userId);
+
+           return new MyFridgeModel() { Id = entity.Id, Name = entity.Name, UserId = entity.UserId, };
 
         }
     }
