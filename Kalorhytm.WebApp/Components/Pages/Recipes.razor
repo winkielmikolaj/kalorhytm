@@ -39,7 +39,7 @@
         @foreach (var ingredient in myFridgeItems)
         {
             <li class="list-group-item">@ingredient.Name
-                <button class="btn btn-danger" @onclick="() => DeleteIngredientFromFridge(ingredient.Id)">Delete</button>
+                <button class="btn btn-danger" @onclick="() => DeleteIngredientFromFridge(ingredient.Id, ingredient.UserId)">Delete</button>
             </li>
         }
     </ul>
@@ -165,7 +165,7 @@ else
         Console.WriteLine($"uzytkownik o id {userId} zapisal produkt o id {saved.Id}");
     }
 
-    private async Task DeleteIngredientFromFridge(int id)
+    private async Task DeleteIngredientFromFridge(int id, string userId)
     {
         Console.WriteLine($"Deleting item id = {id}");
         
