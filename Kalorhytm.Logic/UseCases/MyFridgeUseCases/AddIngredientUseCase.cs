@@ -17,7 +17,11 @@ namespace Kalorhytm.Logic.UseCases.MyFridgeUseCases
         
         public async Task<MyFridgeModel> ExecuteAsync(MyFridgeModel model)
         {
-            var entity = new MyFridgeEntity { Name = model.Name, };
+            var entity = new MyFridgeEntity
+            {
+                Name = model.Name,
+                UserId = model.UserId,
+            };
             
             await _myFridge.AddAsync(entity);
             

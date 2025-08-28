@@ -4,7 +4,7 @@ namespace Kalorhytm.Domain.Interfaces.IRepositories
 {
     public interface IMyFridgeRepository
     {
-        Task<List<MyFridgeEntity>> GetMyFridgesAsync();
+        Task<List<MyFridgeEntity>> GetMyFridgesAsync(string userId);
         
         Task AddAsync(MyFridgeEntity myFridge);
         

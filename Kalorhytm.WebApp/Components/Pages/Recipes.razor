@@ -2,10 +2,12 @@
 @rendermode InteractiveServer
 
 
+@using System.Security.Claims
 @using Kalorhytm.Contracts.Models.MyFridge
 @using Kalorhytm.Logic.Interfaces
 @using Kalorhytm.Logic.Interfaces.IMyFridgeUseCases
 @using Kalorhytm.Logic.UseCases.MyFridgeUseCases
+@inject AuthenticationStateProvider AuthenticationStateProvider
 @inject ISpoonacularRecipesService RecipesService
 @inject IAddIngredientUseCase AddIngredientUseCase
 @inject IGetIngredientUseCase GetIngredientUseCase
@@ -13,6 +15,10 @@
 
 
 
+@*@if (isProcessing)
+{
+    <p>Loading fridge...</p>
+}*@
 
 <h3 class="mt-4">My Fridge</h3>
 
@@ -93,15 +99,23 @@ else
     private int Id { get; set; }
     private string Name { get; set; }
     private bool buttonForOpenningFridge;
+    private string userId { get; set; }
     
     
     //zapisywanie skladnikow do bazy danych(lodówki)
 
-    //protected override Task OnInitializedAsync()
-    //{
-    //    isProcessing = false;
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        Console.WriteLine($"uzytkownik jest odczytany{authState.User}");
         
-    //}
+       isProcessing = false;
+        
+    }
 
     private void OpenFridge()
     {
@@ -128,7 +142,7 @@ else
     {
         isProcessing = true;
 
-        myFridgeItems = await GetIngredientUseCase.ExecuteAsync();
+        myFridgeItems = await GetIngredientUseCase.ExecuteAsync(userId);
 
         isProcessing = false;
         StateHasChanged();
@@ -138,7 +152,8 @@ else
     {
         var model = new MyFridgeModel
         {
-            Name = newIngredient
+            Name = newIngredient,
+            UserId = userId,
         };
         
         var saved = await AddIngredientUseCase.ExecuteAsync(model);
@@ -147,7 +162,8 @@ else
         newIngredient = "";
         StateHasChanged();
         
-        Console.WriteLine($"Product with id {saved.Id} was saved");
+        //Console.WriteLine($"Product with id {saved.Id} was saved");
+        Console.WriteLine($"uzytkownik o id {userId} zapisal produkt o id {saved.Id}");
     }
 
     private async Task DeleteIngredientFromFridge(int id)
@@ -169,7 +185,7 @@ else
     //szukanie przepisow z api
     private async Task SearchRecipes()
     {
-        var fridgeItems = await GetIngredientUseCase.ExecuteAsync();
+        var fridgeItems = await GetIngredientUseCase.ExecuteAsync(userId);
         var ingredients = fridgeItems.Select(i => i.Name).ToList();
         
         Console.WriteLine($"szukanie przepisow for:{ingredients}");
