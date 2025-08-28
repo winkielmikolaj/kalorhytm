@@ -39,7 +39,7 @@
         @foreach (var ingredient in myFridgeItems)
         {
             <li class="list-group-item">@ingredient.Name
-                <button class="btn btn-danger" @onclick="() => DeleteIngredientFromFridge(ingredient.Id, ingredient.UserId)">Delete</button>
+                <button class="btn btn-danger" @onclick="() => DeleteIngredientFromFridge(ingredient.Id)">Delete</button>
             </li>
         }
     </ul>
@@ -111,6 +111,11 @@ else
 
         userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
+        foreach (var claim in user.Claims)
+        {
+            Console.WriteLine($"Claim {claim.Type} = {claim.Value}");
+        }
+        
         Console.WriteLine($"uzytkownik jest odczytany {userId}");
     
         await LoadMyFridge(); //przeladowanie lodowki
@@ -165,7 +170,8 @@ else
         Console.WriteLine($"uzytkownik o id {userId} zapisal produkt o id {saved.Id}");
     }
 
-    private async Task DeleteIngredientFromFridge(int id, string userId)
+    //todo po uzyciu bazy danych musze przetestowac czy to usuwanie dziala czy nie dziala, bo na in memory nie sprawdze bo userid sie zmienia
+    private async Task DeleteIngredientFromFridge(int id)
     {
         Console.WriteLine($"Deleting item id = {id}");
         

@@ -26,7 +26,7 @@ namespace Kalorhytm.Logic.UseCases.MyFridgeUseCases
 
            await _myFridgeRepository.DeleteAsync(id, userId);
 
-           return new MyFridgeModel() { Id = entity.Id, Name = entity.Name, UserId = entity.UserId, };
+           return new MyFridgeModel() { Name = entity.Name, UserId = entity.UserId, };
 
         }
     }
