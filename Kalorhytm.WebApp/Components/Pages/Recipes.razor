@@ -169,8 +169,8 @@ else
         //Console.WriteLine($"Product with id {saved.Id} was saved");
         Console.WriteLine($"uzytkownik o id {userId} zapisal produkt o id {saved.Id}");
     }
-
-    //todo po uzyciu bazy danych musze przetestowac czy to usuwanie dziala czy nie dziala, bo na in memory nie sprawdze bo userid sie zmienia
+    
+    
     private async Task DeleteIngredientFromFridge(int id)
     {
         Console.WriteLine($"Deleting item id = {id}");
@@ -180,7 +180,7 @@ else
         if (deleted != null)
         {
             myFridgeItems.RemoveAll(b => b.Id == deleted.Id);
-            StateHasChanged();
+            await LoadMyFridge();
         }
         else
         {

@@ -19,6 +19,7 @@ namespace Kalorhytm.Logic.UseCases.MyFridgeUseCases
 
             return ingredients.Select(m => new MyFridgeModel
             {
+                Id = m.Id,
                 Name = m.Name,
                 UserId = m.UserId,
             }).ToList();

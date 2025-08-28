@@ -12,7 +12,9 @@ namespace Kalorhytm.Infrastructure.Extensions
             RoleManager<IdentityRole> roleManager)
         {
             var email = "testuser@example.com";
+            var email2 = "testuser2@example.com";
             var user = await userManager.FindByEmailAsync(email);
+            var user2 = await userManager.FindByEmailAsync(email);
 
             if (user == null)
             {
@@ -23,6 +25,27 @@ namespace Kalorhytm.Infrastructure.Extensions
                     EmailConfirmed = true
                 };
 
+                await userManager.CreateAsync(user, "Test123!");
+                
+                user2 = new ApplicationUser 
+                { 
+                    UserName = email2,
+                    Email = email2, 
+                    EmailConfirmed = true
+                };
+                
+                await userManager.CreateAsync(user2, "Test123!");
+            }
+
+            if (user == null)
+            {
+                user = new ApplicationUser 
+                { 
+                    UserName = email2,
+                    Email = email2, 
+                    EmailConfirmed = true
+                };
+                
                 await userManager.CreateAsync(user, "Test123!");
             }
 
