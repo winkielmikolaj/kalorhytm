@@ -17,6 +17,7 @@ namespace Kalorhytm.Logic.Validation
 
             RuleFor(x => x.UserId)
                 .NotEmpty().WithMessage("UserId nie może być pusty.");
+            //test commita z lapka
         }
     }
 }
