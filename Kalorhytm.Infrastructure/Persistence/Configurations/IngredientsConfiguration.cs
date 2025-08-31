@@ -13,6 +13,9 @@ namespace Kalorhytm.Infrastructure.Persistence.Configurations
             builder.HasKey(e => e.Id);
             builder.Property(g => g.Id).ValueGeneratedOnAdd();
             
+            builder.Property(b => b.UserId)
+                .IsRequired();
+            
             builder.Property(e => e.Name)
                 .IsRequired()
                 .HasMaxLength(30);

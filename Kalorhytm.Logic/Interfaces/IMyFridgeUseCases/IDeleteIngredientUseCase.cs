@@ -4,6 +4,6 @@ namespace Kalorhytm.Logic.Interfaces.IMyFridgeUseCases
 {
     public interface IDeleteIngredientUseCase
     {
-        Task<MyFridgeModel> ExecuteAsync(int id);
+        Task<MyFridgeModel> ExecuteAsync(int id, string userId);
     }
 }

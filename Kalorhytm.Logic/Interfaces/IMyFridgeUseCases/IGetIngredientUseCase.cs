@@ -7,6 +7,6 @@ namespace Kalorhytm.Logic.Interfaces.IMyFridgeUseCases
     {
         //Task<List<MyFridgeModel>> ExecuteAsync(int id, string name);
         
-        Task<List<MyFridgeModel>> ExecuteAsync();
+        Task<List<MyFridgeModel>> ExecuteAsync(string userId);
     }
 }

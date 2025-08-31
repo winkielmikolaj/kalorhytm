@@ -18,9 +18,11 @@ namespace Kalorhytm.Infrastructure.Repositories
             return await _context.MyFridges.FindAsync(id);
         }
 
-        public async Task<List<MyFridgeEntity>> GetMyFridgesAsync()
+        public async Task<List<MyFridgeEntity>> GetMyFridgesAsync(string userId)
         {
-            return await _context.MyFridges.ToListAsync();
+            return await _context.MyFridges
+                .Where(x => x.UserId == userId)
+                .ToListAsync();
         }
 
         public async Task AddAsync(MyFridgeEntity myFridge)
@@ -35,9 +37,10 @@ namespace Kalorhytm.Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task DeleteAsync(int id)
+        public async Task DeleteAsync(int id, string userId)
         {
-            var productToDelete = await _context.MyFridges.FindAsync(id);
+            var productToDelete = await _context.MyFridges.FirstOrDefaultAsync
+                (x => x.Id == id && x.UserId == userId);
             if (productToDelete != null)
             {
                 _context.MyFridges.Remove(productToDelete);

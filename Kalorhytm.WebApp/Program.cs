@@ -1,3 +1,5 @@
+using FluentValidation;
+using Kalorhytm.Contracts.Models.MyFridge;
 using Kalorhytm.Infrastructure.Extensions;
 using Kalorhytm.Infrastructure.USDAFood.Extensions;
 using Kalorhytm.Logic.Services;
@@ -14,6 +16,7 @@ using Kalorhytm.Logic.Interfaces.IMyFridgeUseCases;
 using Kalorhytm.Logic.UseCases.BodyMeasurementGoalUseCases;
 using Kalorhytm.Logic.UseCases.BodyMeasurementUseCases;
 using Kalorhytm.Logic.UseCases.MyFridgeUseCases;
+using Kalorhytm.Logic.Validation;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -81,6 +84,9 @@ builder.Services.AddScoped<IAddIngredientUseCase, AddIngredientUseCase>();
 builder.Services.AddScoped<IGetIngredientUseCase, GetIngredientUseCase>();
 //deleting products from fridge use case
 builder.Services.AddScoped<IDeleteIngredientUseCase, DeleteIngredientUseCase>();
+
+//validator
+builder.Services.AddScoped<IValidator<MyFridgeModel>, MyFridgeModelValidator>();
 
 var app = builder.Build();
 

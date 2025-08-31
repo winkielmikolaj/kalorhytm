@@ -13,12 +13,17 @@ namespace Kalorhytm.Logic.UseCases.MyFridgeUseCases
             _myFridge = myFridge;
         }
 
-        public async Task<List<MyFridgeModel>> ExecuteAsync()
+        public async Task<List<MyFridgeModel>> ExecuteAsync(string userId)
         {
-            var ingredients = await _myFridge.GetMyFridgesAsync();
+            var ingredients = await _myFridge.GetMyFridgesAsync(userId);
 
             return ingredients.Select(m => new MyFridgeModel
-                { Name = m.Name, }).ToList();
+            {
+                Id = m.Id,
+                Name = m.Name,
+                UserId = m.UserId,
+            }).ToList();
+                
         }
     }
     
