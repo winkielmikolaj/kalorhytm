@@ -1,4 +1,4 @@
-﻿using Kalorhytm.Contracts.Models;
+﻿using Kalorhytm.Contracts.Models.Recipes;
 
 namespace Kalorhytm.Logic.Interfaces
 {
@@ -9,5 +9,12 @@ namespace Kalorhytm.Logic.Interfaces
             int number = 10,
             int ranking = 1,
             bool ignorePantry = true);
+        
+        Task<RecipeDataModel?> GetRecipeDataAsync(
+            int recipeId,
+            bool includeNutrition = false,
+            bool addWinePairing = false,
+            bool addTasteData = false);
     }
+    
 }

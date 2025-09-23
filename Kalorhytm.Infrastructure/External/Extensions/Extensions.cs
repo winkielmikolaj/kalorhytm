@@ -1,8 +1,9 @@
-﻿using Kalorhytm.Infrastructure.Spoonacular;
+﻿using Kalorhytm.Infrastructure.External.Spoonacular;
+using Kalorhytm.Infrastructure.USDAFood;
 using Microsoft.Extensions.DependencyInjection;
 using Refit;
 
-namespace Kalorhytm.Infrastructure.USDAFood.Extensions
+namespace Kalorhytm.Infrastructure.External.Extensions
 {
     public static class Extensions
     {
@@ -16,7 +17,7 @@ namespace Kalorhytm.Infrastructure.USDAFood.Extensions
             return services;
         }
         
-        public static IServiceCollection AddSpoonacularRecipes(this IServiceCollection services)
+        public static IServiceCollection AddSpoonacular(this IServiceCollection services)
         {
             var baseUrl = "https://api.spoonacular.com";
 

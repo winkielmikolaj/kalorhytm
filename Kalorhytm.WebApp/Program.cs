@@ -1,7 +1,7 @@
 using FluentValidation;
 using Kalorhytm.Contracts.Models.MyFridge;
 using Kalorhytm.Infrastructure.Extensions;
-using Kalorhytm.Infrastructure.USDAFood.Extensions;
+using Kalorhytm.Infrastructure.External.Extensions;
 using Kalorhytm.Logic.Services;
 using Kalorhytm.Logic.UseCases;
 using Kalorhytm.WebApp.Components;
@@ -53,7 +53,7 @@ builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSe
 
 // Add HttpClient for USDA API and SpoonacularApi
 builder.Services.AddUSDAFood();
-builder.Services.AddSpoonacularRecipes();
+builder.Services.AddSpoonacular();
 
 
 builder.Services.AddInfrastructure();

@@ -1,9 +1,7 @@
-﻿namespace Kalorhytm.Contracts.Models
+﻿namespace Kalorhytm.Contracts.Models.Recipes
 {
     public class RecipeModel
     {
-        //simple model for my fridge site
-        
         public int RecipeId { get; set; }
         public string Title { get; set; } = "";
         public string ImageUrl { get; set; } = "";

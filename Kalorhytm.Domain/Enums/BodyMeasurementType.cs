@@ -2,16 +2,17 @@ namespace Kalorhytm.Domain.Enums
 {
     public enum BodyMeasurementType
     {
-        MasaCiala,
-        SzyjaKark,
-        KlatkaPiersiowa,
-        Talia,
-        Brzuch,
-        Biodra,
-        Udo,
-        Lydka,
-        RamieBiceps,
-        ZawartoscTluszczu,
+        BodyWeight,
+        Neck,
+        Chest,
+        Waist,
+        Abdomen,
+        Hips,
+        Thigh,
+        Calf,
+        ArmBiceps,
+        BodyFat,
         BMI
     }
+
 }
