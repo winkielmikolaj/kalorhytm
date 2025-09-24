@@ -110,5 +110,68 @@ namespace Kalorhytm.Logic.Services
             };
         }
 
+        public async Task<NutritionModel?> GetRecipeNutritionWidgetAsync(int recipeId)
+        {
+            if (string.IsNullOrWhiteSpace(_apiKey))
+                return null;
+            
+            var response = await _client.GetRecipeNutritionWidgetAsync(recipeId, _apiKey);
+            
+            return ConvertToNutritionWidgetModel(recipeId, response);
+        }
+
+        private NutritionModel ConvertToNutritionWidgetModel(
+            int recipeId,
+            SpoonacularNutrition nutrition)
+        {
+            return new NutritionModel
+            {
+                RecipeId = recipeId,
+                Nutrients = nutrition.Nutrients.Select(n => new NutrientModel
+                {
+                    Name = n.Name,
+                    Amount = n.Amount,
+                    Unit = n.Unit,
+                    PercentOfDailyNeeds = n.PercentOfDailyNeeds
+                }).ToList(),
+
+                Properties = nutrition.Properties.Select(p => new NutritionPropertyModel
+                {
+                    Name = p.Name,
+                    Amount = p.Amount,
+                    Unit = p.Unit
+                }).ToList(),
+
+                Flavonoids = nutrition.Flavonoids.Select(f => new FlavonoidModel
+                {
+                    Name = f.Name,
+                    Amount = f.Amount,
+                    Unit = f.Unit
+                }).ToList(),
+
+                Ingredients = nutrition.Ingredients.Select(i => new IngredientNutritionModel
+                {
+                    Id = i.Id,
+                    Name = i.Name,
+                    Amount = i.Amount,
+                    Unit = i.Unit,
+                    Nutrients = i.Nutrients.Select(n => new NutrientModel
+                    {
+                        Name = n.Name,
+                        Amount = n.Amount,
+                        Unit = n.Unit,
+                        PercentOfDailyNeeds = n.PercentOfDailyNeeds
+                    }).ToList()
+                }).ToList(),
+
+                PercentProtein = nutrition.CaloricBreakdown?.PercentProtein ?? 0,
+                PercentFat = nutrition.CaloricBreakdown?.PercentFat ?? 0,
+                PercentCarbs = nutrition.CaloricBreakdown?.PercentCarbs ?? 0,
+
+                WeightPerServing = nutrition.WeightPerServing?.Amount ?? 0,
+                WeightUnit = nutrition.WeightPerServing?.Unit ?? ""
+            };
+        }
+
     }
 }

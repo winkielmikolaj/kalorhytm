@@ -21,5 +21,10 @@ namespace Kalorhytm.Infrastructure.External.Spoonacular
             [Query] bool addWinePairing = false,
             [Query] bool addTasteData = false,
             [Query] string apiKey = "");
+        
+        [Get("/recipes/{id}/nutritionWidget.json")]
+        Task<SpoonacularNutrition> GetRecipeNutritionWidgetAsync(
+            int id,
+            [Query] string apiKey = "");
     }
 }

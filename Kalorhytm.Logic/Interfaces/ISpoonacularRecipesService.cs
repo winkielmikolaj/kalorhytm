@@ -15,6 +15,9 @@ namespace Kalorhytm.Logic.Interfaces
             bool includeNutrition = false,
             bool addWinePairing = false,
             bool addTasteData = false);
+        
+        Task<NutritionModel?> GetRecipeNutritionWidgetAsync(
+            int recipeId);
     }
     
 }

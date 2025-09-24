@@ -1,7 +1,36 @@
 @page "/recipes"
+@using System.Security.Claims
+
+@inject AuthenticationStateProvider _AuthenticationStateProvider
 
 <h3>Recipes</h3>
 
+<button>Search recipes with my ingredients - redirect to myFridge</button>
+
+<h4>on recipe site /recipes/{id} show nutrients details button - nutrients endpoint, cooking mode button - recipe steps from recipe info endpoint</h4>
+
+<h4>random recipe on site initialized, - /recipes/random, filtering, sorting recipes</h4>
+
+
 @code {
+    private string userId { get; set; }
+    private bool isProcessing { get; set; } = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await _AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    }
     
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            //await LoadRecipes();
+            isProcessing = false;
+            StateHasChanged();
+        }
+    }
 }
