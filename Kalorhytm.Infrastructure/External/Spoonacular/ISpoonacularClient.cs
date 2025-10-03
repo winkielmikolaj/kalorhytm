@@ -1,5 +1,5 @@
-﻿using Kalorhytm.Infrastructure.Spoonacular;
-using Kalorhytm.Infrastructure.Spoonacular.Models;
+﻿using Kalorhytm.Infrastructure.External.Spoonacular;
+using Kalorhytm.Infrastructure.External.Spoonacular.Models;
 using Refit;
 
 namespace Kalorhytm.Infrastructure.External.Spoonacular
@@ -25,6 +25,19 @@ namespace Kalorhytm.Infrastructure.External.Spoonacular
         [Get("/recipes/{id}/nutritionWidget.json")]
         Task<SpoonacularNutrition> GetRecipeNutritionWidgetAsync(
             int id,
+            [Query] string apiKey = "");
+        
+        [Get("/recipes/random")]
+        Task<SpoonacularRandomRecipeResponse> GetRandomRecipesAsync(
+            [Query] int number = 10,
+            [AliasAs("include-tags")] string includeTags = "",
+            [AliasAs("exclude-tags")] string excludeTags = "",
+            [Query] bool includeNutrition = false,
+            [Query] string apiKey = "");
+        
+        [Get("/recipes/complexSearch")]
+        Task<SpoonacularComplexSearchResponse> ComplexSearchAsync(
+            [Query] SpoonacularComplexSearchRequest request,
             [Query] string apiKey = "");
     }
 }

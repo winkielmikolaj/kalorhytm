@@ -1,6 +1,6 @@
 ﻿using Kalorhytm.Contracts.Models.Recipes;
 using Kalorhytm.Infrastructure.External.Spoonacular;
-using Kalorhytm.Infrastructure.Spoonacular.Models;
+using Kalorhytm.Infrastructure.External.Spoonacular.Models;
 using Kalorhytm.Logic.Interfaces;
 using Microsoft.Extensions.Configuration;
 
@@ -172,6 +172,84 @@ namespace Kalorhytm.Logic.Services
                 WeightUnit = nutrition.WeightPerServing?.Unit ?? ""
             };
         }
+        
+        public async Task<List<RecipeSummaryModel>> SearchRecipesAsync(
+            string query = "",
+            string cuisine = "",
+            string diet = "",
+            string intolerances = "",
+            string type = "",
+            int number = 10,
+            int offset = 0,
+            bool addRecipeInformation = false)
+        {
+            if (string.IsNullOrWhiteSpace(_apiKey))
+                return new();
 
+            var request = new SpoonacularComplexSearchRequest
+            {
+                Query = query,
+                Cuisine = cuisine,
+                Diet = diet,
+                Intolerances = intolerances,
+                Type = type,
+                Number = number,
+                Offset = offset,
+                AddRecipeInformation = addRecipeInformation
+            };
+
+            var response = await _client.ComplexSearchAsync(request, _apiKey);
+
+            if (response?.Results == null || !response.Results.Any())
+                return new();
+
+            return response.Results.Select(ConvertToRecipeSummaryModel).ToList();
+        }
+
+        private RecipeSummaryModel ConvertToRecipeSummaryModel(SpoonacularComplexSearchRecipe recipe)
+        {
+            return new RecipeSummaryModel
+            {
+                RecipeId = recipe.Id,
+                Title = recipe.Title,
+                ImageUrl = recipe.Image,
+                ImageType = recipe.ImageType
+            };
+        }
+        
+        public async Task<List<RecipeSummaryModel>> GetRandomRecipesAsync(
+            int number = 1,
+            string includeTags = "",
+            string excludeTags = "",
+            bool includeNutrition = false)
+        {
+            if (string.IsNullOrWhiteSpace(_apiKey))
+                return new();
+
+            var response = await _client.GetRandomRecipesAsync(
+                number,
+                includeTags,
+                excludeTags,
+                includeNutrition,
+                _apiKey
+            );
+
+            if (response?.Recipes == null || !response.Recipes.Any())
+                return new();
+
+            return response.Recipes.Select(ConvertToRecipeSummaryModel).ToList();
+        }
+
+        private RecipeSummaryModel ConvertToRecipeSummaryModel(SpoonacularRandomRecipe recipe)
+        {
+            return new RecipeSummaryModel
+            {
+                RecipeId = recipe.Id,
+                Title = recipe.Title,
+                ImageUrl = recipe.Image,
+                ImageType = recipe.ImageType
+            };
+        }
+        
     }
 }

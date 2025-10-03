@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Kalorhytm.Infrastructure.Spoonacular.Models
+namespace Kalorhytm.Infrastructure.External.Spoonacular.Models
 {
     public class SpoonacularNutrition
     {
