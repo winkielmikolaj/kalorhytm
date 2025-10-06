@@ -173,30 +173,10 @@ namespace Kalorhytm.Logic.Services
             };
         }
         
-        public async Task<List<RecipeSummaryModel>> SearchRecipesAsync(
-            string query = "",
-            string cuisine = "",
-            string diet = "",
-            string intolerances = "",
-            string type = "",
-            int number = 10,
-            int offset = 0,
-            bool addRecipeInformation = false)
+        public async Task<List<RecipeSummaryModel>> SearchRecipesAsync(SpoonacularComplexSearchRequest request)
         {
             if (string.IsNullOrWhiteSpace(_apiKey))
                 return new();
-
-            var request = new SpoonacularComplexSearchRequest
-            {
-                Query = query,
-                Cuisine = cuisine,
-                Diet = diet,
-                Intolerances = intolerances,
-                Type = type,
-                Number = number,
-                Offset = offset,
-                AddRecipeInformation = addRecipeInformation
-            };
 
             var response = await _client.ComplexSearchAsync(request, _apiKey);
 

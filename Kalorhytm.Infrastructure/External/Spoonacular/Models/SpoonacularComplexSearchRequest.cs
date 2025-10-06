@@ -1,3 +1,4 @@
+using Kalorhytm.Domain.Enums;
 using Refit;
 
 namespace Kalorhytm.Infrastructure.External.Spoonacular.Models
@@ -29,10 +30,10 @@ namespace Kalorhytm.Infrastructure.External.Spoonacular.Models
     public string ExcludeIngredients { get; set; } = "";
 
     [AliasAs("type")]
-    public string Type { get; set; } = "";
+    public MealType? Type { get; set; }
 
     [AliasAs("instructionsRequired")]
-    public bool InstructionsRequired { get; set; } = false;
+    public bool InstructionsRequired { get; set; } = true;
 
     [AliasAs("fillIngredients")]
     public bool FillIngredients { get; set; } = false;

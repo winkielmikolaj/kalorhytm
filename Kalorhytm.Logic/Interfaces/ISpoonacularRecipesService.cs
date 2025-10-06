@@ -1,4 +1,5 @@
 ﻿using Kalorhytm.Contracts.Models.Recipes;
+using Kalorhytm.Infrastructure.External.Spoonacular.Models;
 
 namespace Kalorhytm.Logic.Interfaces
 {
@@ -18,6 +19,14 @@ namespace Kalorhytm.Logic.Interfaces
         
         Task<NutritionModel?> GetRecipeNutritionWidgetAsync(
             int recipeId);
+        
+        Task<List<RecipeSummaryModel>> SearchRecipesAsync(SpoonacularComplexSearchRequest request);
+        
+        Task<List<RecipeSummaryModel>> GetRandomRecipesAsync(
+            int number = 9,
+            string includeTags = "",
+            string excludeTags = "",
+            bool includeNutrition = false);
     }
     
 }
