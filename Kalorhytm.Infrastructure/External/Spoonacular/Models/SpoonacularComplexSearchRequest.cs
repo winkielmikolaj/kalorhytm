@@ -30,7 +30,7 @@ namespace Kalorhytm.Infrastructure.External.Spoonacular.Models
     public string ExcludeIngredients { get; set; } = "";
 
     [AliasAs("type")]
-    public MealType? Type { get; set; }
+    public string Type { get; set; } = "";
 
     [AliasAs("instructionsRequired")]
     public bool InstructionsRequired { get; set; } = true;

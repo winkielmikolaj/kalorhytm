@@ -4,66 +4,45 @@
 @using Kalorhytm.Domain.Enums
 @using Kalorhytm.Infrastructure.External.Spoonacular.Models
 @using Kalorhytm.Logic.Interfaces
+@using Kalorhytm.WebApp.Components.Shared
 
 @inject AuthenticationStateProvider _AuthenticationStateProvider
 @inject NavigationManager _NavigationManager
 @inject ISpoonacularRecipesService _RecipesService
 
-<h3>Recipes</h3>
+<PageTitle>Search Recipes</PageTitle>
 
-@if (recipes == null || !recipes.Any())
-{
-    <div class="">
-        <h4>Wybierz swoje filtry lub spróbuj losowych przepisów</h4>
+<div class="container mx-auto px-4 py-8 text-center">
+    <h3>Search Recipes</h3>
+    <EditForm Model="@filterModel" OnValidSubmit="@OnSearchRecipes" FormName="SearchRecipesForm"
+    >
+        <InputText @bind-Value="filterModel.Query" placeholder="Search for recipes..." class="border rounded-md px-3 py-2 mb-3 w-full" />
 
-        <EditForm Model="@filterModel" OnValidSubmit="@OnSearchRecipes">
-            <div class="filters-form">
-                <InputText @bind-Value="filterModel.Query" placeholder="Szukaj przepisu..." />
-                @* <InputText @bind-Value="filterModel.Cuisine" placeholder="Kuchnia (np. italian)" /> *@
-                <InputText @bind-Value="filterModel.Diet" placeholder="Dieta (np. vegetarian)" />
-                <InputText @bind-Value="filterModel.Intolerances" placeholder="Nietolerancje (np. gluten)" />
-                @* <InputText @bind-Value="filterModel.Type" placeholder="Rodzaj dania (np. main course)" /> *@
-                <button type="submit">Szukaj</button>
-            </div>
-        </EditForm>
+        <MultiSelectDropdown TEnum="SpoonacularCuisine"
+                             Label="Cuisine"
+                             SelectedValues="@filterModel.Cuisines"
+                             SelectedValuesChanged="(v => filterModel.Cuisines = v)" />
 
-        <button class="random-btn" @onclick="GetRandomRecipes">Losowe przepisy (9)</button>
-    </div>
-}
-else
-{
-    <div class="recipes-layout">
-        <div class="sidebar">
-            <h4>Filtry</h4>
-            <EditForm Model="@filterModel" OnValidSubmit="@OnSearchRecipes">
-                <InputText @bind-Value="filterModel.Query" placeholder="Szukaj przepisu..." />
-                @* <InputText @bind-Value="filterModel.Cuisine" placeholder="Kuchnia" /> *@
-                <InputText @bind-Value="filterModel.Diet" placeholder="Dieta" />
-                <button type="submit">Filtruj</button>
-            </EditForm>
-        </div>
 
-        <div class="content">
-            <div class="sorting">
-                <label>Sortuj według:</label>
-                <select @bind="selectedSort">
-                    <option value="title">Tytuł</option>
-                    <option value="calories">Kalorie</option>
-                </select>
-            </div>
+        <MultiSelectDropdown TEnum="SpoonacularDiet"
+                             Label="Diet"
+                             SelectedValues="@filterModel.Diets"
+                             SelectedValuesChanged="(v => filterModel.Diets = v)" />
 
-            <div class="recipes-grid">
-                @foreach (var recipe in recipes)
-                {
-                    <div class="recipe-card">
-                        <img src="@recipe.ImageUrl" alt="@recipe.Title" />
-                        <h5>@recipe.Title</h5>
-                    </div>
-                }
-            </div>
-        </div>
-    </div>
-}
+        <MultiSelectDropdown TEnum="SpoonacularIntolerances"
+                             Label="Intolerance"
+                             SelectedValues="@filterModel.Intolerances"
+                             SelectedValuesChanged="(v => filterModel.Intolerances = v)" />
+
+        <MultiSelectDropdown TEnum="SpoonacularMealType"
+                             Label="Meal Type"
+                             SelectedValues="@filterModel.Types"
+                             SelectedValuesChanged="(v => filterModel.Types = v)" />
+
+        <button type="submit" class="mt-4 bg-blue-500 text-gray-100 px-4 py-2 rounded">Search</button>
+    </EditForm>
+
+</div>
 
 
 @code {
@@ -94,22 +73,21 @@ else
     
     private async Task OnSearchRecipes()
     {
-        // pousuwac z modelu potem te useless filtry typu equipment
-        
-        /* var request = new SpoonacularComplexSearchRequest
+        var request = new SpoonacularComplexSearchRequest
         {
             Query = filterModel.Query,
-            Cuisine = filterModel.Cuisine,
-            Diet = filterModel.Diet,
-            Intolerances = filterModel.Intolerances,
-            Type = filterModel.Type,
+            Cuisine = string.Join(",", filterModel.Cuisines.Select(c => c.ToString().ToLower())),
+            Diet = string.Join(",", filterModel.Diets.Select(d => d.ToString().ToLower())),
+            Intolerances = string.Join(",", filterModel.Intolerances.Select(i => i.ToString().ToLower())),
+            Type = string.Join(",", filterModel.Types.Select(t => t.ToString().ToLower())),
             Number = 9,
             Offset = 0,
             AddRecipeInformation = true
-        }; 
+        };
 
-        recipes = await _RecipesService.SearchRecipesAsync(request); */
+        recipes = await _RecipesService.SearchRecipesAsync(request);
     }
+
 
     private async Task GetRandomRecipes()
     {
@@ -119,9 +97,9 @@ else
     public class RecipeFilterModel
     {
         public string Query { get; set; } = "";
-        public SpoonacularCuisine Cuisine { get; set; }
-        public string Diet { get; set; } = "";
-        public string Intolerances { get; set; } = "";
-        public SpoonacularMealType Type { get; set; }
+        public List<SpoonacularCuisine> Cuisines { get; set; } = new();
+        public List<SpoonacularDiet> Diets { get; set; } = new();
+        public List<SpoonacularIntolerances> Intolerances { get; set; } = new();
+        public List<SpoonacularMealType> Types { get; set; } = new();
     }
 }
