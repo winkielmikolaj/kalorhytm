@@ -5,6 +5,7 @@
 @using Kalorhytm.Infrastructure.External.Spoonacular.Models
 @using Kalorhytm.Logic.Interfaces
 @using Kalorhytm.WebApp.Components.Shared
+@using Microsoft.AspNetCore.WebUtilities
 
 @inject AuthenticationStateProvider _AuthenticationStateProvider
 @inject NavigationManager _NavigationManager
@@ -13,9 +14,8 @@
 <PageTitle>Search Recipes</PageTitle>
 
 <div class="container mx-auto px-4 py-8 text-center">
-    <h3>Search Recipes</h3>
-    <EditForm Model="@filterModel" OnValidSubmit="@OnSearchRecipes" FormName="SearchRecipesForm"
-    >
+    <h3 class="text-3xl font-bold text-gray-900 mb-8">Search Recipes</h3>
+    <EditForm Model="@filterModel" OnValidSubmit="@OnSearchRecipes" FormName="SearchRecipesForm">
         <InputText @bind-Value="filterModel.Query" placeholder="Search for recipes..." class="border rounded-md px-3 py-2 mb-3 w-full" />
 
         <MultiSelectDropdown TEnum="SpoonacularCuisine"
@@ -41,9 +41,36 @@
 
         <button type="submit" class="mt-4 bg-blue-500 text-gray-100 px-4 py-2 rounded">Search</button>
     </EditForm>
-
 </div>
 
+@* OnAfterSearch site*@
+@if (recipes?.Any() == true)
+{
+    <div class="">
+        @foreach (var recipe in recipes)
+        {
+            <div class="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300">
+                <img src="@recipe.ImageUrl"
+                     alt="@recipe.Title"
+                     class="w-full h-48 object-cover" />
+
+                <div class="p-4 text-left">
+                    <h4 class="font-semibold text-gray-800 text-lg mb-2 line-clamp-2">@recipe.Title</h4>
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs text-gray-500">#@recipe.RecipeId</span>
+                        <button class="bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg">
+                            View
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else if (!string.IsNullOrWhiteSpace(filterModel.Query))
+{
+    <p class="mt-8 text-gray-500 text-center">No recipes found for your search.</p>
+}
 
 @code {
     private string? userId { get; set; }
@@ -51,24 +78,46 @@
 
     private List<RecipeSummaryModel> recipes = new();
     private RecipeFilterModel filterModel = new();
+
     private string selectedSort = "title";
+
+    private IEnumerable<RecipeSummaryModel> SortedRecipes()
+    {
+        return selectedSort switch
+        {
+            "title" => recipes.OrderBy(r => r.Title),
+            "title_desc" => recipes.OrderByDescending(r => r.Title),
+            "id" => recipes.OrderByDescending(r => r.RecipeId),
+            _ => recipes
+        };
+    }
+
     
     protected override async Task OnInitializedAsync()
     {
-        var authState = await _AuthenticationStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
+        var uri = new Uri(_NavigationManager.Uri);
+        var queryParams = QueryHelpers.ParseQuery(uri.Query);
 
-        userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-    }
-    
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            //await LoadRecipes();
-            isProcessing = false;
-            StateHasChanged();
-        }
+        if (queryParams.TryGetValue("query", out var query))
+            filterModel.Query = query;
+
+        if (queryParams.TryGetValue("cuisine", out var cuisine))
+            filterModel.Cuisines = cuisine.ToString().Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(c => Enum.Parse<SpoonacularCuisine>(c, true)).ToList();
+
+        if (queryParams.TryGetValue("diet", out var diet))
+            filterModel.Diets = diet.ToString().Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(d => Enum.Parse<SpoonacularDiet>(d, true)).ToList();
+
+        if (queryParams.TryGetValue("intolerance", out var intolerance))
+            filterModel.Intolerances = intolerance.ToString().Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(i => Enum.Parse<SpoonacularIntolerances>(i, true)).ToList();
+
+        if (queryParams.TryGetValue("type", out var type))
+            filterModel.Types = type.ToString().Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(t => Enum.Parse<SpoonacularMealType>(t, true)).ToList();
+
+        await base.OnInitializedAsync();
     }
     
     private async Task OnSearchRecipes()
@@ -86,6 +135,8 @@
         };
 
         recipes = await _RecipesService.SearchRecipesAsync(request);
+        
+        UpdateUrlWithFilters();
     }
 
 
@@ -93,6 +144,30 @@
     {
         recipes = await _RecipesService.GetRandomRecipesAsync(9);
     }
+    
+    private void UpdateUrlWithFilters()
+    {
+        var queryParams = new Dictionary<string, string?>();
+
+        if (!string.IsNullOrWhiteSpace(filterModel.Query))
+            queryParams["query"] = filterModel.Query;
+
+        if (filterModel.Cuisines.Any())
+            queryParams["cuisine"] = string.Join(",", filterModel.Cuisines.Select(c => c.ToString().ToLower()));
+
+        if (filterModel.Diets.Any())
+            queryParams["diet"] = string.Join(",", filterModel.Diets.Select(d => d.ToString().ToLower()));
+
+        if (filterModel.Intolerances.Any())
+            queryParams["intolerance"] = string.Join(",", filterModel.Intolerances.Select(i => i.ToString().ToLower()));
+
+        if (filterModel.Types.Any())
+            queryParams["type"] = string.Join(",", filterModel.Types.Select(t => t.ToString().ToLower()));
+
+        var uri = QueryHelpers.AddQueryString("/recipes", queryParams);
+        _NavigationManager.NavigateTo(uri, forceLoad: false);
+    }
+
 
     public class RecipeFilterModel
     {
