@@ -1,254 +1,180 @@
-﻿@page "/recipes"
-@rendermode InteractiveServer
-
-
+@page "/recipes"
 @using System.Security.Claims
-@using Kalorhytm.Contracts.Models.MyFridge
+@using Kalorhytm.Contracts.Models.Recipes
+@using Kalorhytm.Domain.Enums
+@using Kalorhytm.Infrastructure.External.Spoonacular.Models
 @using Kalorhytm.Logic.Interfaces
-@using Kalorhytm.Logic.Interfaces.IMyFridgeUseCases
-@using Kalorhytm.Logic.UseCases.MyFridgeUseCases
-@inject AuthenticationStateProvider AuthenticationStateProvider
-@inject ISpoonacularRecipesService RecipesService
-@inject IAddIngredientUseCase AddIngredientUseCase
-@inject IGetIngredientUseCase GetIngredientUseCase
-@inject IDeleteIngredientUseCase DeleteIngredientUseCase
+@using Kalorhytm.WebApp.Components.Shared
+@using Microsoft.AspNetCore.WebUtilities
+
+@inject AuthenticationStateProvider _AuthenticationStateProvider
+@inject NavigationManager _NavigationManager
+@inject ISpoonacularRecipesService _RecipesService
+
+<PageTitle>Search Recipes</PageTitle>
+
+<div class="container mx-auto px-4 py-8 text-center">
+    <h3 class="text-3xl font-bold text-gray-900 mb-8">Search Recipes</h3>
+    <EditForm Model="@filterModel" OnValidSubmit="@OnSearchRecipes" FormName="SearchRecipesForm">
+        <InputText @bind-Value="filterModel.Query" placeholder="Search for recipes..." class="border rounded-md px-3 py-2 mb-3 w-full" />
+
+        <MultiSelectDropdown TEnum="SpoonacularCuisine"
+                             Label="Cuisine"
+                             SelectedValues="@filterModel.Cuisines"
+                             SelectedValuesChanged="(v => filterModel.Cuisines = v)" />
 
 
+        <MultiSelectDropdown TEnum="SpoonacularDiet"
+                             Label="Diet"
+                             SelectedValues="@filterModel.Diets"
+                             SelectedValuesChanged="(v => filterModel.Diets = v)" />
 
-@*@if (isProcessing)
-{
-    <p>Loading fridge...</p>
-}*@
+        <MultiSelectDropdown TEnum="SpoonacularIntolerances"
+                             Label="Intolerance"
+                             SelectedValues="@filterModel.Intolerances"
+                             SelectedValuesChanged="(v => filterModel.Intolerances = v)" />
 
-<h3 class="mt-4">My Fridge</h3>
+        <MultiSelectDropdown TEnum="SpoonacularMealType"
+                             Label="Meal Type"
+                             SelectedValues="@filterModel.Types"
+                             SelectedValuesChanged="(v => filterModel.Types = v)" />
 
-<div class="mb-3">
-    <input @bind="newIngredient" class="form-control" placeholder="Add ingredient name..." />
-    @if (!string.IsNullOrEmpty(validationMessageForAddingToFridge))
-    {
-        <div class="text-danger mt-1">@validationMessageForAddingToFridge</div>
-    }
+        <button type="submit" class="mt-4 bg-blue-500 text-gray-100 px-4 py-2 rounded">Search</button>
+    </EditForm>
 </div>
-<div class="mb-3">
-    <button class="btn btn-success" @onclick="AddIngredientsToFridge" >Add to Fridge</button>
-</div>
 
-<button class="btn btn-success" @onclick="OpenFridge">Open Fridge</button>
-<button class="btn btn-danger" @onclick="CloseFridge">Close Fridge</button>
-
-
-@if (buttonForOpenningFridge == true)
+@* OnAfterSearch site*@
+@if (recipes?.Any() == true)
 {
-    <ul class="list-group mt-3">
-        @foreach (var ingredient in myFridgeItems)
-        {
-            <li class="list-group-item">@ingredient.Name
-                <button class="btn btn-danger" @onclick="() => DeleteIngredientFromFridge(ingredient.Id)">Delete</button>
-            </li>
-        }
-    </ul>
-}
-
-
-
-<h3 class="mb-3">Search Recipes by Ingredients</h3>
-
-
-<div class="mb-3">
-    <button class="btn btn-primary" @onclick="SearchRecipes">Search</button>
-</div>
-@if (!string.IsNullOrEmpty(validateMessageForSearching))
-{
-    <div class="text-danger mt-1">@validateMessageForSearching</div>
-}
-@if (recipes == null)
-{
-    <p>Enter ingredients to search for recipes.</p>
-}
-else if (recipes.Count == 0)
-{
-    <p>No recipes found.</p>
-}
-else
-{
-    <div class="row">
+    <div class="">
         @foreach (var recipe in recipes)
         {
-            <div class="col-md-4 mb-3">
-                <div class="card">
-                    <img class="card-img-top" src="@recipe.ImageUrl" alt="@recipe.Title" />
-                    <div class="card-body">
-                        <h5 class="card-title">@recipe.Title</h5>
-                        <p><b>Likes:</b> @recipe.Likes</p>
-                        <p>
-                            <b>Used:</b> @string.Join(", ", recipe.UsedIngredients)<br />
-                            <b>Missing:</b> @string.Join(", ", recipe.MissedIngredients)
-                        </p>
+            <div class="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300">
+                <img src="@recipe.ImageUrl"
+                     alt="@recipe.Title"
+                     class="w-full h-48 object-cover" />
+
+                <div class="p-4 text-left">
+                    <h4 class="font-semibold text-gray-800 text-lg mb-2 line-clamp-2">@recipe.Title</h4>
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs text-gray-500">#@recipe.RecipeId</span>
+                        <button class="bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg">
+                            View
+                        </button>
                     </div>
                 </div>
             </div>
         }
     </div>
 }
-
+else if (!string.IsNullOrWhiteSpace(filterModel.Query))
+{
+    <p class="mt-8 text-gray-500 text-center">No recipes found for your search.</p>
+}
 
 @code {
-
+    private string? userId { get; set; }
     private bool isProcessing { get; set; } = true;
-    //api
-    private string ingredientsInput = "apples, flour, sugar";
-    private List<Kalorhytm.Contracts.Models.RecipeModel> recipes;
-    
-    //myFridge
-    private string newIngredient = "";
-    private List<MyFridgeModel> myFridgeItems = new();
-    private MyFridgeModel newFridgeModel = new();
-    private int Id { get; set; }
-    private string Name { get; set; }
-    private bool buttonForOpenningFridge;
-    private string userId { get; set; }
-    //validator
-    private string validationMessageForAddingToFridge;
-    private string validateMessageForSearching;
-    private string validateMessageForDeleting;
-    
-    
-    //saving ingredients to database (fridge)
 
+    private List<RecipeSummaryModel> recipes = new();
+    private RecipeFilterModel filterModel = new();
+
+    private string selectedSort = "title";
+
+    private IEnumerable<RecipeSummaryModel> SortedRecipes()
+    {
+        return selectedSort switch
+        {
+            "title" => recipes.OrderBy(r => r.Title),
+            "title_desc" => recipes.OrderByDescending(r => r.Title),
+            "id" => recipes.OrderByDescending(r => r.RecipeId),
+            _ => recipes
+        };
+    }
+
+    
     protected override async Task OnInitializedAsync()
     {
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
+        var uri = new Uri(_NavigationManager.Uri);
+        var queryParams = QueryHelpers.ParseQuery(uri.Query);
 
-        userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (queryParams.TryGetValue("query", out var query))
+            filterModel.Query = query;
 
-        foreach (var claim in user.Claims)
-        {
-            Console.WriteLine($"Claim {claim.Type} = {claim.Value}");
-        }
-        
-        Console.WriteLine($"User is loaded {userId}");
-    
-        await LoadMyFridge(); //reload fridge
-    }
+        if (queryParams.TryGetValue("cuisine", out var cuisine))
+            filterModel.Cuisines = cuisine.ToString().Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(c => Enum.Parse<SpoonacularCuisine>(c, true)).ToList();
 
-    private void OpenFridge()
-    {
-        buttonForOpenningFridge = true;
-    }
+        if (queryParams.TryGetValue("diet", out var diet))
+            filterModel.Diets = diet.ToString().Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(d => Enum.Parse<SpoonacularDiet>(d, true)).ToList();
 
-    private void CloseFridge()
-    {
-        buttonForOpenningFridge = false;
-    }
-    
-    // protected override async Task OnAfterRenderAsync(bool firstRender)
-    // {
-    //     if (firstRender)
-    //     {
-    //         await LoadMyFridge();
-    //         isProcessing = true;
-    //         StateHasChanged();
-    //
-    //     }
-    // }
+        if (queryParams.TryGetValue("intolerance", out var intolerance))
+            filterModel.Intolerances = intolerance.ToString().Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(i => Enum.Parse<SpoonacularIntolerances>(i, true)).ToList();
 
-    private async Task LoadMyFridge()
-    {
-        isProcessing = true;
+        if (queryParams.TryGetValue("type", out var type))
+            filterModel.Types = type.ToString().Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(t => Enum.Parse<SpoonacularMealType>(t, true)).ToList();
 
-        myFridgeItems = await GetIngredientUseCase.ExecuteAsync(userId);
-
-        isProcessing = false;
-        StateHasChanged();
+        await base.OnInitializedAsync();
     }
     
-    private async Task AddIngredientsToFridge()
+    private async Task OnSearchRecipes()
     {
-        validationMessageForAddingToFridge = string.Empty;
+        var request = new SpoonacularComplexSearchRequest
+        {
+            Query = filterModel.Query,
+            Cuisine = string.Join(",", filterModel.Cuisines.Select(c => c.ToString().ToLower())),
+            Diet = string.Join(",", filterModel.Diets.Select(d => d.ToString().ToLower())),
+            Intolerances = string.Join(",", filterModel.Intolerances.Select(i => i.ToString().ToLower())),
+            Type = string.Join(",", filterModel.Types.Select(t => t.ToString().ToLower())),
+            Number = 9,
+            Offset = 0,
+            AddRecipeInformation = true
+        };
+
+        recipes = await _RecipesService.SearchRecipesAsync(request);
         
-        try
-        {
-            var model = new MyFridgeModel
-            {
-                Name = newIngredient,
-                UserId = userId,
-            };
+        UpdateUrlWithFilters();
+    }
 
-            var saved = await AddIngredientUseCase.ExecuteAsync(model);
 
-            myFridgeItems.Add(saved);
-            newIngredient = "";
-        }
-        catch (FluentValidation.ValidationException ex)
-        {
-            Console.WriteLine($"Validation error: {ex.Message}");
-            validationMessageForAddingToFridge = ex.Message;
-        }
-
-        StateHasChanged();
+    private async Task GetRandomRecipes()
+    {
+        recipes = await _RecipesService.GetRandomRecipesAsync(9);
     }
     
-    
-    private async Task DeleteIngredientFromFridge(int id)
+    private void UpdateUrlWithFilters()
     {
-        validateMessageForDeleting = string.Empty;
+        var queryParams = new Dictionary<string, string?>();
 
-        try
-        {
+        if (!string.IsNullOrWhiteSpace(filterModel.Query))
+            queryParams["query"] = filterModel.Query;
 
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-            throw;
-        }
-        
-        Console.WriteLine($"Deleting item id = {id}");
-        
-        var deleted = await DeleteIngredientUseCase.ExecuteAsync(id, userId);
+        if (filterModel.Cuisines.Any())
+            queryParams["cuisine"] = string.Join(",", filterModel.Cuisines.Select(c => c.ToString().ToLower()));
 
-        if (deleted != null)
-        {
-            myFridgeItems.RemoveAll(b => b.Id == deleted.Id);
-            await LoadMyFridge();
-        }
-        else
-        {
-            Console.WriteLine($"Item with id {id} not found or doesn't belong to user {userId}");
-        }
-        
-        StateHasChanged();
+        if (filterModel.Diets.Any())
+            queryParams["diet"] = string.Join(",", filterModel.Diets.Select(d => d.ToString().ToLower()));
+
+        if (filterModel.Intolerances.Any())
+            queryParams["intolerance"] = string.Join(",", filterModel.Intolerances.Select(i => i.ToString().ToLower()));
+
+        if (filterModel.Types.Any())
+            queryParams["type"] = string.Join(",", filterModel.Types.Select(t => t.ToString().ToLower()));
+
+        var uri = QueryHelpers.AddQueryString("/recipes", queryParams);
+        _NavigationManager.NavigateTo(uri, forceLoad: false);
     }
-    
-    //searching recipes from API
-    private async Task SearchRecipes()
+
+
+    public class RecipeFilterModel
     {
-        validateMessageForSearching = string.Empty;
-        
-        
-            var fridgeItems = await GetIngredientUseCase.ExecuteAsync(userId);
-            var ingredients = fridgeItems.Select(i => i.Name).ToList();
-
-
-            
-                Console.WriteLine($"Searching recipes for:{ingredients}");
-        
-                recipes = await RecipesService.SearchRecipesByIngredientsAsync(
-                    ingredients,
-                    number: 20,
-                    ranking: 1,
-                    ignorePantry: true);
-
-                if (ingredients.Count == 0)
-                {
-                    Console.WriteLine("User did not provide any products");
-                    validateMessageForSearching = "The fridge is empty!";
-                    StateHasChanged();
-                }
-
-                Console.WriteLine($"Found {recipes.Count} recipes");
-
-
+        public string Query { get; set; } = "";
+        public List<SpoonacularCuisine> Cuisines { get; set; } = new();
+        public List<SpoonacularDiet> Diets { get; set; } = new();
+        public List<SpoonacularIntolerances> Intolerances { get; set; } = new();
+        public List<SpoonacularMealType> Types { get; set; } = new();
     }
 }

@@ -1,0 +1,52 @@
+@typeparam TEnum
+
+<div class="relative inline-block text-left w-full">
+    <button type="button"
+            class="border rounded-md px-3 py-2 bg-gray-200 shadow-sm w-full text-left flex justify-between items-center"
+            @onclick="ToggleDropdown">
+        <span>@Label</span>
+        <span class="text-gray-600">▼</span>
+    </button>
+
+    @if (isOpen)
+    {
+        <div class="absolute mt-2 w-full rounded-md bg-white shadow-lg border z-50 max-h-60 overflow-y-auto">
+            @foreach (var value in Enum.GetValues(typeof(TEnum)).Cast<TEnum>())
+            {
+                var isChecked = SelectedValues.Contains(value);
+                <label class="flex items-center px-3 py-1 hover:bg-gray-100 cursor-pointer">
+                    <input type="checkbox"
+                           class="mr-2"
+                           @bind="isChecked"
+                           @bind:after="() => ToggleSelection(value, isChecked)" />
+                    @value.ToString()
+                </label>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string Label { get; set; } = "";
+    [Parameter] public List<TEnum> SelectedValues { get; set; } = new();
+    [Parameter] public EventCallback<List<TEnum>> SelectedValuesChanged { get; set; }
+
+    private bool isOpen = false;
+
+    private void ToggleDropdown() => isOpen = !isOpen;
+
+    private async Task ToggleSelection(TEnum value, bool isChecked)
+    {
+        if (isChecked)
+        {
+            if (!SelectedValues.Contains(value))
+                SelectedValues.Add(value);
+        }
+        else
+        {
+            SelectedValues.Remove(value);
+        }
+
+        await SelectedValuesChanged.InvokeAsync(SelectedValues);
+    }
+}

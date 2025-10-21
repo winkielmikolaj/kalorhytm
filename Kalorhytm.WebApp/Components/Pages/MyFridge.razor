@@ -1,0 +1,254 @@
+﻿@page "/myFridge"
+@rendermode InteractiveServer
+
+@using System.Security.Claims
+@using Kalorhytm.Contracts.Models.Recipes
+@using Kalorhytm.Contracts.Models.MyFridge
+@using Kalorhytm.Logic.Interfaces
+@using Kalorhytm.Logic.Interfaces.IMyFridgeUseCases
+@using Kalorhytm.Logic.UseCases.MyFridgeUseCases
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject ISpoonacularRecipesService RecipesService
+@inject IAddIngredientUseCase AddIngredientUseCase
+@inject IGetIngredientUseCase GetIngredientUseCase
+@inject IDeleteIngredientUseCase DeleteIngredientUseCase
+
+
+
+@*@if (isProcessing)
+{
+    <p>Loading fridge...</p>
+}*@
+
+<h3 class="mt-4">My Fridge</h3>
+
+<div class="mb-3">
+    <input @bind="newIngredient" class="form-control" placeholder="Add ingredient name..." />
+    @if (!string.IsNullOrEmpty(validationMessageForAddingToFridge))
+    {
+        <div class="text-danger mt-1">@validationMessageForAddingToFridge</div>
+    }
+</div>
+<div class="mb-3">
+    <button class="btn btn-success" @onclick="AddIngredientsToFridge" >Add to Fridge</button>
+</div>
+
+<button class="btn btn-success" @onclick="OpenFridge">Open Fridge</button>
+<button class="btn btn-danger" @onclick="CloseFridge">Close Fridge</button>
+
+
+@if (buttonForOpenningFridge == true)
+{
+    <ul class="list-group mt-3">
+        @foreach (var ingredient in myFridgeItems)
+        {
+            <li class="list-group-item">@ingredient.Name
+                <button class="btn btn-danger" @onclick="() => DeleteIngredientFromFridge(ingredient.Id)">Delete</button>
+            </li>
+        }
+    </ul>
+}
+
+
+
+<h3 class="mb-3">Search Recipes by Ingredients</h3>
+
+
+<div class="mb-3">
+    <button class="btn btn-primary" @onclick="SearchRecipes">Search</button>
+</div>
+@if (!string.IsNullOrEmpty(validateMessageForSearching))
+{
+    <div class="text-danger mt-1">@validateMessageForSearching</div>
+}
+@if (recipes == null)
+{
+    <p>Enter ingredients to search for recipes.</p>
+}
+else if (recipes.Count == 0)
+{
+    <p>No recipes found.</p>
+}
+else
+{
+    <div class="row">
+        @foreach (var recipe in recipes)
+        {
+            <div class="col-md-4 mb-3">
+                <div class="card">
+                    <img class="card-img-top" src="@recipe.ImageUrl" alt="@recipe.Title" />
+                    <div class="card-body">
+                        <h5 class="card-title">@recipe.Title</h5>
+                        <p><b>Likes:</b> @recipe.Likes</p>
+                        <p>
+                            <b>Used:</b> @string.Join(", ", recipe.UsedIngredients)<br />
+                            <b>Missing:</b> @string.Join(", ", recipe.MissedIngredients)
+                        </p>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+
+@code {
+
+    private bool isProcessing { get; set; } = true;
+    //api
+    private string ingredientsInput = "apples, flour, sugar";
+    private List<RecipeModel> recipes;
+    
+    //myFridge
+    private string newIngredient = "";
+    private List<MyFridgeModel> myFridgeItems = new();
+    private MyFridgeModel newFridgeModel = new();
+    private int Id { get; set; }
+    private string Name { get; set; }
+    private bool buttonForOpenningFridge;
+    private string userId { get; set; }
+    //validator
+    private string validationMessageForAddingToFridge;
+    private string validateMessageForSearching;
+    private string validateMessageForDeleting;
+    
+    
+    //saving ingredients to database (fridge)
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        foreach (var claim in user.Claims)
+        {
+            Console.WriteLine($"Claim {claim.Type} = {claim.Value}");
+        }
+        
+        Console.WriteLine($"User is loaded {userId}");
+    
+        await LoadMyFridge(); //reload fridge
+    }
+
+    private void OpenFridge()
+    {
+        buttonForOpenningFridge = true;
+    }
+
+    private void CloseFridge()
+    {
+        buttonForOpenningFridge = false;
+    }
+    
+    // protected override async Task OnAfterRenderAsync(bool firstRender)
+    // {
+    //     if (firstRender)
+    //     {
+    //         await LoadMyFridge();
+    //         isProcessing = true;
+    //         StateHasChanged();
+    //
+    //     }
+    // }
+
+    private async Task LoadMyFridge()
+    {
+        isProcessing = true;
+
+        myFridgeItems = await GetIngredientUseCase.ExecuteAsync(userId);
+
+        isProcessing = false;
+        StateHasChanged();
+    }
+    
+    private async Task AddIngredientsToFridge()
+    {
+        validationMessageForAddingToFridge = string.Empty;
+        
+        try
+        {
+            var model = new MyFridgeModel
+            {
+                Name = newIngredient,
+                UserId = userId,
+            };
+
+            var saved = await AddIngredientUseCase.ExecuteAsync(model);
+
+            myFridgeItems.Add(saved);
+            newIngredient = "";
+        }
+        catch (FluentValidation.ValidationException ex)
+        {
+            Console.WriteLine($"Validation error: {ex.Message}");
+            validationMessageForAddingToFridge = ex.Message;
+        }
+
+        StateHasChanged();
+    }
+    
+    
+    private async Task DeleteIngredientFromFridge(int id)
+    {
+        validateMessageForDeleting = string.Empty;
+
+        try
+        {
+
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
+        
+        Console.WriteLine($"Deleting item id = {id}");
+        
+        var deleted = await DeleteIngredientUseCase.ExecuteAsync(id, userId);
+
+        if (deleted != null)
+        {
+            myFridgeItems.RemoveAll(b => b.Id == deleted.Id);
+            await LoadMyFridge();
+        }
+        else
+        {
+            Console.WriteLine($"Item with id {id} not found or doesn't belong to user {userId}");
+        }
+        
+        StateHasChanged();
+    }
+    
+    //searching recipes from API
+    private async Task SearchRecipes()
+    {
+        validateMessageForSearching = string.Empty;
+        
+        
+            var fridgeItems = await GetIngredientUseCase.ExecuteAsync(userId);
+            var ingredients = fridgeItems.Select(i => i.Name).ToList();
+
+
+            
+                Console.WriteLine($"Searching recipes for:{ingredients}");
+        
+                recipes = await RecipesService.SearchRecipesByIngredientsAsync(
+                    ingredients,
+                    number: 20,
+                    ranking: 1,
+                    ignorePantry: true);
+
+                if (ingredients.Count == 0)
+                {
+                    Console.WriteLine("User did not provide any products");
+                    validateMessageForSearching = "The fridge is empty!";
+                    StateHasChanged();
+                }
+
+                Console.WriteLine($"Found {recipes.Count} recipes");
+
+
+    }
+}
