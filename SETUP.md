@@ -8,9 +8,9 @@ git clone <repository-url>
 cd Kalorhytm
 ```
 
-### 2. Konfiguracja API USDA
+### 2. Konfiguracja API Spoonacular
 1. Skopiuj plik `appsettings.example.json` do `appsettings.json`
-2. Zastąp `YOUR_USDA_API_KEY_HERE` swoim kluczem API z [USDA Food Data Central](https://fdc.nal.usda.gov/api-key-signup.html)
+2. Zastąp `SPOONACULAR_API_KEY` swoim kluczem API z [Spoonacular](https://spoonacular.com/food-api)
 
 ### 3. Uruchomienie aplikacji
 ```bash
@@ -25,7 +25,7 @@ Aplikacja będzie dostępna pod adresem: http://localhost:5150
 
 - **Kalorhytm.Contracts** - Modele danych
 - **Kalorhytm.Domain** - Encje domenowe
-- **Kalorhytm.Infrastructure** - Konfiguracja bazy danych i klienta USDA API
+- **Kalorhytm.Infrastructure** - Konfiguracja bazy danych i klienta Spoonacular API
 - **Kalorhytm.Logic** - Logika biznesowa
 - **Kalorhytm.WebApp** - Aplikacja Blazor Server
 
@@ -33,6 +33,6 @@ Aplikacja będzie dostępna pod adresem: http://localhost:5150
 
 Aplikacja używa bazy danych w pamięci (In-Memory Database) dla celów deweloperskich. Dane są zachowywane między restartami aplikacji.
 
-## API USDA
+## API Spoonacular
 
-Aplikacja integruje się z USDA Food Data Central API do wyszukiwania produktów spożywczych. Jeśli klucz API nie jest skonfigurowany, aplikacja używa danych demo. 
+Aplikacja integruje się z Spoonacular API do wyszukiwania produktów spożywczych i przepisów. Jeśli klucz API nie jest skonfigurowany, aplikacja używa danych demo. 

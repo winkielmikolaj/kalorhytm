@@ -51,15 +51,29 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => { options.SignIn.Re
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
-// Add HttpClient for USDA API and SpoonacularApi
-builder.Services.AddUSDAFood();
+// Add API Controllers
+builder.Services.AddControllers();
+
+// Add Swagger/OpenAPI
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    {
+        Title = "Kalorhytm API",
+        Version = "v1",
+        Description = "API dla aplikacji Kalorhytm - kalkulatora kalorii"
+    });
+});
+
+// Add HttpClient for Spoonacular API
 builder.Services.AddSpoonacular();
 
 
 builder.Services.AddInfrastructure();
 
-// Register USDA Food Service and SpoonacularApi
-builder.Services.AddScoped<IUSDAFoodService, USDAFoodService>();
+// Register Spoonacular Food Service and Recipes Service
+builder.Services.AddScoped<ISpoonacularFoodService, SpoonacularFoodService>();
 builder.Services.AddScoped<ISpoonacularRecipesService, SpoonacularRecipesService>();
 
 // Register use cases
@@ -106,6 +120,13 @@ using (var scope = app.Services.CreateScope())
 if (app.Environment.IsDevelopment())
 {
     app.UseMigrationsEndPoint();
+    // Enable Swagger UI in Development
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Kalorhytm API V1");
+        c.RoutePrefix = "swagger"; // Swagger UI will be available at /swagger
+    });
 }
 else
 {
@@ -117,6 +138,9 @@ else
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseAntiforgery();
+
+// Map API Controllers
+app.MapControllers();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();

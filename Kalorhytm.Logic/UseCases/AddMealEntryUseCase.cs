@@ -10,23 +10,23 @@ namespace Kalorhytm.Logic.UseCases
 {
     public class AddMealEntryUseCase : IAddMealEntryUseCase
     {
-        private readonly IUSDAFoodService _usdaFoodService;
+        private readonly ISpoonacularFoodService _spoonacularFoodService;
         private readonly IFoodRepository _foodRepository;
         private readonly IMealEntryRepository _mealEntryRepository;
 
         public AddMealEntryUseCase(
-            IUSDAFoodService usdaFoodService,
+            ISpoonacularFoodService spoonacularFoodService,
             IFoodRepository foodRepository,
             IMealEntryRepository mealEntryRepository)
         {
-            _usdaFoodService = usdaFoodService;
+            _spoonacularFoodService = spoonacularFoodService;
             _foodRepository = foodRepository;
             _mealEntryRepository = mealEntryRepository;
         }
 
         public async Task<MealEntryModel> ExecuteAsync(int foodId, double quantity, MealType mealType, DateTime date)
         {
-            var food = await _usdaFoodService.GetFoodByIdAsync(foodId);
+            var food = await _spoonacularFoodService.GetFoodByIdAsync(foodId);
             if (food == null)
                 throw new ArgumentException("Food not found");
 
