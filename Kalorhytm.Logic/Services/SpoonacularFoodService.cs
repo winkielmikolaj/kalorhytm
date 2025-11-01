@@ -3,6 +3,7 @@ using Kalorhytm.Infrastructure.External.Spoonacular;
 using Kalorhytm.Infrastructure.External.Spoonacular.Models;
 using Kalorhytm.Logic.Interfaces;
 using Microsoft.Extensions.Configuration;
+using Refit;
 
 namespace Kalorhytm.Logic.Services
 {
@@ -45,7 +46,31 @@ namespace Kalorhytm.Logic.Services
                 }
 
                 Console.WriteLine("Using Spoonacular API for search");
-                var searchResponse = await _client.SearchIngredientsAsync(searchTerm, 10, _apiKey);
+                SpoonacularIngredientSearchResponse? searchResponse;
+                try
+                {
+                    searchResponse = await _client.SearchIngredientsAsync(searchTerm, 10, _apiKey);
+                }
+                catch (ApiException apiEx)
+                {
+                    Console.WriteLine($"Spoonacular API error: {apiEx.StatusCode} - {apiEx.Message}");
+                    
+                    // Handle specific HTTP status codes
+                    if (apiEx.StatusCode == System.Net.HttpStatusCode.PaymentRequired) // 402
+                    {
+                        Console.WriteLine("Spoonacular API limit exceeded or payment required. Falling back to demo foods.");
+                    }
+                    else if (apiEx.StatusCode == System.Net.HttpStatusCode.TooManyRequests) // 429
+                    {
+                        Console.WriteLine("Too many requests to Spoonacular API. Falling back to demo foods.");
+                    }
+                    else if (apiEx.StatusCode == System.Net.HttpStatusCode.Unauthorized) // 401
+                    {
+                        Console.WriteLine("Invalid Spoonacular API key. Falling back to demo foods.");
+                    }
+                    
+                    return GetDemoFoods(searchTerm);
+                }
 
                 if (searchResponse?.Results == null || !searchResponse.Results.Any())
                 {
@@ -61,11 +86,26 @@ namespace Kalorhytm.Logic.Services
                     try
                     {
                         // Get detailed information for each ingredient
-                        var ingredientInfo = await _client.GetIngredientInformationAsync(
-                            ingredient.Id, 
-                            100, 
-                            "gram", 
-                            _apiKey);
+                        SpoonacularIngredientInformation? ingredientInfo;
+                        try
+                        {
+                            ingredientInfo = await _client.GetIngredientInformationAsync(
+                                ingredient.Id, 
+                                100, 
+                                "gram", 
+                                _apiKey);
+                        }
+                        catch (ApiException apiEx)
+                        {
+                            // Skip this ingredient if API returns payment required or other errors
+                            if (apiEx.StatusCode == System.Net.HttpStatusCode.PaymentRequired ||
+                                apiEx.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+                            {
+                                Console.WriteLine($"Skipping ingredient {ingredient.Id} due to API limits");
+                                continue;
+                            }
+                            throw; // Re-throw other exceptions
+                        }
 
                         if (ingredientInfo?.Nutrition != null)
                         {
@@ -210,7 +250,9 @@ namespace Kalorhytm.Logic.Services
                 new FoodModel { FoodId = 12, Name = "Carrot", Calories = 41, Protein = 0.9, Carbohydrates = 10, Fat = 0.2, Fiber = 2.8, Sugar = 4.7, Sodium = 69, Unit = "100g", ServingSize = 100 },
                 new FoodModel { FoodId = 13, Name = "Potato", Calories = 77, Protein = 2, Carbohydrates = 17, Fat = 0.1, Fiber = 2.2, Sugar = 0.8, Sodium = 6, Unit = "100g", ServingSize = 100 },
                 new FoodModel { FoodId = 14, Name = "Onion", Calories = 40, Protein = 1.1, Carbohydrates = 9.3, Fat = 0.1, Fiber = 1.7, Sugar = 4.7, Sodium = 4, Unit = "100g", ServingSize = 100 },
-                new FoodModel { FoodId = 15, Name = "Spinach", Calories = 23, Protein = 2.9, Carbohydrates = 3.6, Fat = 0.4, Fiber = 2.2, Sugar = 0.4, Sodium = 79, Unit = "100g", ServingSize = 100 }
+                new FoodModel { FoodId = 15, Name = "Spinach", Calories = 23, Protein = 2.9, Carbohydrates = 3.6, Fat = 0.4, Fiber = 2.2, Sugar = 0.4, Sodium = 79, Unit = "100g", ServingSize = 100 },
+                new FoodModel { FoodId = 16, Name = "Water", Calories = 0, Protein = 0, Carbohydrates = 0, Fat = 0, Fiber = 0, Sugar = 0, Sodium = 7, Unit = "100g", ServingSize = 100 },
+                new FoodModel { FoodId = 17, Name = "Milk", Calories = 42, Protein = 3.4, Carbohydrates = 5, Fat = 1, Fiber = 0, Sugar = 5, Sodium = 44, Unit = "100g", ServingSize = 100 }
             };
 
             if (string.IsNullOrWhiteSpace(searchTerm))
