@@ -16,6 +16,7 @@ using Kalorhytm.Logic.Interfaces.IMyFridgeUseCases;
 using Kalorhytm.Logic.UseCases.BodyMeasurementGoalUseCases;
 using Kalorhytm.Logic.UseCases.BodyMeasurementUseCases;
 using Kalorhytm.Logic.UseCases.MyFridgeUseCases;
+using Kalorhytm.Logic.UseCases.WaterIntakeUseCases;
 using Kalorhytm.Logic.Validation;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -80,6 +81,11 @@ builder.Services.AddScoped<ISpoonacularRecipesService, SpoonacularRecipesService
 builder.Services.AddScoped<IGetDailyNutritionUseCase, GetDailyNutritionUseCase>();
 builder.Services.AddScoped<ISearchFoodsUseCase, SearchFoodsUseCase>();
 builder.Services.AddScoped<IAddMealEntryUseCase, AddMealEntryUseCase>();
+
+// Water Intake Use Cases
+builder.Services.AddScoped<IGetDailyWaterIntakeUseCase, GetDailyWaterIntakeUseCase>();
+builder.Services.AddScoped<IAddWaterGlassUseCase, AddWaterGlassUseCase>();
+builder.Services.AddScoped<IRemoveWaterGlassUseCase, RemoveWaterGlassUseCase>();
 
 // Body Measurement Use Cases
 builder.Services.AddScoped<IGetBodyMeasurementUseCase, GetBodyMeasurementUseCase>();

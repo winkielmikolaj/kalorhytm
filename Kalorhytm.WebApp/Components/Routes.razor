@@ -1,5 +1,8 @@
 ﻿<Router AppAssembly="typeof(Program).Assembly">
     <Found Context="routeData">
+        <HeadContent>
+            <PageTitle>Kalorhytm</PageTitle>
+        </HeadContent>
         <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
             <NotAuthorized>
                 @if (context.User.Identity?.IsAuthenticated != true)

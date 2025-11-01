@@ -19,6 +19,7 @@ namespace Kalorhytm.Infrastructure
 
         public DbSet<FoodEntity> FoodEntities { get; set; }
         public DbSet<MealEntryEntity> MealEntries { get; set; }
+        public DbSet<WaterIntakeEntity> WaterIntakes { get; set; }
         
         public DbSet<BodyMeasurementEntity> BodyMeasurements { get; set; }
         public DbSet<BodyMeasurementGoalEntity> BodyMeasurementGoals { get; set; }
