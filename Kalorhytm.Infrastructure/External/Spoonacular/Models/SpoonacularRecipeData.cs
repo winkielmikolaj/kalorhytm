@@ -1,4 +1,6 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Collections.Generic;
 
 namespace Kalorhytm.Infrastructure.External.Spoonacular.Models
 {
@@ -11,10 +13,10 @@ namespace Kalorhytm.Infrastructure.External.Spoonacular.Models
         public string Title { get; set; } = "";
 
         [JsonPropertyName("image")]
-        public string Image { get; set; } = "";
+        public string? Image { get; set; }
 
         [JsonPropertyName("imageType")]
-        public string ImageType { get; set; } = "";
+        public string? ImageType { get; set; }
 
         [JsonPropertyName("servings")]
         public int Servings { get; set; }
@@ -117,6 +119,10 @@ namespace Kalorhytm.Infrastructure.External.Spoonacular.Models
 
         [JsonPropertyName("winePairing")]
         public SpoonacularWinePairing? WinePairing { get; set; }
+
+        // Przechowuj nieznane pola, żeby nie powodowały błędów deserializacji
+        [JsonExtensionData]
+        public Dictionary<string, JsonElement>? ExtensionData { get; set; }
     }
 
     public class SpoonacularExtendedIngredient
