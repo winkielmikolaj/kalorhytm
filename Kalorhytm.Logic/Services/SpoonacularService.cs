@@ -3,6 +3,7 @@ using Kalorhytm.Infrastructure.External.Spoonacular;
 using Kalorhytm.Infrastructure.External.Spoonacular.Models;
 using Kalorhytm.Logic.Interfaces;
 using Microsoft.Extensions.Configuration;
+using Refit;
 
 namespace Kalorhytm.Logic.Services
 {
@@ -64,14 +65,34 @@ namespace Kalorhytm.Logic.Services
             if (string.IsNullOrWhiteSpace(_apiKey))
                 return null;
 
-            var recipeData = await _client.GetRecipeDataAsync(
-                recipeId,
-                includeNutrition,
-                addWinePairing,
-                addTasteData,
-                _apiKey);
+            try
+            {
+                var recipeData = await _client.GetRecipeDataAsync(
+                    recipeId,
+                    includeNutrition,
+                    addWinePairing,
+                    addTasteData,
+                    _apiKey);
 
-            return ConvertToRecipeDataModel(recipeData);
+                if (recipeData == null)
+                    return null;
+
+                return ConvertToRecipeDataModel(recipeData);
+            }
+            catch (ApiException apiEx)
+            {
+                Console.WriteLine($"Spoonacular API error for recipe data {recipeId}: {apiEx.StatusCode} - {apiEx.Message}");
+                if (apiEx.Content != null)
+                {
+                    Console.WriteLine($"Response content: {apiEx.Content}");
+                }
+                throw new Exception($"Failed to get recipe data for recipe {recipeId}: {apiEx.Message}", apiEx);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting recipe data for recipe {recipeId}: {ex.Message}");
+                throw new Exception($"Failed to get recipe data for recipe {recipeId}: {ex.Message}", ex);
+            }
         }
 
         private RecipeDataModel ConvertToRecipeDataModel(SpoonacularRecipeData recipeData)
@@ -115,9 +136,29 @@ namespace Kalorhytm.Logic.Services
             if (string.IsNullOrWhiteSpace(_apiKey))
                 return null;
             
-            var response = await _client.GetRecipeNutritionWidgetAsync(recipeId, _apiKey);
-            
-            return ConvertToNutritionWidgetModel(recipeId, response);
+            try
+            {
+                var response = await _client.GetRecipeNutritionWidgetAsync(recipeId, _apiKey);
+                
+                if (response == null)
+                    return null;
+                
+                return ConvertToNutritionWidgetModel(recipeId, response);
+            }
+            catch (ApiException apiEx)
+            {
+                Console.WriteLine($"Spoonacular API error for recipe {recipeId}: {apiEx.StatusCode} - {apiEx.Message}");
+                if (apiEx.Content != null)
+                {
+                    Console.WriteLine($"Response content: {apiEx.Content}");
+                }
+                throw new Exception($"Failed to get nutrition data for recipe {recipeId}: {apiEx.Message}", apiEx);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting nutrition widget for recipe {recipeId}: {ex.Message}");
+                throw new Exception($"Failed to get nutrition data for recipe {recipeId}: {ex.Message}", ex);
+            }
         }
 
         private NutritionModel ConvertToNutritionWidgetModel(

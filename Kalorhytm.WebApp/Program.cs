@@ -81,6 +81,7 @@ builder.Services.AddScoped<ISpoonacularRecipesService, SpoonacularRecipesService
 builder.Services.AddScoped<IGetDailyNutritionUseCase, GetDailyNutritionUseCase>();
 builder.Services.AddScoped<ISearchFoodsUseCase, SearchFoodsUseCase>();
 builder.Services.AddScoped<IAddMealEntryUseCase, AddMealEntryUseCase>();
+builder.Services.AddScoped<IAddRecipeToMealUseCase, AddRecipeToMealUseCase>();
 
 // Water Intake Use Cases
 builder.Services.AddScoped<IGetDailyWaterIntakeUseCase, GetDailyWaterIntakeUseCase>();
