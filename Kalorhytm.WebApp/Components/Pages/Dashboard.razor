@@ -1,4 +1,5 @@
 @page "/dashboard"
+@page "/"
 @rendermode InteractiveServer
 @using Kalorhytm.Contracts
 @using Kalorhytm.Contracts.Models
@@ -8,19 +9,22 @@
 @inject IGetDailyNutritionUseCase GetDailyNutritionUseCase
 @inject ISearchFoodsUseCase SearchFoodsUseCase
 @inject IAddMealEntryUseCase AddMealEntryUseCase
+@inject IGetDailyWaterIntakeUseCase GetDailyWaterIntakeUseCase
+@inject IAddWaterGlassUseCase AddWaterGlassUseCase
+@inject IRemoveWaterGlassUseCase RemoveWaterGlassUseCase
 
-<PageTitle>Dashboard - Kalkulator Kalorii</PageTitle>
 
 <div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold text-gray-900 mb-8">Dashboard - Kalkulator Kalorii</h1>
+    <h1 class="text-3xl font-bold text-gray-900 mb-8">Meal Plan</h1>
     
     <!-- Date Selector -->
     <div class="mb-6">
-        <label for="selectedDate" class="block text-sm font-medium text-gray-700 mb-2">Data:</label>
+        <label for="selectedDate" class="block text-sm font-medium text-gray-700 mb-2">Date:</label>
         <input type="date" id="selectedDate" @bind="selectedDate" @bind:format="yyyy-MM-dd" 
+               @bind:after="OnDateChanged"
                class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        <button @onclick="LoadDailyNutrition" class="ml-2 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">
-            Załaduj
+        <button @onclick="LoadData" class="ml-2 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">
+            Load
         </button>
     </div>
 
@@ -28,28 +32,28 @@
     @if (dailyNutrition != null)
     {
         <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-            <h2 class="text-xl font-semibold text-gray-900 mb-4">Dzienne podsumowanie</h2>
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">Daily Summary</h2>
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Kalorie</h3>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Calories</h3>
                     <p class="text-3xl font-bold text-blue-600">@dailyNutrition.TotalCalories.ToString("F0")</p>
                     <p class="text-sm text-gray-500">kcal</p>
                 </div>
                 
                 <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Białko</h3>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Protein</h3>
                     <p class="text-3xl font-bold text-green-600">@dailyNutrition.TotalProtein.ToString("F1")</p>
                     <p class="text-sm text-gray-500">g</p>
                 </div>
                 
                 <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Węglowodany</h3>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Carbohydrates</h3>
                     <p class="text-3xl font-bold text-yellow-600">@dailyNutrition.TotalCarbohydrates.ToString("F1")</p>
                     <p class="text-sm text-gray-500">g</p>
                 </div>
                 
                 <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Tłuszcze</h3>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Fat</h3>
                     <p class="text-3xl font-bold text-red-600">@dailyNutrition.TotalFat.ToString("F1")</p>
                     <p class="text-sm text-gray-500">g</p>
                 </div>
@@ -59,12 +63,12 @@
 
     <!-- Meal Entries - Always Visible -->
     <div class="space-y-6">
-        <h2 class="text-xl font-semibold text-gray-900 mb-4">Dzisiejsze posiłki</h2>
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">Today's Meals</h2>
         
         <!-- Breakfast -->
         <div class="bg-white rounded-lg shadow-md p-6">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-medium text-gray-900">🍳 Śniadanie</h3>
+                <h3 class="text-lg font-medium text-gray-900">🍳 Breakfast</h3>
                 <button @onclick="() => ShowAddFoodModal(MealType.Breakfast)" 
                         class="bg-green-500 text-white p-2 rounded-full hover:bg-green-600 transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -86,7 +90,7 @@
                         </div>
                         <div class="text-right text-sm text-gray-600">
                             <div>@entry.TotalCalories.ToString("F0") kcal</div>
-                            <div>B: @entry.TotalProtein.ToString("F1")g W: @entry.TotalCarbohydrates.ToString("F1")g T: @entry.TotalFat.ToString("F1")g</div>
+                            <div>P: @entry.TotalProtein.ToString("F1")g C: @entry.TotalCarbohydrates.ToString("F1")g F: @entry.TotalFat.ToString("F1")g</div>
                         </div>
                     </div>
                 }
@@ -94,7 +98,7 @@
             else
             {
                 <div class="text-center py-4 text-gray-500">
-                    <p>Brak posiłków</p>
+                    <p>No meals</p>
                 </div>
             }
         </div>
@@ -102,7 +106,7 @@
         <!-- Second Breakfast -->
         <div class="bg-white rounded-lg shadow-md p-6">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-medium text-gray-900">🥐 Drugie śniadanie</h3>
+                <h3 class="text-lg font-medium text-gray-900">🥐 Second Breakfast</h3>
                 <button @onclick="() => ShowAddFoodModal(MealType.SecondBreakfast)" 
                         class="bg-green-500 text-white p-2 rounded-full hover:bg-green-600 transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -124,7 +128,7 @@
                         </div>
                         <div class="text-right text-sm text-gray-600">
                             <div>@entry.TotalCalories.ToString("F0") kcal</div>
-                            <div>B: @entry.TotalProtein.ToString("F1")g W: @entry.TotalCarbohydrates.ToString("F1")g T: @entry.TotalFat.ToString("F1")g</div>
+                            <div>P: @entry.TotalProtein.ToString("F1")g C: @entry.TotalCarbohydrates.ToString("F1")g F: @entry.TotalFat.ToString("F1")g</div>
                         </div>
                     </div>
                 }
@@ -132,7 +136,7 @@
             else
             {
                 <div class="text-center py-4 text-gray-500">
-                    <p>Brak posiłków</p>
+                    <p>No meals</p>
                 </div>
             }
         </div>
@@ -140,7 +144,7 @@
         <!-- Lunch -->
         <div class="bg-white rounded-lg shadow-md p-6">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-medium text-gray-900">🍽️ Obiad</h3>
+                <h3 class="text-lg font-medium text-gray-900">🍽️ Lunch</h3>
                 <button @onclick="() => ShowAddFoodModal(MealType.Lunch)" 
                         class="bg-green-500 text-white p-2 rounded-full hover:bg-green-600 transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -162,7 +166,7 @@
                         </div>
                         <div class="text-right text-sm text-gray-600">
                             <div>@entry.TotalCalories.ToString("F0") kcal</div>
-                            <div>B: @entry.TotalProtein.ToString("F1")g W: @entry.TotalCarbohydrates.ToString("F1")g T: @entry.TotalFat.ToString("F1")g</div>
+                            <div>P: @entry.TotalProtein.ToString("F1")g C: @entry.TotalCarbohydrates.ToString("F1")g F: @entry.TotalFat.ToString("F1")g</div>
                         </div>
                     </div>
                 }
@@ -170,7 +174,7 @@
             else
             {
                 <div class="text-center py-4 text-gray-500">
-                    <p>Brak posiłków</p>
+                    <p>No meals</p>
                 </div>
             }
         </div>
@@ -178,7 +182,7 @@
         <!-- Snack -->
         <div class="bg-white rounded-lg shadow-md p-6">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-medium text-gray-900">🍎 Przekąska</h3>
+                <h3 class="text-lg font-medium text-gray-900">🍎 Snack</h3>
                 <button @onclick="() => ShowAddFoodModal(MealType.Snack)" 
                         class="bg-green-500 text-white p-2 rounded-full hover:bg-green-600 transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -200,7 +204,7 @@
                         </div>
                         <div class="text-right text-sm text-gray-600">
                             <div>@entry.TotalCalories.ToString("F0") kcal</div>
-                            <div>B: @entry.TotalProtein.ToString("F1")g W: @entry.TotalCarbohydrates.ToString("F1")g T: @entry.TotalFat.ToString("F1")g</div>
+                            <div>P: @entry.TotalProtein.ToString("F1")g C: @entry.TotalCarbohydrates.ToString("F1")g F: @entry.TotalFat.ToString("F1")g</div>
                         </div>
                     </div>
                 }
@@ -208,7 +212,7 @@
             else
             {
                 <div class="text-center py-4 text-gray-500">
-                    <p>Brak posiłków</p>
+                    <p>No meals</p>
                 </div>
             }
         </div>
@@ -216,7 +220,7 @@
         <!-- Dinner -->
         <div class="bg-white rounded-lg shadow-md p-6">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-medium text-gray-900">🌙 Kolacja</h3>
+                <h3 class="text-lg font-medium text-gray-900">🌙 Dinner</h3>
                 <button @onclick="() => ShowAddFoodModal(MealType.Dinner)" 
                         class="bg-green-500 text-white p-2 rounded-full hover:bg-green-600 transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -238,7 +242,7 @@
                         </div>
                         <div class="text-right text-sm text-gray-600">
                             <div>@entry.TotalCalories.ToString("F0") kcal</div>
-                            <div>B: @entry.TotalProtein.ToString("F1")g W: @entry.TotalCarbohydrates.ToString("F1")g T: @entry.TotalFat.ToString("F1")g</div>
+                            <div>P: @entry.TotalProtein.ToString("F1")g C: @entry.TotalCarbohydrates.ToString("F1")g F: @entry.TotalFat.ToString("F1")g</div>
                         </div>
                     </div>
                 }
@@ -246,7 +250,73 @@
             else
             {
                 <div class="text-center py-4 text-gray-500">
-                    <p>Brak posiłków</p>
+                    <p>No meals</p>
+                </div>
+            }
+        </div>
+
+        <!-- Water Intake -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium text-gray-900">💧 Water Intake</h3>
+                @if (dailyWaterIntake != null)
+                {
+                    <div class="text-sm text-gray-600">
+                        <span class="font-semibold">@dailyWaterIntake.TotalWaterMl.ToString("F0") ml</span>
+                        <span class="text-gray-500">(@dailyWaterIntake.GlassCount glasses)</span>
+                    </div>
+                }
+            </div>
+            <div class="flex flex-wrap gap-3 mb-4">
+                @{
+                    // Calculate how many glasses to show
+                    var currentMaxGlassNumber = dailyWaterIntake?.WaterGlasses?.Any() == true
+                        ? dailyWaterIntake.WaterGlasses.Max(w => w.GlassNumber)
+                        : 0;
+                    
+                    // Base number of glasses to display (default 10 or max from DB)
+                    var baseDisplayNumber = Math.Max(DailyWaterIntakeModel.DefaultGlasses, currentMaxGlassNumber);
+                    
+                    // Total displayed = base + additional empty glasses added via + button
+                    var displayMaxNumber = baseDisplayNumber + additionalWaterGlasses;
+                    
+                    // Limit total to MaxGlasses (25)
+                    displayMaxNumber = Math.Min(displayMaxNumber, DailyWaterIntakeModel.MaxGlasses);
+                    
+                    // Check if we can add more (limit is 25)
+                    var canAddMore = displayMaxNumber < DailyWaterIntakeModel.MaxGlasses;
+                    
+                    // Show all glasses up to displayMaxNumber
+                    @for (int i = 1; i <= displayMaxNumber; i++)
+                    {
+                        var glassNumber = i;
+                        var isDrunk = dailyWaterIntake?.WaterGlasses?.Any(w => w.GlassNumber == glassNumber) ?? false;
+                        <button @onclick="() => ToggleWaterGlass(glassNumber)" 
+                                class="@(isDrunk ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-600 hover:bg-gray-300") 
+                                       w-16 h-16 rounded-full flex items-center justify-center font-semibold text-lg transition-colors
+                                       border-2 @(isDrunk ? "border-blue-600" : "border-gray-300")">
+                            💧
+                        </button>
+                    }
+                    
+                    @if (canAddMore)
+                    {
+                        <button @onclick="AddNewWaterGlass" 
+                                class="bg-green-500 text-white hover:bg-green-600 
+                                       w-16 h-16 rounded-full flex items-center justify-center font-semibold text-lg transition-colors
+                                       border-2 border-green-600">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                            </svg>
+                        </button>
+                    }
+                }
+            </div>
+            @if (dailyWaterIntake != null && dailyWaterIntake.TotalWaterMl > 0)
+            {
+                var liters = (dailyWaterIntake.TotalWaterMl / 1000.0).ToString("F2");
+                <div class="text-center text-sm text-gray-600 mt-2">
+                    @dailyWaterIntake.TotalWaterMl.ToString("F0") ml (@liters L)
                 </div>
             }
         </div>
@@ -259,7 +329,7 @@
     <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999;">
         <div class="bg-white rounded-lg p-6 w-96 mx-4 shadow-xl">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold text-gray-900">Dodaj do @GetMealTypeName(selectedMealType)</h3>
+                <h3 class="text-lg font-semibold text-gray-900">Add to @GetMealTypeName(selectedMealType)</h3>
                 <button @onclick="CloseModal" class="text-gray-400 hover:text-gray-600 bg-transparent border-none cursor-pointer">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -267,8 +337,8 @@
                 </button>
             </div>
             <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Wyszukaj produkt:</label>
-                <input type="text" @bind="SearchTermModal" placeholder="Wpisz nazwę produktu..." 
+                <label class="block text-sm font-medium text-gray-700 mb-2">Search product:</label>
+                <input type="text" @bind="SearchTermModal" placeholder="Enter product name..." 
                        class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             @if (modalSearchResults.Any())
@@ -283,9 +353,9 @@
                                     <p class="text-xs text-gray-400">@food.Calories kcal / @food.Unit</p>
                                 </div>
                                 <div class="text-right text-xs text-gray-500">
-                                    <div>B: @food.Protein g</div>
-                                    <div>W: @food.Carbohydrates g</div>
-                                    <div>T: @food.Fat g</div>
+                                    <div>P: @food.Protein g</div>
+                                    <div>C: @food.Carbohydrates g</div>
+                                    <div>F: @food.Fat g</div>
                                 </div>
                             </div>
                         </div>
@@ -295,20 +365,20 @@
             @if (selectedFoodForModal != null)
             {
                 <div class="mb-4 p-4 bg-blue-50 rounded-md">
-                    <h4 class="font-medium text-gray-900 mb-2">Wybrany produkt: @selectedFoodForModal.Name</h4>
+                    <h4 class="font-medium text-gray-900 mb-2">Selected product: @selectedFoodForModal.Name</h4>
                     <p class="text-xs text-gray-500">
-                        Kalorie: @selectedFoodForModal.Calories kcal | Białko: @selectedFoodForModal.Protein g | 
-                        Węglowodany: @selectedFoodForModal.Carbohydrates g | Tłuszcze: @selectedFoodForModal.Fat g
+                        Calories: @selectedFoodForModal.Calories kcal | Protein: @selectedFoodForModal.Protein g | 
+                        Carbohydrates: @selectedFoodForModal.Carbohydrates g | Fat: @selectedFoodForModal.Fat g
                     </p>
                 </div>
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Ilość (g):</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Quantity (g):</label>
                     <input type="number" @bind="modalQuantity" min="1" step="1" 
                            class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
                 </div>
                 <div class="flex gap-2">
-                    <button @onclick="AddFoodToMeal" class="flex-1 bg-green-500 text-white px-4 py-2 rounded-md border-none cursor-pointer hover:bg-green-600 transition">Dodaj do posiłku</button>
-                    <button @onclick="CloseModal" class="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-md border-none cursor-pointer hover:bg-gray-400 transition">Anuluj</button>
+                    <button @onclick="AddFoodToMeal" class="flex-1 bg-green-500 text-white px-4 py-2 rounded-md border-none cursor-pointer hover:bg-green-600 transition">Add to meal</button>
+                    <button @onclick="CloseModal" class="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-md border-none cursor-pointer hover:bg-gray-400 transition">Cancel</button>
                 </div>
             }
         </div>
@@ -318,6 +388,8 @@
 @code {
     private DateTime selectedDate = DateTime.Today;
     private DailyNutritionModel? dailyNutrition;
+    private DailyWaterIntakeModel? dailyWaterIntake;
+    private int additionalWaterGlasses = 0; // Local state for additional empty glasses
     private string _searchTerm = "";
     private List<FoodModel> searchResults = new();
     
@@ -364,6 +436,7 @@
         searchResults = new List<FoodModel>();
         dailyNutrition = new DailyNutritionModel { Date = selectedDate };
         await LoadDailyNutrition();
+        await LoadWaterIntake();
     }
 
     private async Task LoadDailyNutrition()
@@ -378,6 +451,101 @@
         {
             Console.WriteLine($"Error loading daily nutrition: {ex.Message}");
         }
+    }
+
+    private async Task LoadWaterIntake()
+    {
+        try
+        {
+            Console.WriteLine($"Loading water intake for date: {selectedDate:yyyy-MM-dd}");
+            dailyWaterIntake = await GetDailyWaterIntakeUseCase.ExecuteAsync(selectedDate);
+            Console.WriteLine($"Loaded water intake: {dailyWaterIntake?.GlassCount ?? 0} glasses, {dailyWaterIntake?.TotalWaterMl ?? 0} ml");
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading water intake: {ex.Message}");
+        }
+    }
+
+    private async Task ToggleWaterGlass(int glassNumber)
+    {
+        try
+        {
+            var isDrunk = dailyWaterIntake?.WaterGlasses?.Any(w => w.GlassNumber == glassNumber) ?? false;
+            
+            if (isDrunk)
+            {
+                // If clicked glass is drunk, remove the last drunk glass (from the end) instead
+                var drunkGlasses = dailyWaterIntake?.WaterGlasses?.OrderByDescending(w => w.GlassNumber).ToList() ?? new List<WaterIntakeModel>();
+                
+                if (drunkGlasses.Any())
+                {
+                    var lastDrunkGlassNumber = drunkGlasses.First().GlassNumber;
+                    Console.WriteLine($"Removing last water glass {lastDrunkGlassNumber} (from the end) for date: {selectedDate:yyyy-MM-dd}");
+                    await RemoveWaterGlassUseCase.ExecuteAsync(selectedDate, lastDrunkGlassNumber);
+                }
+            }
+            else
+            {
+                // If clicked glass is empty, fill the first empty glass from the left instead
+                var drunkGlassNumbers = dailyWaterIntake?.WaterGlasses?.Select(w => w.GlassNumber).ToHashSet() ?? new HashSet<int>();
+                
+                // Calculate how many glasses to check (based on display max)
+                var currentMaxGlassNumber = dailyWaterIntake?.WaterGlasses?.Any() == true
+                    ? dailyWaterIntake.WaterGlasses.Max(w => w.GlassNumber)
+                    : 0;
+                
+                var baseDisplayNumber = Math.Max(DailyWaterIntakeModel.DefaultGlasses, currentMaxGlassNumber);
+                var displayMaxNumber = baseDisplayNumber + additionalWaterGlasses;
+                displayMaxNumber = Math.Min(displayMaxNumber, DailyWaterIntakeModel.MaxGlasses);
+                
+                // Find first empty glass from the left
+                int firstEmptyGlassNumber = 1;
+                for (int i = 1; i <= displayMaxNumber; i++)
+                {
+                    if (!drunkGlassNumbers.Contains(i))
+                    {
+                        firstEmptyGlassNumber = i;
+                        break;
+                    }
+                }
+                
+                Console.WriteLine($"Adding water glass {firstEmptyGlassNumber} (first empty from left) for date: {selectedDate:yyyy-MM-dd}");
+                await AddWaterGlassUseCase.ExecuteAsync(selectedDate, firstEmptyGlassNumber);
+            }
+            
+            await LoadWaterIntake();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error toggling water glass: {ex.Message}");
+        }
+    }
+
+    private void AddNewWaterGlass()
+    {
+        // Simply increase the number of displayed empty glasses (local state)
+        var currentMaxGlassNumber = dailyWaterIntake?.WaterGlasses?.Any() == true
+            ? dailyWaterIntake.WaterGlasses.Max(w => w.GlassNumber)
+            : 0;
+        
+        var baseDisplayNumber = Math.Max(DailyWaterIntakeModel.DefaultGlasses, currentMaxGlassNumber);
+        var currentTotal = baseDisplayNumber + additionalWaterGlasses;
+        
+        // Only add if we haven't reached the limit (25)
+        if (currentTotal < DailyWaterIntakeModel.MaxGlasses)
+        {
+            additionalWaterGlasses++;
+            InvokeAsync(StateHasChanged);
+        }
+    }
+    
+    private async Task OnDateChanged()
+    {
+        // Reset additional glasses when date changes
+        additionalWaterGlasses = 0;
+        await LoadData();
     }
 
     private async Task SearchFoods()
@@ -488,15 +656,21 @@
         }
     }
 
+    private async Task LoadData()
+    {
+        await LoadDailyNutrition();
+        await LoadWaterIntake();
+    }
+
     private string GetMealTypeName(MealType mealType)
     {
         return mealType switch
         {
-            MealType.Breakfast => "Śniadanie",
-            MealType.SecondBreakfast => "Drugie śniadanie",
-            MealType.Lunch => "Obiad",
-            MealType.Snack => "Przekąska",
-            MealType.Dinner => "Kolacja",
+            MealType.Breakfast => "Breakfast",
+            MealType.SecondBreakfast => "Second Breakfast",
+            MealType.Lunch => "Lunch",
+            MealType.Snack => "Snack",
+            MealType.Dinner => "Dinner",
             _ => mealType.ToString()
         };
     }

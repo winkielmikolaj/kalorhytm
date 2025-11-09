@@ -5,20 +5,20 @@ namespace Kalorhytm.Logic.UseCases
 {
     public class SearchFoodsUseCase : ISearchFoodsUseCase
     {
-        private readonly IUSDAFoodService _usdaFoodService;
+        private readonly ISpoonacularFoodService _spoonacularFoodService;
 
-        public SearchFoodsUseCase(IUSDAFoodService usdaFoodService)
+        public SearchFoodsUseCase(ISpoonacularFoodService spoonacularFoodService)
         {
-            _usdaFoodService = usdaFoodService;
+            _spoonacularFoodService = spoonacularFoodService;
         }
 
         public async Task<List<FoodModel>> ExecuteAsync(string searchTerm)
         {
             try
             {
-                // Zawsze przekazuj frazę wyszukiwania do serwisu USDA
-                // Serwis USDA obsłuży pustą frazę odpowiednio
-                return await _usdaFoodService.SearchFoodsAsync(searchTerm);
+                // Zawsze przekazuj frazę wyszukiwania do serwisu Spoonacular
+                // Serwis Spoonacular obsłuży pustą frazę odpowiednio
+                return await _spoonacularFoodService.SearchFoodsAsync(searchTerm);
             }
             catch (Exception ex)
             {

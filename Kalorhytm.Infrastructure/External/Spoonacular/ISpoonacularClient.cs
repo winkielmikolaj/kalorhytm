@@ -39,5 +39,19 @@ namespace Kalorhytm.Infrastructure.External.Spoonacular
         Task<SpoonacularComplexSearchResponse> ComplexSearchAsync(
             [Query] SpoonacularComplexSearchRequest request,
             [Query] string apiKey = "");
+        
+        // Food/Ingredients endpoints for product search
+        [Get("/food/ingredients/search")]
+        Task<SpoonacularIngredientSearchResponse> SearchIngredientsAsync(
+            [Query] string query,
+            [Query] int number = 10,
+            [Query] string apiKey = "");
+        
+        [Get("/food/ingredients/{id}/information")]
+        Task<SpoonacularIngredientInformation> GetIngredientInformationAsync(
+            int id,
+            [Query] double amount = 1,
+            [Query] string unit = "gram",
+            [Query] string apiKey = "");
     }
 }
