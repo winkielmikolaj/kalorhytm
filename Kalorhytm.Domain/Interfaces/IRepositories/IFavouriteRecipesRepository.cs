@@ -4,14 +4,16 @@ namespace Kalorhytm.Domain.Interfaces.IRepositories
 {
     public interface IFavouriteRecipesRepository
     {
-        Task<List<FavouriteRecipesEntity>> GetMyFavRecipesAsync(string userId);
+        Task<FavouriteRecipesEntity> AddAsync(FavouriteRecipesEntity recipe);
         
-        Task AddAsync(FavouriteRecipesEntity myFavRec);
+        Task<IEnumerable<FavouriteRecipesEntity>> GetMyFavRecipesAsync(string userId);
         
-        Task UpdateAsync(FavouriteRecipesEntity myFavRec);
+        Task UpdateAsync(FavouriteRecipesEntity recipe);
         
-        Task<FavouriteRecipesEntity?> GetByIdAsync(int id);
+        Task<List<FavouriteRecipesEntity>> GetByUserIdAsync(string  userId);
         
-        Task DeleteAsync(int id, string userId);
+        Task<bool> DeleteAsync(int id, string userId);
+        
+        Task<bool> ExistsAsync(string userId, int recipeId);
     }
 }
