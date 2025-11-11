@@ -1,4 +1,4 @@
-﻿@page "/myFridge"
+@page "/myFridge"
 @rendermode InteractiveServer
 
 @using System.Security.Claims
@@ -25,14 +25,14 @@
 <h3 class="mt-4">My Fridge</h3>
 
 <div class="mb-3">
-    <input @bind="newIngredient" class="form-control" placeholder="Add ingredient name..." />
+    <input @bind="newIngredient" class="form-control" placeholder="Add ingredient name..."/>
     @if (!string.IsNullOrEmpty(validationMessageForAddingToFridge))
     {
         <div class="text-danger mt-1">@validationMessageForAddingToFridge</div>
     }
 </div>
 <div class="mb-3">
-    <button class="btn btn-success" @onclick="AddIngredientsToFridge" >Add to Fridge</button>
+    <button class="btn btn-success" @onclick="AddIngredientsToFridge">Add to Fridge</button>
 </div>
 
 <button class="btn btn-success" @onclick="OpenFridge">Open Fridge</button>
@@ -45,7 +45,8 @@
         @foreach (var ingredient in myFridgeItems)
         {
             <li class="list-group-item">@ingredient.Name
-                <button class="btn btn-danger" @onclick="() => DeleteIngredientFromFridge(ingredient.Id)">Delete</button>
+                <button class="btn btn-danger" @onclick="() => DeleteIngredientFromFridge(ingredient.Id)">Delete
+                </button>
             </li>
         }
     </ul>
@@ -78,14 +79,17 @@ else
         {
             <div class="col-md-4 mb-3">
                 <div class="card">
-                    <img class="card-img-top" src="@recipe.ImageUrl" alt="@recipe.Title" />
+                    <img class="card-img-top" src="@recipe.ImageUrl" alt="@recipe.Title"/>
                     <div class="card-body">
                         <h5 class="card-title">@recipe.Title</h5>
-                        <p><b>Likes:</b> @recipe.Likes</p>
+                        <p><button @onclick="() => LikingSystem(recipe.RecipeId)">🤍</button> @recipe.Likes</p>
                         <p>
-                            <b>Used:</b> @string.Join(", ", recipe.UsedIngredients)<br />
+                            <b>Used:</b> @string.Join(", ", recipe.UsedIngredients)<br/>
                             <b>Missing:</b> @string.Join(", ", recipe.MissedIngredients)
                         </p>
+                        <div class="flex justify-content-end">
+                            <button class="btn btn-primary">Zapisz</button>
+                        </div>
                         <button class="btn btn-primary mt-2" @onclick="() => ShowAddRecipeModal(recipe)">Add to Meal</button>
                     </div>
                 </div>
@@ -146,10 +150,11 @@ else
 @code {
 
     private bool isProcessing { get; set; } = true;
+
     //api
     private string ingredientsInput = "apples, flour, sugar";
     private List<RecipeModel> recipes;
-    
+
     //myFridge
     private string newIngredient = "";
     private List<MyFridgeModel> myFridgeItems = new();
@@ -157,7 +162,9 @@ else
     private int Id { get; set; }
     private string Name { get; set; }
     private bool buttonForOpenningFridge;
+
     private string userId { get; set; }
+
     //validator
     private string validationMessageForAddingToFridge;
     private string validateMessageForSearching;
@@ -170,6 +177,20 @@ else
     private double recipeServings = 1.0;
     private DateTime selectedDate = DateTime.Today;
     private string recipeModalError = "";
+
+    private void LikingSystem(int id)
+    {
+        var recipe = recipes.FirstOrDefault(r => r.RecipeId == id);
+
+        if (recipe != null)
+        {
+            recipe.Likes++;
+
+            Console.WriteLine("You liked a recipe");
+        }
+        
+        StateHasChanged();
+    }
     
     
     //saving ingredients to database (fridge)
@@ -185,9 +206,9 @@ else
         {
             Console.WriteLine($"Claim {claim.Type} = {claim.Value}");
         }
-        
+
         Console.WriteLine($"User is loaded {userId}");
-    
+
         await LoadMyFridge(); //reload fridge
     }
 
@@ -200,7 +221,7 @@ else
     {
         buttonForOpenningFridge = false;
     }
-    
+
     // protected override async Task OnAfterRenderAsync(bool firstRender)
     // {
     //     if (firstRender)
@@ -221,11 +242,11 @@ else
         isProcessing = false;
         StateHasChanged();
     }
-    
+
     private async Task AddIngredientsToFridge()
     {
         validationMessageForAddingToFridge = string.Empty;
-        
+
         try
         {
             var model = new MyFridgeModel
@@ -247,24 +268,23 @@ else
 
         StateHasChanged();
     }
-    
-    
+
+
     private async Task DeleteIngredientFromFridge(int id)
     {
         validateMessageForDeleting = string.Empty;
 
         try
         {
-
         }
         catch (Exception e)
         {
             Console.WriteLine(e);
             throw;
         }
-        
+
         Console.WriteLine($"Deleting item id = {id}");
-        
+
         var deleted = await DeleteIngredientUseCase.ExecuteAsync(id, userId);
 
         if (deleted != null)
@@ -276,39 +296,36 @@ else
         {
             Console.WriteLine($"Item with id {id} not found or doesn't belong to user {userId}");
         }
-        
+
         StateHasChanged();
     }
-    
+
     //searching recipes from API
     private async Task SearchRecipes()
     {
         validateMessageForSearching = string.Empty;
-        
-        
-            var fridgeItems = await GetIngredientUseCase.ExecuteAsync(userId);
-            var ingredients = fridgeItems.Select(i => i.Name).ToList();
 
 
-            
-                Console.WriteLine($"Searching recipes for:{ingredients}");
-        
-                recipes = await RecipesService.SearchRecipesByIngredientsAsync(
-                    ingredients,
-                    number: 20,
-                    ranking: 1,
-                    ignorePantry: true);
-
-                if (ingredients.Count == 0)
-                {
-                    Console.WriteLine("User did not provide any products");
-                    validateMessageForSearching = "The fridge is empty!";
-                    StateHasChanged();
-                }
-
-                Console.WriteLine($"Found {recipes.Count} recipes");
+        var fridgeItems = await GetIngredientUseCase.ExecuteAsync(userId);
+        var ingredients = fridgeItems.Select(i => i.Name).ToList();
 
 
+        Console.WriteLine($"Searching recipes for:{ingredients}");
+
+        recipes = await RecipesService.SearchRecipesByIngredientsAsync(
+            ingredients,
+            number: 20,
+            ranking: 1,
+            ignorePantry: true);
+
+        if (ingredients.Count == 0)
+        {
+            Console.WriteLine("User did not provide any products");
+            validateMessageForSearching = "The fridge is empty!";
+            StateHasChanged();
+        }
+
+        Console.WriteLine($"Found {recipes.Count} recipes");
     }
     
     private void ShowAddRecipeModal(RecipeModel recipe)
