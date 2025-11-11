@@ -22,12 +22,15 @@ namespace Kalorhytm.Infrastructure.Repositories
 
         public async Task<IEnumerable<FavouriteRecipesEntity>> GetMyFavRecipesAsync(string userId)
         {
-            throw new NotImplementedException();
+            return await _context.FavouriteRecipes
+                .Where(x => x.UserId == userId)
+                .ToListAsync();
         }
 
         public async Task UpdateAsync(FavouriteRecipesEntity recipe)
         {
-            throw new NotImplementedException();
+            _context.FavouriteRecipes.Update(recipe);
+            await _context.SaveChangesAsync();
         }
 
         public async Task<List<FavouriteRecipesEntity>> GetByUserIdAsync(string userId)

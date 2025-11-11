@@ -113,6 +113,8 @@ builder.Services.AddScoped<IDeleteIngredientUseCase, DeleteIngredientUseCase>();
 //favourite recipe
 builder.Services.AddScoped<IFavouriteRecipesRepository, FavouriteRecipesRepository>();
 builder.Services.AddScoped<IAddFavouriteRecipeUseCase, AddFavouriteRecipeUseCase>();
+builder.Services.AddScoped<IGetFavouriteRecipeUseCase, GetFavouriteRecipeUseCase>();
+builder.Services.AddScoped<IDeleteFavouriteRecipeUseCase, DeleteFavouriteRecipeUseCase>();
 
 //validator
 builder.Services.AddScoped<IValidator<MyFridgeModel>, MyFridgeModelValidator>();

@@ -200,21 +200,24 @@ else
     {
         try
         {
+            Console.WriteLine($"[myFridge] Saving recipe {recipe.RecipeId} for user {userId}");
+        
             var favourite = new FavouriteRecipesModel
             {
                 UserId = userId,
                 RecipeId = recipe.RecipeId,
                 Title = recipe.Title,
-                ImageUrl = recipe.ImageUrl
+                ImageUrl = recipe.ImageUrl,
+                Likes = recipe.Likes
             };
 
-            await AddFavouriteRecipeUseCase.ExecuteAsync(favourite);
-            Console.WriteLine($"Saved recipe '{recipe.Title}' to your favourites");
+            var saved = await AddFavouriteRecipeUseCase.ExecuteAsync(favourite);
+            Console.WriteLine($"[myFridge] Recipe saved successfully with Id: {saved.Id}");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error saving favourite: {ex.Message}");
-            throw;
+            Console.WriteLine($"[myFridge] Error saving favourite: {ex.Message}");
+            Console.WriteLine($"[myFridge] Stack trace: {ex.StackTrace}");
         }
     }
     
