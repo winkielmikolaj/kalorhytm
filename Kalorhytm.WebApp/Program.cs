@@ -1,5 +1,6 @@
 using FluentValidation;
 using Kalorhytm.Contracts.Models.MyFridge;
+using Kalorhytm.Domain.Interfaces.IRepositories;
 using Kalorhytm.Infrastructure.Extensions;
 using Kalorhytm.Infrastructure.External.Extensions;
 using Kalorhytm.Logic.Services;
@@ -7,14 +8,17 @@ using Kalorhytm.Logic.UseCases;
 using Kalorhytm.WebApp.Components;
 using Kalorhytm.WebApp.Components.Account;
 using Kalorhytm.Infrastructure;
+using Kalorhytm.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore;
 using Kalorhytm.Logic.Interfaces;
 using Kalorhytm.Logic.Interfaces.IBodyMeasurementGoalUseCases;
+using Kalorhytm.Logic.Interfaces.IFavouriteRecipesUseCases;
 using Kalorhytm.Logic.Interfaces.IMyFridgeUseCases;
 using Kalorhytm.Logic.UseCases.BodyMeasurementGoalUseCases;
 using Kalorhytm.Logic.UseCases.BodyMeasurementUseCases;
+using Kalorhytm.Logic.UseCases.FavouriteRecipesUseCase;
 using Kalorhytm.Logic.UseCases.MyFridgeUseCases;
 using Kalorhytm.Logic.UseCases.WaterIntakeUseCases;
 using Kalorhytm.Logic.Validation;
@@ -105,6 +109,10 @@ builder.Services.AddScoped<IAddIngredientUseCase, AddIngredientUseCase>();
 builder.Services.AddScoped<IGetIngredientUseCase, GetIngredientUseCase>();
 //deleting products from fridge use case
 builder.Services.AddScoped<IDeleteIngredientUseCase, DeleteIngredientUseCase>();
+
+//favourite recipe
+builder.Services.AddScoped<IFavouriteRecipesRepository, FavouriteRecipesRepository>();
+builder.Services.AddScoped<IAddFavouriteRecipeUseCase, AddFavouriteRecipeUseCase>();
 
 //validator
 builder.Services.AddScoped<IValidator<MyFridgeModel>, MyFridgeModelValidator>();
