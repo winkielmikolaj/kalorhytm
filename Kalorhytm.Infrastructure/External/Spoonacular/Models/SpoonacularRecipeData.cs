@@ -22,13 +22,13 @@ namespace Kalorhytm.Infrastructure.External.Spoonacular.Models
         public int Servings { get; set; }
 
         [JsonPropertyName("readyInMinutes")]
-        public int ReadyInMinutes { get; set; }
+        public int? ReadyInMinutes { get; set; }
 
         [JsonPropertyName("cookingMinutes")]
-        public int CookingMinutes { get; set; }
+        public int? CookingMinutes { get; set; }
 
         [JsonPropertyName("preparationMinutes")]
-        public int PreparationMinutes { get; set; }
+        public int? PreparationMinutes { get; set; }
 
         [JsonPropertyName("license")]
         public string License { get; set; } = "";

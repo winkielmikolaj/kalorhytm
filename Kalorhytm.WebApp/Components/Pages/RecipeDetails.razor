@@ -1,0 +1,63 @@
+@using Kalorhytm.Contracts.Models.Recipes
+@using Kalorhytm.Logic.Interfaces
+
+@inject ISpoonacularRecipesService _RecipesService
+
+@page "/recipes/recipe-{RecipeId}"
+
+@if (isLoading)
+{
+    <div class="text-center py-8">Loading...</div>
+}
+else if (!string.IsNullOrEmpty(ErrorMessage))
+{
+    <div class="text-red-600">@ErrorMessage</div>
+}
+else if (RecipeData != null)
+{
+    <div class="">
+        <div class="">
+            <img src="@RecipeData.ImageUrl"
+                 alt="@RecipeData.Title"
+                 class="">
+        </div>
+        <div class="">
+            <h1>@RecipeData.Title</h1>
+        </div>
+        <div class="">
+            <h1>Instructions</h1>
+        </div>
+        <h1>Nutritions</h1>
+    </div>
+}
+
+@code {
+
+    private bool isLoading = true;
+    private string ErrorMessage = "";
+    private RecipeDataModel? RecipeData { get; set; }
+
+    [Parameter] public string RecipeId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (int.TryParse(RecipeId, out int recipeId))
+        {
+            try
+            {
+                RecipeData = await _RecipesService.GetRecipeDataAsync(recipeId);
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = $"Błąd: {ex.Message}";
+            }
+        }
+        else
+        {
+            ErrorMessage = "Incorrect ID";
+        }
+        
+        isLoading = false;
+    }
+
+}
