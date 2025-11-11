@@ -1,0 +1,94 @@
+﻿@page "/Profile"
+@rendermode InteractiveServer
+
+@using System.Security.Claims
+@using Kalorhytm.Contracts.Models.FavouriteRecipes
+@using Kalorhytm.Logic.Interfaces.IFavouriteRecipesUseCases
+@inject IGetFavouriteRecipeUseCase GetFavUseCase
+@inject IDeleteFavouriteRecipeUseCase DeleteFavUseCase
+@inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthStateProvider
+
+<h3>Twoje ulubione przepisy</h3>
+
+@if (isLoading)
+{
+    <p>Ładowanie przepisów...</p>
+}
+else if (FavouriteRecipes == null || !FavouriteRecipes.Any())
+{
+    <p>Brak ulubionych przepisów.</p>
+}
+else
+{
+    <div class="row">
+        @foreach (var recipe in FavouriteRecipes)
+        {
+            <div class="col-md-4 mb-3">
+                <div class="card">
+                    <img src="@recipe.ImageUrl" class="card-img-top" alt="@recipe.Title" />
+                    <div class="card-body">
+                        <h5 class="card-title">@recipe.Title</h5>
+                        <p>Lajki: @recipe.Likes</p>
+                        <button class="btn btn-danger" @onclick="() => DeleteRecipe(recipe.Id)">Usuń</button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private List<FavouriteRecipesModel> FavouriteRecipes = new();
+    private bool isLoading = true;
+    private string userId = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadFavouriteRecipes();
+    }
+
+    // To się wywoła za każdym razem gdy wrócisz na stronę
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadFavouriteRecipes();
+    }
+
+    private async Task LoadFavouriteRecipes()
+    {
+        isLoading = true;
+        StateHasChanged(); // Pokaż loading
+        
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity != null && user.Identity.IsAuthenticated)
+        {
+            // Użyj tej samej metody co w myFridge
+            userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value 
+                     ?? user.FindFirst(c => c.Type == "sub")?.Value 
+                     ?? user.Identity.Name;
+            
+            Console.WriteLine($"[Profile] Loading favourites for user: {userId}");
+            FavouriteRecipes = await GetFavUseCase.ExecuteAsync(userId);
+            Console.WriteLine($"[Profile] Loaded {FavouriteRecipes.Count} favourite recipes");
+        }
+
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    private async Task DeleteRecipe(int recipeId)
+    {
+        try
+        {
+            await DeleteFavUseCase.ExecuteAsync(recipeId, userId);
+            FavouriteRecipes.RemoveAll(r => r.Id == recipeId);
+            StateHasChanged();
+            Console.WriteLine($"[Profile] Deleted recipe {recipeId}");
+        }
+        catch (InvalidOperationException ex)
+        {
+            Console.WriteLine($"[Profile] Error deleting recipe: {ex.Message}");
+        }
+    }
+}
