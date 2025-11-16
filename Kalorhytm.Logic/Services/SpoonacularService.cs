@@ -1,4 +1,5 @@
 ﻿using Kalorhytm.Contracts.Models.Recipes;
+using Kalorhytm.Contracts.Models.Recipes.SpoonacularAnalyzedInstruction;
 using Kalorhytm.Infrastructure.External.Spoonacular;
 using Kalorhytm.Infrastructure.External.Spoonacular.Models;
 using Kalorhytm.Logic.Interfaces;
@@ -96,40 +97,72 @@ namespace Kalorhytm.Logic.Services
         }
 
         private RecipeDataModel ConvertToRecipeDataModel(SpoonacularRecipeData recipeData)
-        {
-            var tags = new List<string>();
+{
+    var tags = new List<string>();
 
-            if (recipeData.Cheap) tags.Add("Cheap");
-            if (recipeData.Vegan) tags.Add("Vegan");
-            if (recipeData.Vegetarian) tags.Add("Vegetarian");
-            if (recipeData.GlutenFree) tags.Add("GlutenFree");
-            if (recipeData.DairyFree) tags.Add("DairyFree");
-            if (recipeData.Ketogenic) tags.Add("Ketogenic");
-            if (recipeData.LowFodmap) tags.Add("LowFodmap");
-            if (recipeData.Sustainable) tags.Add("Sustainable");
-            if (recipeData.VeryHealthy) tags.Add("VeryHealthy");
-            if (recipeData.VeryPopular) tags.Add("VeryPopular");
-            if (recipeData.Whole30) tags.Add("Whole30");
-            
-            if (!string.IsNullOrWhiteSpace(recipeData.Gaps) && recipeData.Gaps != "no") 
-                tags.Add($"Gaps:{recipeData.Gaps}");
-            
-            tags.AddRange(recipeData.Diets);
-            tags.AddRange(recipeData.Occasions);
+    if (recipeData.Cheap) tags.Add("Cheap");
+    if (recipeData.Vegan) tags.Add("Vegan");
+    if (recipeData.Vegetarian) tags.Add("Vegetarian");
+    if (recipeData.GlutenFree) tags.Add("GlutenFree");
+    if (recipeData.DairyFree) tags.Add("DairyFree");
+    if (recipeData.Ketogenic) tags.Add("Ketogenic");
+    if (recipeData.LowFodmap) tags.Add("LowFodmap");
+    if (recipeData.Sustainable) tags.Add("Sustainable");
+    if (recipeData.VeryHealthy) tags.Add("VeryHealthy");
+    if (recipeData.VeryPopular) tags.Add("VeryPopular");
+    if (recipeData.Whole30) tags.Add("Whole30");
+    
+    if (!string.IsNullOrWhiteSpace(recipeData.Gaps) && recipeData.Gaps != "no") 
+        tags.Add($"Gaps:{recipeData.Gaps}");
+    
+    tags.AddRange(recipeData.Diets);
+    tags.AddRange(recipeData.Occasions);
 
-            return new RecipeDataModel
+    return new RecipeDataModel
+    {
+        RecipeId = recipeData.Id,
+        Title = recipeData.Title,
+        ImageUrl = recipeData.Image,
+        Servings = recipeData.Servings,
+        DishTypes = recipeData.DishTypes?.ToList() ?? new List<string>(),
+        Cuisines = recipeData.Cuisines?.ToList() ?? new List<string>(),
+        Summary = recipeData.Summary,
+        Tags = tags,
+        
+        AnalyzedInstructions = recipeData.AnalyzedInstructions?
+            .Select(ai => new AnalyzedInstruction
             {
-                RecipeId = recipeData.Id,
-                Title = recipeData.Title,
-                ImageUrl = recipeData.Image,
-                Servings = recipeData.Servings,
-                ReadyInMinutes = recipeData.ReadyInMinutes,
-                DishTypes = recipeData.DishTypes?.ToList() ?? new List<string>(),
-                Cuisines = recipeData.Cuisines?.ToList() ?? new List<string>(),
-                Summary = recipeData.Summary,
-                Tags = tags
-            };
-        }
+                Name = ai.Name,
+                Steps = ai.Steps?.Select(s => new InstructionStep
+                {
+                    Number = s.Number,
+                    Step = s.Step,
+                    Ingredients = s.Ingredients?.Select(i => new Ingredient
+                    {
+                        Id = i.Id,
+                        Name = i.Name,
+                        Image = i.Image
+                    }).ToList() ?? new List<Ingredient>(),
+                    Equipment = s.Equipment?.Select(e => new StepEquipment
+                    {
+                        Id = e.Id,
+                        Name = e.Name,
+                        Image = e.Image,
+                        Temperature = e.Temperature != null ? new TemperatureInfo
+                        {
+                            Number = e.Temperature.Number,
+                            Unit = e.Temperature.Unit
+                        } : null
+                    }).ToList() ?? new List<StepEquipment>(),
+                    Length = s.Length != null ? new StepLengthInfo
+                    {
+                        Number = s.Length.Number,
+                        Unit = s.Length.Unit
+                    } : null
+                }).ToList() ?? new List<InstructionStep>()
+            }).ToList() ?? new List<AnalyzedInstruction>()
+    };
+}
 
         public async Task<NutritionModel?> GetRecipeNutritionWidgetAsync(int recipeId)
         {

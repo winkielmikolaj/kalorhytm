@@ -52,7 +52,7 @@ namespace Kalorhytm.Infrastructure.External.Spoonacular.Models
         public double PricePerServing { get; set; }
 
         [JsonPropertyName("analyzedInstructions")]
-        public List<object> AnalyzedInstructions { get; set; } = new();
+        public List<SpoonacularAnalyzedInstruction> AnalyzedInstructions { get; set; } = new();
 
         [JsonPropertyName("cheap")]
         public bool Cheap { get; set; }
@@ -223,4 +223,76 @@ namespace Kalorhytm.Infrastructure.External.Spoonacular.Models
         [JsonPropertyName("link")]
         public string Link { get; set; } = "";
     }
+    
+    public class SpoonacularAnalyzedInstruction
+    {
+        [JsonPropertyName("name")]
+        public string Name { get; set; }
+    
+        [JsonPropertyName("steps")]
+        public List<SpoonacularInstructionStep> Steps { get; set; } = new();
+    }
+
+    public class SpoonacularInstructionStep
+    {
+        [JsonPropertyName("number")]
+        public int Number { get; set; }
+    
+        [JsonPropertyName("step")]
+        public string Step { get; set; }
+    
+        // uzywanie utworzonej wczesniej klasy spoonacularingredient
+        [JsonPropertyName("ingredients")]
+        public List<SpoonacularIngredient> Ingredients { get; set; } = new();
+    
+        [JsonPropertyName("equipment")]
+        public List<SpoonacularStepEquipment> Equipment { get; set; } = new();
+
+        [JsonPropertyName("length")]
+        public SpoonacularStepLength? Length { get; set; }
+        
+        // to samo co z equipment, rozne kroki rozne wlasciwosci mialy
+        [JsonExtensionData]
+        public Dictionary<string, JsonElement>? ExtensionData { get; set; }
+    }
+
+    public class SpoonacularStepEquipment
+    {
+        [JsonPropertyName("id")]
+        public int Id { get; set; }
+    
+        [JsonPropertyName("name")]
+        public string Name { get; set; }
+    
+        [JsonPropertyName("image")]
+        public string Image { get; set; }
+        
+        [JsonPropertyName("temperature")]
+        public SpoonacularTemperature? Temperature { get; set; }
+        
+        // rozne equipmenty mialy rozne wlasciwosci to na razie niech wylapuje po prostu tak zeby bledow nie bylo
+        [JsonExtensionData]
+        public Dictionary<string, JsonElement>? ExtensionData { get; set; }
+    }
+    
+    public class SpoonacularTemperature
+    {
+        [JsonPropertyName("number")]
+        public double Number { get; set; }
+    
+        [JsonPropertyName("unit")]
+        public string Unit { get; set; }
+    }
+    
+    public class SpoonacularStepLength
+    {
+        [JsonPropertyName("number")]
+        public double Number { get; set; }
+    
+        [JsonPropertyName("unit")]
+        public string Unit { get; set; }
+    }
+    
+    
+    // tutaj bedzie pewnie trzeba uporzadkowac te klasy do osobnych plikow, poki co zostawiam tak
 }

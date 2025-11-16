@@ -26,6 +26,21 @@ else if (RecipeData != null)
         </div>
         <div class="">
             <h1>Instructions</h1>
+            @foreach (var instruction in RecipeData.AnalyzedInstructions)
+            {
+                @if (!string.IsNullOrEmpty(instruction.Name))
+                {
+                    <h2>@instruction.Name</h2>
+                }
+        
+                @foreach (var step in instruction.Steps)
+                {
+                    <div class="mb-4">
+                        <span class="font-bold">@step.Number.</span>
+                        <span>@step.Step</span>
+                    </div>
+                }
+            }
         </div>
         <h1>Nutritions</h1>
     </div>
