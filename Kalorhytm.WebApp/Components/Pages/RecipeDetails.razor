@@ -25,22 +25,120 @@ else if (RecipeData != null)
             <h1>@RecipeData.Title</h1>
         </div>
         <div class="">
+            <h1>Summary</h1>
+            <div class="">@((MarkupString)RecipeData.Summary)</div>
+        </div>
+        <h2 class="text-xl font-semibold mb-4">Ingredients</h2>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            @foreach (var ingredient in RecipeData.ExtendedIngredients)
+            {
+                <div class="flex items-start p-4 rounded-lg shadow bg-white gap-3">
+
+                    @if (!string.IsNullOrWhiteSpace(ingredient.Image))
+                    {
+                        <img src="https://spoonacular.com/cdn/ingredients_100x100/@ingredient.Image"
+                             alt="@ingredient.Name"
+                             class="w-14 h-14 rounded object-cover" />
+                    }
+
+                    <div class="flex flex-col text-gray-800 text-base leading-tight w-full">
+
+                        <div class="flex justify-between items-center">
+                            <span class="font-medium">@ingredient.Name</span>
+                            <span class="">@ingredient.Amount @ingredient.Unit</span>
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(ingredient.Original))
+                        {
+                            <span class="text-sm text-gray-600 mt-1 italic">@ingredient.Original</span>
+                        }
+
+                        @if (ingredient.Meta?.Count > 0)
+                        {
+                            <div class="mt-2 flex flex-wrap gap-1">
+                                @foreach (var meta in ingredient.Meta)
+                                {
+                                    <span class="px-2 py-1 text-xs rounded bg-gray-200 text-gray-700">
+                                        @meta
+                                    </span>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+
+        <div class="">
             <h1>Instructions</h1>
             @foreach (var instruction in RecipeData.AnalyzedInstructions)
             {
-                @if (!string.IsNullOrEmpty(instruction.Name))
-                {
-                    <h2>@instruction.Name</h2>
-                }
-        
-                @foreach (var step in instruction.Steps)
-                {
-                    <div class="mb-4">
-                        <span class="font-bold">@step.Number.</span>
+            @if (!string.IsNullOrEmpty(instruction.Name))
+            {
+                <h2 class="text-xl font-bold mb-4">@instruction.Name</h2>
+            }
+
+            @foreach (var step in instruction.Steps)
+            {
+                <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+                    <div class="mb-2">
+                        <span class="font-bold text-lg">@step.Number.</span>
                         <span>@step.Step</span>
                     </div>
-                }
+                    
+            @if (step.Ingredients?.Any() == true)
+            {
+                // sprawdzic tutaj bo ingredients nic nie wyswietlalo
+                // ingredients zmienilem na extendedingredients jak w dokumentacji spoonacular
+                // i nadal nic nie wyswietla
+                <div class="mt-3 pl-6">
+                    <span class="text-sm font-semibold text-gray-600">Ingredients:</span>
+                    <div class="flex flex-wrap gap-2 mt-1">
+                        @foreach (var ingredient in step.Ingredients)
+                        {
+                            <span class="inline-flex items-center gap-1 bg-white px-3 py-1 rounded-full text-sm border">
+                                @if (!string.IsNullOrEmpty(ingredient.Image))
+                                {
+                                    <img src="https://spoonacular.com/cdn/ingredients_100x100/@ingredient.Image" 
+                                         alt="@ingredient.Name" 
+                                         class="w-5 h-5 rounded-full object-cover" />
+                                }
+                                @ingredient.Name
+                            </span>
+                        }
+                    </div>
+                </div>
             }
+            
+            @if (step.Equipment?.Any() == true)
+            {
+                <div class="mt-3 pl-6">
+                    <span class="text-sm font-semibold text-gray-600">Equipment:</span>
+                    <div class="flex flex-wrap gap-2 mt-1">
+                        @foreach (var equipment in step.Equipment)
+                        {
+                            <span class="inline-flex items-center gap-1 bg-blue-50 px-3 py-1 rounded-full text-sm border border-blue-200">
+                                @if (!string.IsNullOrEmpty(equipment.Image))
+                                {
+                                    <img src="https://spoonacular.com/cdn/equipment_100x100/@equipment.Image" 
+                                         alt="@equipment.Name" 
+                                         class="w-5 h-5 rounded-full object-cover" />
+                                }
+                                @equipment.Name
+                                @if (equipment.Temperature != null)
+                                {
+                                    <span class="text-xs text-gray-500">(@equipment.Temperature.Number° @equipment.Temperature.Unit)</span>
+                                }
+                            </span>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+}
         </div>
         <h1>Nutritions</h1>
     </div>

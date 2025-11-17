@@ -117,6 +117,8 @@ namespace Kalorhytm.Logic.Services
     
     tags.AddRange(recipeData.Diets);
     tags.AddRange(recipeData.Occasions);
+    tags.AddRange(recipeData.DishTypes);
+    tags.AddRange(recipeData.Cuisines);
 
     return new RecipeDataModel
     {
@@ -124,10 +126,37 @@ namespace Kalorhytm.Logic.Services
         Title = recipeData.Title,
         ImageUrl = recipeData.Image,
         Servings = recipeData.Servings,
-        DishTypes = recipeData.DishTypes?.ToList() ?? new List<string>(),
-        Cuisines = recipeData.Cuisines?.ToList() ?? new List<string>(),
         Summary = recipeData.Summary,
         Tags = tags,
+        ExtendedIngredients = recipeData.ExtendedIngredients?
+            .Select(ei => new ExtendedIngredient
+            {
+                Aisle = ei.Aisle,
+                Amount = ei.Amount,
+                Consistency = ei.Consistency,
+                Id = ei.Id,
+                Image = ei.Image,
+                Meta = ei.Meta?.ToList() ?? new List<string>(),
+                Name = ei.Name,
+                Original = ei.Original,
+                OriginalName = ei.OriginalName,
+                Unit = ei.Unit,
+                Measures = new Measures
+                {
+                    Metric = new MeasureUnit
+                    {
+                        Amount = ei.Measures?.Metric?.Amount ?? 0,
+                        UnitLong = ei.Measures?.Metric?.UnitLong ?? "",
+                        UnitShort = ei.Measures?.Metric?.UnitShort ?? ""
+                    },
+                    Us = new MeasureUnit
+                    {
+                        Amount = ei.Measures?.Us?.Amount ?? 0,
+                        UnitLong = ei.Measures?.Us?.UnitLong ?? "",
+                        UnitShort = ei.Measures?.Us?.UnitShort ?? ""
+                    }
+                }
+            }).ToList() ?? new List<ExtendedIngredient>(),
         
         AnalyzedInstructions = recipeData.AnalyzedInstructions?
             .Select(ai => new AnalyzedInstruction

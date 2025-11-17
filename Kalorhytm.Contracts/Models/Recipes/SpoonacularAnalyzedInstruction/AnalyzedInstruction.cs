@@ -45,18 +45,20 @@ namespace Kalorhytm.Contracts.Models.Recipes.SpoonacularAnalyzedInstruction
         public string Unit { get; set; }
     }
     
+    
+    // ingredient jest zawarty w get recipe information / analyzed instrucitons / step instruction
     public class Ingredient
     {
         public int Id { get; set; }
         
         public string Name { get; set; } = "";
-        
+
         public double Amount { get; set; }
         
         public string Unit { get; set; } = "";
         
         public string Original { get; set; } = "";
-
+        
         public string Image { get; set; } = "";
     }
 }
