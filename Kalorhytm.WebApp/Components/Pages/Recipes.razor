@@ -13,7 +13,7 @@
 
 <PageTitle>Search Recipes</PageTitle>
 
-<div class="container mx-auto px-4 py-8 text-center">
+<div class="container max-w-3xl mx-auto px-4 py-8 text-center">
     <h3 class="text-3xl font-bold text-gray-900 mb-8">Search Recipes</h3>
     <EditForm Model="@filterModel" OnValidSubmit="@OnSearchRecipes" FormName="SearchRecipesForm">
         <InputText @bind-Value="filterModel.Query" placeholder="Search for recipes..." class="border rounded-md px-3 py-2 mb-3 w-full" />
@@ -52,13 +52,13 @@
             <div class="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300">
                 <img src="@recipe.ImageUrl"
                      alt="@recipe.Title"
-                     class="w-full h-48 object-cover" />
+                     class="w h-48 object-cover" />
 
                 <div class="p-4 text-left">
                     <h4 class="font-semibold text-gray-800 text-lg mb-2 line-clamp-2">@recipe.Title</h4>
                     <div class="flex justify-between items-center">
                         <span class="text-xs text-gray-500">#@recipe.RecipeId</span>
-                        <button class="bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg">
+                        <button class="bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg" @onclick="() => GoToRecipeDetails(recipe.RecipeId)">
                             View
                         </button>
                     </div>
@@ -129,7 +129,7 @@ else if (!string.IsNullOrWhiteSpace(filterModel.Query))
             Diet = string.Join(",", filterModel.Diets.Select(d => d.ToString().ToLower())),
             Intolerances = string.Join(",", filterModel.Intolerances.Select(i => i.ToString().ToLower())),
             Type = string.Join(",", filterModel.Types.Select(t => t.ToString().ToLower())),
-            Number = 9,
+            Number = 2,
             Offset = 0,
             AddRecipeInformation = true
         };
@@ -166,6 +166,11 @@ else if (!string.IsNullOrWhiteSpace(filterModel.Query))
 
         var uri = QueryHelpers.AddQueryString("/recipes", queryParams);
         _NavigationManager.NavigateTo(uri, forceLoad: false);
+    }
+
+    private void GoToRecipeDetails(int recipeId)
+    {
+        _NavigationManager.NavigateTo($"/recipes/recipe-{recipeId}");
     }
 
 

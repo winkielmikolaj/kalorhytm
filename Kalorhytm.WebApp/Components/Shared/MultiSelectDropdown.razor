@@ -10,7 +10,7 @@
 
     @if (isOpen)
     {
-        <div class="absolute mt-2 w-full rounded-md bg-white shadow-lg border z-50 max-h-60 overflow-y-auto">
+        <div class="static mt-2 w-full rounded-md bg-white shadow-lg border z-50 max-h-60 overflow-y-auto">
             @foreach (var value in Enum.GetValues(typeof(TEnum)).Cast<TEnum>())
             {
                 var isChecked = SelectedValues.Contains(value);
