@@ -9,7 +9,6 @@ namespace Kalorhytm.Contracts.Models.Recipes
         public string ImageUrl { get; set; } = "";
         public int Servings { get; set; }
         
-        // te dwie rzeczy chyba sie zawrze w Tags
         public List<string> DishTypes { get; set; } = new();
         public List<string> Cuisines { get; set; } = new();
         public string Summary { get; set; } = "";
