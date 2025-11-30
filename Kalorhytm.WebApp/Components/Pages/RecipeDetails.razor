@@ -140,16 +140,16 @@ else if (RecipeData != null)
         <div>
     <div>
     <h1 class="text-2xl font-bold mb-4">Nutritions</h1>
-    <button class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" 
+    <MudButton class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" 
             @onclick="() => showNutrition = !showNutrition">
         @(showNutrition ? "Hide" : "Show") nutritions
-    </button>
-    <div>
-        Dla dorosłego na diecie 2000 kcal dziennie - to standard FDA (Food and Drug Administration) używany na etykietach żywności w USA.
-    </div>
-
+    </MudButton>
+        
     @if (showNutrition && RecipeNutrition != null)
     {
+        <div>
+            Dla dorosłego na diecie 2000 kcal dziennie - to standard FDA (Food and Drug Administration) używany na etykietach żywności w USA.
+        </div>
         <div class="mt-6">
             <div class="grid grid-cols-3 gap-4 mb-6">
                 <div class="bg-blue-50 p-4 rounded-lg text-center">
