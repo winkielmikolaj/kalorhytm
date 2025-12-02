@@ -90,9 +90,6 @@ else if (RecipeData != null)
                     
             @if (step.Ingredients?.Any() == true)
             {
-                // sprawdzic tutaj bo ingredients nic nie wyswietlalo
-                // ingredients zmienilem na extendedingredients jak w dokumentacji spoonacular
-                // i nadal nic nie wyswietla
                 <div class="mt-3 pl-6">
                     <span class="text-sm font-semibold text-gray-600">Ingredients:</span>
                     <div class="flex flex-wrap gap-2 mt-1">
@@ -140,7 +137,57 @@ else if (RecipeData != null)
     }
 }
         </div>
-        <h1>Nutritions</h1>
+        <div>
+    <div>
+    <h1 class="text-2xl font-bold mb-4">Nutritions</h1>
+    <MudButton class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" 
+            @onclick="() => showNutrition = !showNutrition">
+        @(showNutrition ? "Hide" : "Show") nutritions
+    </MudButton>
+        
+    @if (showNutrition && RecipeNutrition != null)
+    {
+        <div>
+            Dla dorosłego na diecie 2000 kcal dziennie - to standard FDA (Food and Drug Administration) używany na etykietach żywności w USA.
+        </div>
+        <div class="mt-6">
+            <div class="grid grid-cols-3 gap-4 mb-6">
+                <div class="bg-blue-50 p-4 rounded-lg text-center">
+                    <div class="text-3xl font-bold text-blue-600">@RecipeNutrition.PercentProtein.ToString("F1")%</div>
+                    <div class="text-sm text-gray-600">Protein</div>
+                </div>
+                <div class="bg-green-50 p-4 rounded-lg text-center">
+                    <div class="text-3xl font-bold text-green-600">@RecipeNutrition.PercentFat.ToString("F1")%</div>
+                    <div class="text-sm text-gray-600">Fat</div>
+                </div>
+                <div class="bg-orange-50 p-4 rounded-lg text-center">
+                    <div class="text-3xl font-bold text-orange-600">@RecipeNutrition.PercentCarbs.ToString("F1")%</div>
+                    <div class="text-sm text-gray-600">Carbs</div>
+                </div>
+            </div>
+            
+            @if (RecipeNutrition.Nutrients?.Any() == true)
+            {
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    @foreach (var nutrient in RecipeNutrition.Nutrients.Where(n => 
+                        new[] { "Calories", "Protein", "Fat", "Carbohydrates", "Fiber", "Sugar", "Sodium", "Cholesterol", "Saturated Fat" }
+                        .Contains(n.Name)))
+                    {
+                        <div class="bg-white p-3 rounded border flex justify-between items-center">
+                            <span class="font-medium">@nutrient.Name</span>
+                            <div class="text-right">
+                                <div class="font-semibold">@nutrient.Amount.ToString("F1") @nutrient.Unit</div>
+                                <div class="text-xs text-gray-500">@nutrient.PercentOfDailyNeeds.ToString("F0")% daily</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>
+    
+</div>
     </div>
 }
 
@@ -149,6 +196,8 @@ else if (RecipeData != null)
     private bool isLoading = true;
     private string ErrorMessage = "";
     private RecipeDataModel? RecipeData { get; set; }
+    private bool showNutrition;
+    private NutritionModel? RecipeNutrition = new();
 
     [Parameter] public string RecipeId { get; set; }
 
@@ -159,6 +208,7 @@ else if (RecipeData != null)
             try
             {
                 RecipeData = await _RecipesService.GetRecipeDataAsync(recipeId);
+                RecipeNutrition = await _RecipesService.GetRecipeNutritionWidgetAsync(recipeId);
             }
             catch (Exception ex)
             {

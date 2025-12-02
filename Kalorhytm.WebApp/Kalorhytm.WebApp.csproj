@@ -15,6 +15,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="9.0.0" />
+    <PackageReference Include="MudBlazor" Version="8.15.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.9.0" />
   </ItemGroup>
 
@@ -22,6 +23,11 @@
     <ProjectReference Include="..\..\Kalorhytm\Kalorhytm.Contracts\Kalorhytm.Contracts.csproj" />
     <ProjectReference Include="..\..\Kalorhytm\Kalorhytm.Infrastructure\Kalorhytm.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Kalorhytm\Kalorhytm.Logic\Kalorhytm.Logic.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <_ContentIncludedByDefault Remove="wwwroot\bootstrap\bootstrap.min.css" />
+    <_ContentIncludedByDefault Remove="wwwroot\bootstrap\bootstrap.min.css.map" />
   </ItemGroup>
 
 </Project>

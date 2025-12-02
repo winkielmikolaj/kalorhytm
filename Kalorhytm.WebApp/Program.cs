@@ -22,6 +22,7 @@ using Kalorhytm.Logic.UseCases.FavouriteRecipesUseCase;
 using Kalorhytm.Logic.UseCases.MyFridgeUseCases;
 using Kalorhytm.Logic.UseCases.WaterIntakeUseCases;
 using Kalorhytm.Logic.Validation;
+using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -70,6 +71,9 @@ builder.Services.AddSwaggerGen(c =>
         Description = "API dla aplikacji Kalorhytm - kalkulatora kalorii"
     });
 });
+
+// Register MudBlazor
+builder.Services.AddMudServices();
 
 // Add HttpClient for Spoonacular API
 builder.Services.AddSpoonacular();

@@ -41,6 +41,9 @@
 
         <button type="submit" class="mt-4 bg-blue-500 text-gray-100 px-4 py-2 rounded">Search</button>
     </EditForm>
+    
+    <button class="mt-4 bg-blue-500 text-gray-100 px-4 py-2 rounded" @onclick="GoToMyFridge">Search by ingredients</button>
+    <button class="mt-4 bg-blue-500 text-gray-100 px-4 py-2 rounded" @onclick="GetRandomRecipes">Show random recipes</button>
 </div>
 
 @* OnAfterSearch site*@
@@ -142,7 +145,7 @@ else if (!string.IsNullOrWhiteSpace(filterModel.Query))
 
     private async Task GetRandomRecipes()
     {
-        recipes = await _RecipesService.GetRandomRecipesAsync(9);
+        recipes = await _RecipesService.GetRandomRecipesAsync(3);
     }
     
     private void UpdateUrlWithFilters()
@@ -173,7 +176,11 @@ else if (!string.IsNullOrWhiteSpace(filterModel.Query))
         _NavigationManager.NavigateTo($"/recipes/recipe-{recipeId}");
     }
 
-
+    private void GoToMyFridge()
+    {
+        _NavigationManager.NavigateTo("myFridge");
+    }
+    
     public class RecipeFilterModel
     {
         public string Query { get; set; } = "";
