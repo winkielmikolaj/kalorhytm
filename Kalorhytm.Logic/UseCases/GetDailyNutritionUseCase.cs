@@ -15,9 +15,9 @@ namespace Kalorhytm.Logic.UseCases
             _mealEntryRepository = mealEntryRepository;
         }
 
-        public async Task<DailyNutritionModel> ExecuteAsync(DateTime date)
+        public async Task<DailyNutritionModel> ExecuteAsync(DateTime date, string userId)
         {
-            var entries = await _mealEntryRepository.GetByDateAsync(date);
+            var entries = await _mealEntryRepository.GetByDateAsync(date, userId);
 
             var mealEntries = entries.Select(entry => new MealEntryModel
             {

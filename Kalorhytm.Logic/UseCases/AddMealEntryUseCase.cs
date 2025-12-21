@@ -24,7 +24,7 @@ namespace Kalorhytm.Logic.UseCases
             _mealEntryRepository = mealEntryRepository;
         }
 
-        public async Task<MealEntryModel> ExecuteAsync(int foodId, double quantity, MealType mealType, DateTime date)
+        public async Task<MealEntryModel> ExecuteAsync(int foodId, double quantity, MealType mealType, DateTime date, string userId)
         {
             var food = await _spoonacularFoodService.GetFoodByIdAsync(foodId);
             if (food == null)
@@ -57,7 +57,8 @@ namespace Kalorhytm.Logic.UseCases
                 FoodId = foodId,
                 Quantity = quantity,
                 MealType = (Domain.Enums.MealType)mealType,
-                Date = date
+                Date = date,
+                UserId = userId
             };
             await _mealEntryRepository.AddAsync(mealEntry);
 
@@ -72,7 +73,7 @@ namespace Kalorhytm.Logic.UseCases
             };
         }
 
-        public async Task<MealEntryModel> ExecuteAsync(FoodModel food, double quantity, MealType mealType, DateTime date)
+        public async Task<MealEntryModel> ExecuteAsync(FoodModel food, double quantity, MealType mealType, DateTime date, string userId)
         {
             if (food == null)
                 throw new ArgumentException("Food cannot be null");
@@ -104,7 +105,8 @@ namespace Kalorhytm.Logic.UseCases
                 FoodId = food.FoodId,
                 Quantity = quantity,
                 MealType = (Domain.Enums.MealType)mealType,
-                Date = date
+                Date = date,
+                UserId = userId
             };
             await _mealEntryRepository.AddAsync(mealEntry);
 

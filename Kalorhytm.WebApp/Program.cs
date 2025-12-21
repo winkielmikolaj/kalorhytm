@@ -57,20 +57,6 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => { options.SignIn.Re
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
-// Add API Controllers
-builder.Services.AddControllers();
-
-// Add Swagger/OpenAPI
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c =>
-{
-    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
-    {
-        Title = "Kalorhytm API",
-        Version = "v1",
-        Description = "API dla aplikacji Kalorhytm - kalkulatora kalorii"
-    });
-});
 
 // Register MudBlazor
 builder.Services.AddMudServices();
@@ -141,13 +127,6 @@ using (var scope = app.Services.CreateScope())
 if (app.Environment.IsDevelopment())
 {
     app.UseMigrationsEndPoint();
-    // Enable Swagger UI in Development
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Kalorhytm API V1");
-        c.RoutePrefix = "swagger"; // Swagger UI will be available at /swagger
-    });
 }
 else
 {
@@ -159,9 +138,6 @@ else
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseAntiforgery();
-
-// Map API Controllers
-app.MapControllers();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();

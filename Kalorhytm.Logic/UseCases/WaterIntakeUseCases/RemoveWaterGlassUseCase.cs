@@ -12,9 +12,9 @@ namespace Kalorhytm.Logic.UseCases.WaterIntakeUseCases
             _waterIntakeRepository = waterIntakeRepository;
         }
 
-        public async Task ExecuteAsync(DateTime date, int glassNumber)
+        public async Task ExecuteAsync(DateTime date, int glassNumber, string userId)
         {
-            await _waterIntakeRepository.DeleteByDateAndGlassNumberAsync(date, glassNumber);
+            await _waterIntakeRepository.DeleteByDateAndGlassNumberAsync(date, glassNumber, userId);
         }
     }
 }

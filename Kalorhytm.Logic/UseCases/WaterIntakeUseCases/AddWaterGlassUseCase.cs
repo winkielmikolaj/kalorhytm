@@ -14,10 +14,10 @@ namespace Kalorhytm.Logic.UseCases.WaterIntakeUseCases
             _waterIntakeRepository = waterIntakeRepository;
         }
 
-        public async Task<WaterIntakeModel> ExecuteAsync(DateTime date, int glassNumber)
+        public async Task<WaterIntakeModel> ExecuteAsync(DateTime date, int glassNumber, string userId)
         {
             // Check if glass already exists for this date
-            var existing = await _waterIntakeRepository.GetByDateAsync(date);
+            var existing = await _waterIntakeRepository.GetByDateAsync(date, userId);
             if (existing.Any(w => w.GlassNumber == glassNumber))
             {
                 throw new InvalidOperationException($"Glass {glassNumber} already exists for date {date:yyyy-MM-dd}");
@@ -27,7 +27,8 @@ namespace Kalorhytm.Logic.UseCases.WaterIntakeUseCases
             {
                 Date = date,
                 GlassNumber = glassNumber,
-                Amount = DailyWaterIntakeModel.GlassSize
+                Amount = DailyWaterIntakeModel.GlassSize,
+                UserId = userId
             };
 
             await _waterIntakeRepository.AddAsync(waterIntake);

@@ -6,12 +6,14 @@
 @using Kalorhytm.Domain.Enums
 @using Kalorhytm.Logic.Interfaces
 @using Kalorhytm.Logic.UseCases
+@using System.Security.Claims
 @inject IGetDailyNutritionUseCase GetDailyNutritionUseCase
 @inject ISearchFoodsUseCase SearchFoodsUseCase
 @inject IAddMealEntryUseCase AddMealEntryUseCase
 @inject IGetDailyWaterIntakeUseCase GetDailyWaterIntakeUseCase
 @inject IAddWaterGlassUseCase AddWaterGlassUseCase
 @inject IRemoveWaterGlassUseCase RemoveWaterGlassUseCase
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
 
 <div class="container mx-auto px-4 py-8">
@@ -430,9 +432,14 @@
     private FoodModel? selectedFood;
     private MealType selectedMealTypeOld = MealType.Breakfast;
     private double quantity = 100;
+    private string? userId;
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
         searchResults = new List<FoodModel>();
         dailyNutrition = new DailyNutritionModel { Date = selectedDate };
         await LoadDailyNutrition();
@@ -441,10 +448,12 @@
 
     private async Task LoadDailyNutrition()
     {
+        if (string.IsNullOrEmpty(userId)) return;
+        
         try
         {
-            Console.WriteLine($"Loading daily nutrition for date: {selectedDate:yyyy-MM-dd}");
-            dailyNutrition = await GetDailyNutritionUseCase.ExecuteAsync(selectedDate);
+            Console.WriteLine($"Loading daily nutrition for date: {selectedDate:yyyy-MM-dd}, userId: {userId}");
+            dailyNutrition = await GetDailyNutritionUseCase.ExecuteAsync(selectedDate, userId);
             Console.WriteLine($"Loaded nutrition: {dailyNutrition?.MealEntries.Count ?? 0} entries, Total calories: {dailyNutrition?.TotalCalories ?? 0}");
         }
         catch (Exception ex)
@@ -455,10 +464,12 @@
 
     private async Task LoadWaterIntake()
     {
+        if (string.IsNullOrEmpty(userId)) return;
+        
         try
         {
-            Console.WriteLine($"Loading water intake for date: {selectedDate:yyyy-MM-dd}");
-            dailyWaterIntake = await GetDailyWaterIntakeUseCase.ExecuteAsync(selectedDate);
+            Console.WriteLine($"Loading water intake for date: {selectedDate:yyyy-MM-dd}, userId: {userId}");
+            dailyWaterIntake = await GetDailyWaterIntakeUseCase.ExecuteAsync(selectedDate, userId);
             Console.WriteLine($"Loaded water intake: {dailyWaterIntake?.GlassCount ?? 0} glasses, {dailyWaterIntake?.TotalWaterMl ?? 0} ml");
             await InvokeAsync(StateHasChanged);
         }
@@ -483,7 +494,8 @@
                 {
                     var lastDrunkGlassNumber = drunkGlasses.First().GlassNumber;
                     Console.WriteLine($"Removing last water glass {lastDrunkGlassNumber} (from the end) for date: {selectedDate:yyyy-MM-dd}");
-                    await RemoveWaterGlassUseCase.ExecuteAsync(selectedDate, lastDrunkGlassNumber);
+                    if (!string.IsNullOrEmpty(userId))
+                        await RemoveWaterGlassUseCase.ExecuteAsync(selectedDate, lastDrunkGlassNumber, userId);
                 }
             }
             else
@@ -512,7 +524,8 @@
                 }
                 
                 Console.WriteLine($"Adding water glass {firstEmptyGlassNumber} (first empty from left) for date: {selectedDate:yyyy-MM-dd}");
-                await AddWaterGlassUseCase.ExecuteAsync(selectedDate, firstEmptyGlassNumber);
+                if (!string.IsNullOrEmpty(userId))
+                    await AddWaterGlassUseCase.ExecuteAsync(selectedDate, firstEmptyGlassNumber, userId);
             }
             
             await LoadWaterIntake();
@@ -571,12 +584,12 @@
 
     private async Task AddMealEntry()
     {
-        if (selectedFood != null && quantity > 0)
+        if (selectedFood != null && quantity > 0 && !string.IsNullOrEmpty(userId))
         {
             try
             {
                 Console.WriteLine($"Adding meal entry: {selectedFood.Name}, {quantity}g, {selectedMealTypeOld}, {selectedDate:yyyy-MM-dd}");
-                await AddMealEntryUseCase.ExecuteAsync(selectedFood, quantity, selectedMealTypeOld, selectedDate);
+                await AddMealEntryUseCase.ExecuteAsync(selectedFood, quantity, selectedMealTypeOld, selectedDate, userId);
                 Console.WriteLine("Meal entry added successfully, reloading nutrition...");
                 await LoadDailyNutrition();
                 
@@ -637,12 +650,12 @@
 
     private async Task AddFoodToMeal()
     {
-        if (selectedFoodForModal != null && modalQuantity > 0)
+        if (selectedFoodForModal != null && modalQuantity > 0 && !string.IsNullOrEmpty(userId))
         {
             try
             {
                 Console.WriteLine($"Adding food to meal: {selectedFoodForModal.Name}, {modalQuantity}g, {selectedMealType}, {selectedDate:yyyy-MM-dd}");
-                await AddMealEntryUseCase.ExecuteAsync(selectedFoodForModal, modalQuantity, selectedMealType, selectedDate);
+                await AddMealEntryUseCase.ExecuteAsync(selectedFoodForModal, modalQuantity, selectedMealType, selectedDate, userId);
                 Console.WriteLine("Food added successfully, reloading nutrition...");
                 await LoadDailyNutrition();
                 

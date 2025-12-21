@@ -7,10 +7,10 @@ namespace Kalorhytm.Domain.Interfaces.IRepositories
     {
         Task<MealEntryEntity?> GetByIdAsync(int id);
         Task<List<MealEntryEntity>> GetAllAsync();
-        Task<List<MealEntryEntity>> GetByDateAsync(DateTime date);
-        Task<List<MealEntryEntity>> GetByDateAndMealTypeAsync(DateTime date, MealType mealType);
-        Task<List<MealEntryEntity>> GetByDateRangeAsync(DateTime startDate, DateTime endDate);
-        Task<double> GetTotalCaloriesForDateAsync(DateTime date);
+        Task<List<MealEntryEntity>> GetByDateAsync(DateTime date, string userId);
+        Task<List<MealEntryEntity>> GetByDateAndMealTypeAsync(DateTime date, MealType mealType, string userId);
+        Task<List<MealEntryEntity>> GetByDateRangeAsync(DateTime startDate, DateTime endDate, string userId);
+        Task<double> GetTotalCaloriesForDateAsync(DateTime date, string userId);
         Task AddAsync(MealEntryEntity mealEntry);
         Task UpdateAsync(MealEntryEntity mealEntry);
         Task DeleteAsync(int id);
