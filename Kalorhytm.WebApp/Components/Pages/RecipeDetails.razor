@@ -15,184 +15,207 @@ else if (!string.IsNullOrEmpty(ErrorMessage))
 }
 else if (RecipeData != null)
 {
-    <div class="">
-        <div class="">
+    <div class="max-w-6xl mx-auto">
+        <!-- Recipe Image -->
+        <div class="mb-8 rounded-lg overflow-hidden shadow-lg">
             <img src="@RecipeData.ImageUrl"
                  alt="@RecipeData.Title"
-                 class="">
+                 class="w-full h-96 object-cover">
         </div>
-        <div class="">
-            <h1>@RecipeData.Title</h1>
+
+        <!-- Recipe Title -->
+        <div class="mb-6">
+            <h1 class="text-4xl font-bold text-gray-900">@RecipeData.Title</h1>
         </div>
-        <div class="">
-            <h1>Summary</h1>
-            <div class="">@((MarkupString)RecipeData.Summary)</div>
+
+        <!-- Summary -->
+        <div class="mb-8 bg-white p-6 rounded-lg shadow">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-800">Summary</h2>
+            <div class="text-gray-700 leading-relaxed">@((MarkupString)RecipeData.Summary)</div>
         </div>
-        <h2 class="text-xl font-semibold mb-4">Ingredients</h2>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            @foreach (var ingredient in RecipeData.ExtendedIngredients)
-            {
-                <div class="flex items-start p-4 rounded-lg shadow bg-white gap-3">
-
-                    @if (!string.IsNullOrWhiteSpace(ingredient.Image))
-                    {
-                        <img src="https://spoonacular.com/cdn/ingredients_100x100/@ingredient.Image"
-                             alt="@ingredient.Name"
-                             class="w-14 h-14 rounded object-cover" />
-                    }
-
-                    <div class="flex flex-col text-gray-800 text-base leading-tight w-full">
-
-                        <div class="flex justify-between items-center">
-                            <span class="font-medium">@ingredient.Name</span>
-                            <span class="">@ingredient.Amount @ingredient.Unit</span>
-                        </div>
-
-                        @if (!string.IsNullOrWhiteSpace(ingredient.Original))
+        <!-- Ingredients -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-800">Ingredients</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                @foreach (var ingredient in RecipeData.ExtendedIngredients)
+                {
+                    <div class="flex items-start p-4 rounded-lg shadow bg-white gap-3">
+                        @if (!string.IsNullOrWhiteSpace(ingredient.Image))
                         {
-                            <span class="text-sm text-gray-600 mt-1 italic">@ingredient.Original</span>
+                            <img src="https://spoonacular.com/cdn/ingredients_100x100/@ingredient.Image"
+                                 alt="@ingredient.Name"
+                                 class="w-14 h-14 rounded object-cover" />
                         }
 
-                        @if (ingredient.Meta?.Count > 0)
-                        {
-                            <div class="mt-2 flex flex-wrap gap-1">
-                                @foreach (var meta in ingredient.Meta)
-                                {
-                                    <span class="px-2 py-1 text-xs rounded bg-gray-200 text-gray-700">
-                                        @meta
-                                    </span>
-                                }
+                        <div class="flex flex-col text-gray-800 text-base leading-tight w-full">
+                            <div class="flex justify-between items-center">
+                                <span class="font-medium">@ingredient.Name</span>
+                                <span class="text-gray-600">@ingredient.Amount @ingredient.Unit</span>
                             </div>
-                        }
+
+                            @if (!string.IsNullOrWhiteSpace(ingredient.Original))
+                            {
+                                <span class="text-sm text-gray-600 mt-1 italic">@ingredient.Original</span>
+                            }
+
+                            @if (ingredient.Meta?.Count > 0)
+                            {
+                                <div class="mt-2 flex flex-wrap gap-1">
+                                    @foreach (var meta in ingredient.Meta)
+                                    {
+                                        <span class="px-2 py-1 text-xs rounded bg-gray-200 text-gray-700">
+                                            @meta
+                                        </span>
+                                    }
+                                </div>
+                            }
+                        </div>
                     </div>
-                </div>
-            }
+                }
+            </div>
         </div>
 
-
-        <div class="">
-            <h1>Instructions</h1>
+        <!-- Instructions -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-800">Instructions</h2>
             @foreach (var instruction in RecipeData.AnalyzedInstructions)
             {
-            @if (!string.IsNullOrEmpty(instruction.Name))
-            {
-                <h2 class="text-xl font-bold mb-4">@instruction.Name</h2>
-            }
+                @if (!string.IsNullOrEmpty(instruction.Name))
+                {
+                    <h3 class="text-xl font-bold mb-4 text-gray-700">@instruction.Name</h3>
+                }
 
-            @foreach (var step in instruction.Steps)
-            {
-                <div class="mb-6 p-4 bg-gray-50 rounded-lg">
-                    <div class="mb-2">
-                        <span class="font-bold text-lg">@step.Number.</span>
-                        <span>@step.Step</span>
-                    </div>
-                    
-            @if (step.Ingredients?.Any() == true)
-            {
-                <div class="mt-3 pl-6">
-                    <span class="text-sm font-semibold text-gray-600">Ingredients:</span>
-                    <div class="flex flex-wrap gap-2 mt-1">
-                        @foreach (var ingredient in step.Ingredients)
+                @foreach (var step in instruction.Steps)
+                {
+                    <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+                        <div class="mb-2">
+                            <span class="font-bold text-lg text-gray-900">@step.Number.</span>
+                            <span class="text-gray-800">@step.Step</span>
+                        </div>
+
+                        @if (step.Ingredients?.Any() == true)
                         {
-                            <span class="inline-flex items-center gap-1 bg-white px-3 py-1 rounded-full text-sm border">
-                                @if (!string.IsNullOrEmpty(ingredient.Image))
-                                {
-                                    <img src="https://spoonacular.com/cdn/ingredients_100x100/@ingredient.Image" 
-                                         alt="@ingredient.Name" 
-                                         class="w-5 h-5 rounded-full object-cover" />
-                                }
-                                @ingredient.Name
-                            </span>
-                        }
-                    </div>
-                </div>
-            }
-            
-            @if (step.Equipment?.Any() == true)
-            {
-                <div class="mt-3 pl-6">
-                    <span class="text-sm font-semibold text-gray-600">Equipment:</span>
-                    <div class="flex flex-wrap gap-2 mt-1">
-                        @foreach (var equipment in step.Equipment)
-                        {
-                            <span class="inline-flex items-center gap-1 bg-blue-50 px-3 py-1 rounded-full text-sm border border-blue-200">
-                                @if (!string.IsNullOrEmpty(equipment.Image))
-                                {
-                                    <img src="https://spoonacular.com/cdn/equipment_100x100/@equipment.Image" 
-                                         alt="@equipment.Name" 
-                                         class="w-5 h-5 rounded-full object-cover" />
-                                }
-                                @equipment.Name
-                                @if (equipment.Temperature != null)
-                                {
-                                    <span class="text-xs text-gray-500">(@equipment.Temperature.Number° @equipment.Temperature.Unit)</span>
-                                }
-                            </span>
-                        }
-                    </div>
-                </div>
-            }
-        </div>
-    }
-}
-        </div>
-        <div>
-    <div>
-    <h1 class="text-2xl font-bold mb-4">Nutritions</h1>
-    <MudButton class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" 
-            @onclick="() => showNutrition = !showNutrition">
-        @(showNutrition ? "Hide" : "Show") nutritions
-    </MudButton>
-        
-    @if (showNutrition && RecipeNutrition != null)
-    {
-        <div>
-            Dla dorosłego na diecie 2000 kcal dziennie - to standard FDA (Food and Drug Administration) używany na etykietach żywności w USA.
-        </div>
-        <div class="mt-6">
-            <div class="grid grid-cols-3 gap-4 mb-6">
-                <div class="bg-blue-50 p-4 rounded-lg text-center">
-                    <div class="text-3xl font-bold text-blue-600">@RecipeNutrition.PercentProtein.ToString("F1")%</div>
-                    <div class="text-sm text-gray-600">Protein</div>
-                </div>
-                <div class="bg-green-50 p-4 rounded-lg text-center">
-                    <div class="text-3xl font-bold text-green-600">@RecipeNutrition.PercentFat.ToString("F1")%</div>
-                    <div class="text-sm text-gray-600">Fat</div>
-                </div>
-                <div class="bg-orange-50 p-4 rounded-lg text-center">
-                    <div class="text-3xl font-bold text-orange-600">@RecipeNutrition.PercentCarbs.ToString("F1")%</div>
-                    <div class="text-sm text-gray-600">Carbs</div>
-                </div>
-            </div>
-            
-            @if (RecipeNutrition.Nutrients?.Any() == true)
-            {
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    @foreach (var nutrient in RecipeNutrition.Nutrients.Where(n => 
-                        new[] { "Calories", "Protein", "Fat", "Carbohydrates", "Fiber", "Sugar", "Sodium", "Cholesterol", "Saturated Fat" }
-                        .Contains(n.Name)))
-                    {
-                        <div class="bg-white p-3 rounded border flex justify-between items-center">
-                            <span class="font-medium">@nutrient.Name</span>
-                            <div class="text-right">
-                                <div class="font-semibold">@nutrient.Amount.ToString("F1") @nutrient.Unit</div>
-                                <div class="text-xs text-gray-500">@nutrient.PercentOfDailyNeeds.ToString("F0")% daily</div>
+                            <div class="mt-3 pl-6">
+                                <span class="text-sm font-semibold text-gray-600">Ingredients:</span>
+                                <div class="flex flex-wrap gap-2 mt-1">
+                                    @foreach (var ingredient in step.Ingredients)
+                                    {
+                                        <span class="inline-flex items-center gap-1 bg-white px-3 py-1 rounded-full text-sm border">
+                                            @if (!string.IsNullOrEmpty(ingredient.Image))
+                                            {
+                                                <img src="https://spoonacular.com/cdn/ingredients_100x100/@ingredient.Image"
+                                                     alt="@ingredient.Name"
+                                                     class="w-5 h-5 rounded-full object-cover" />
+                                            }
+                                            @ingredient.Name
+                                        </span>
+                                    }
+                                </div>
                             </div>
+                        }
+
+                        @if (step.Equipment?.Any() == true)
+                        {
+                            <div class="mt-3 pl-6">
+                                <span class="text-sm font-semibold text-gray-600">Equipment:</span>
+                                <div class="flex flex-wrap gap-2 mt-1">
+                                    @foreach (var equipment in step.Equipment)
+                                    {
+                                        <span class="inline-flex items-center gap-1 bg-blue-50 px-3 py-1 rounded-full text-sm border border-blue-200">
+                                            @if (!string.IsNullOrEmpty(equipment.Image))
+                                            {
+                                                <img src="https://spoonacular.com/cdn/equipment_100x100/@equipment.Image"
+                                                     alt="@equipment.Name"
+                                                     class="w-5 h-5 rounded-full object-cover" />
+                                            }
+                                            @equipment.Name
+                                            @if (equipment.Temperature != null)
+                                            {
+                                                <span class="text-xs text-gray-500">(@equipment.Temperature.Number° @equipment.Temperature.Unit)</span>
+                                            }
+                                        </span>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            }
+        </div>
+
+        <!-- Nutrition -->
+        <div class="mb-8 bg-white p-6 rounded-lg shadow">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800">Nutritions</h2>
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       @onclick="() => showNutrition = !showNutrition"
+                       Class="mb-4">
+                @(showNutrition ? "Hide" : "Show") nutritions
+            </MudButton>
+
+            @if (showNutrition && RecipeNutrition != null)
+            {
+                <div class="mb-4 text-sm text-gray-600 italic">
+                    Dla dorosłego na diecie 2000 kcal dziennie - to standard FDA (Food and Drug Administration) używany na etykietach żywności w USA.
+                </div>
+
+                <div class="mt-6">
+                    <div class="grid grid-cols-3 gap-4 mb-6">
+                        <div class="bg-blue-50 p-4 rounded-lg text-center">
+                            <div class="text-3xl font-bold text-blue-600">@RecipeNutrition.PercentProtein.ToString("F1")%</div>
+                            <div class="text-sm text-gray-600">Protein</div>
+                        </div>
+                        <div class="bg-green-50 p-4 rounded-lg text-center">
+                            <div class="text-3xl font-bold text-green-600">@RecipeNutrition.PercentFat.ToString("F1")%</div>
+                            <div class="text-sm text-gray-600">Fat</div>
+                        </div>
+                        <div class="bg-orange-50 p-4 rounded-lg text-center">
+                            <div class="text-3xl font-bold text-orange-600">@RecipeNutrition.PercentCarbs.ToString("F1")%</div>
+                            <div class="text-sm text-gray-600">Carbs</div>
+                        </div>
+                    </div>
+
+                    @if (RecipeNutrition.Nutrients?.Any() == true)
+                    {
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            @foreach (var nutrient in RecipeNutrition.Nutrients.Where(n =>
+                                          new[] { "Calories", "Protein", "Fat", "Carbohydrates", "Fiber", "Sugar", "Sodium", "Cholesterol", "Saturated Fat" }
+                                              .Contains(n.Name)))
+                            {
+                                <div class="bg-white p-3 rounded border flex justify-between items-center">
+                                    <span class="font-medium">@nutrient.Name</span>
+                                    <div class="text-right">
+                                        <div class="font-semibold">@nutrient.Amount.ToString("F1") @nutrient.Unit</div>
+                                        <div class="text-xs text-gray-500">@nutrient.PercentOfDailyNeeds.ToString("F0")% daily</div>
+                                    </div>
+                                </div>
+                            }
                         </div>
                     }
                 </div>
             }
         </div>
-    }
-</div>
-    
-</div>
+        
+        <!-- Tags -->
+        @if (RecipeData.Tags?.Any() == true)
+        {
+            <div class="mb-8 bg-white p-6 rounded-lg shadow">
+                <h2 class="text-2xl font-bold mb-4 text-gray-800">Tags</h2>
+                <div class="flex flex-wrap gap-2">
+                    @foreach (var tag in RecipeData.Tags)
+                    {
+                        <span class="px-4 py-2 bg-green-100 text-green-700 rounded-full text-sm font-medium hover:bg-green-200 transition-colors">
+                            @tag
+                        </span>
+                    }
+                </div>
+            </div>
+        }
     </div>
 }
 
 @code {
-
     private bool isLoading = true;
     private string ErrorMessage = "";
     private RecipeDataModel? RecipeData { get; set; }
@@ -219,8 +242,7 @@ else if (RecipeData != null)
         {
             ErrorMessage = "Incorrect ID";
         }
-        
+
         isLoading = false;
     }
-
 }
