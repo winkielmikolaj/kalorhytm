@@ -12,55 +12,76 @@
 
 <PageTitle>Log in</PageTitle>
 
-<h1>Log in</h1>
-<div class="row">
-    <div class="col-lg-6">
-        <section>
-            <StatusMessage Message="@errorMessage" />
-            <EditForm Model="Input" method="post" OnValidSubmit="LoginUser" FormName="login">
-                <DataAnnotationsValidator />
-                <h2>Use a local account to log in.</h2>
-                <hr />
-                <ValidationSummary class="text-danger" role="alert" />
-                <div class="form-floating mb-3">
-                    <InputText @bind-Value="Input.Email" id="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
-                    <label for="Input.Email" class="form-label">Email</label>
-                    <ValidationMessage For="() => Input.Email" class="text-danger" />
+<div class="container mx-auto px-4 py-8 max-w-4xl">
+    <div class="flex flex-col md:flex-row gap-8">
+        @* Main Login Form *@
+        <div class="flex-1">
+            <Card AdditionalClass="mb-6">
+                <h1 class="text-3xl font-bold text-white mb-2">Log in</h1>
+                <p class="text-gray-300 mb-6">Use a local account to log in.</p>
+                
+                <StatusMessage Message="@errorMessage" />
+                
+                <EditForm Model="Input" method="post" OnValidSubmit="LoginUser" FormName="login">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary class="text-red-400 text-sm mb-4 p-3 bg-red-500/10 rounded-lg border border-red-500/30" role="alert" />
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label for="Input.Email" class="block text-sm font-medium text-gray-300 mb-2">Email</label>
+                            <input type="email" 
+                                   @bind="Input.Email" 
+                                   id="Input.Email" 
+                                   class="w-full bg-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-700 transition-all duration-200" 
+                                   autocomplete="username" 
+                                   aria-required="true" 
+                                   placeholder="name@example.com" />
+                            <ValidationMessage For="() => Input.Email" class="text-red-400 text-sm mt-1" />
+                        </div>
+                        
+                        <div>
+                            <label for="Input.Password" class="block text-sm font-medium text-gray-300 mb-2">Password</label>
+                            <input type="password" 
+                                   @bind="Input.Password" 
+                                   id="Input.Password" 
+                                   class="w-full bg-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-700 transition-all duration-200" 
+                                   autocomplete="current-password" 
+                                   aria-required="true" 
+                                   placeholder="password" />
+                            <ValidationMessage For="() => Input.Password" class="text-red-400 text-sm mt-1" />
+                        </div>
+                        
+                        <div class="flex items-center">
+                            <input type="checkbox" 
+                                   @bind="Input.RememberMe" 
+                                   id="Input.RememberMe" 
+                                   class="w-4 h-4 bg-gray-600 border-gray-500 rounded focus:ring-2 focus:ring-green-500 text-green-500" />
+                            <label for="Input.RememberMe" class="ml-2 text-sm text-gray-300">Remember me</label>
+                        </div>
+                        
+                        <Button ButtonType="ButtonType.Submit" AdditionalClass="w-full">
+                            Log in
+                        </Button>
+                    </div>
+                </EditForm>
+                
+                <div class="mt-6 space-y-2 text-sm">
+                    <a href="Account/ForgotPassword" class="text-green-400 hover:text-green-300 transition-colors duration-200 block">Forgot your password?</a>
+                    <a href="@(NavigationManager.GetUriWithQueryParameters("Account/Register", new Dictionary<string, object?> { ["ReturnUrl"] = ReturnUrl }))" class="text-green-400 hover:text-green-300 transition-colors duration-200 block">Register as a new user</a>
+                    <a href="Account/ResendEmailConfirmation" class="text-green-400 hover:text-green-300 transition-colors duration-200 block">Resend email confirmation</a>
                 </div>
-                <div class="form-floating mb-3">
-                    <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="password" />
-                    <label for="Input.Password" class="form-label">Password</label>
-                    <ValidationMessage For="() => Input.Password" class="text-danger" />
+            </Card>
+        </div>
+        
+        @* External Login Section *@
+        <div class="flex-1">
+            <Card>
+                <h3 class="text-xl font-semibold text-white mb-6 text-center">Use another service to log in</h3>
+                <div class="flex justify-center">
+                    <ExternalLoginPicker />
                 </div>
-                <div class="checkbox mb-3">
-                    <label class="form-label">
-                        <InputCheckbox @bind-Value="Input.RememberMe" class="darker-border-checkbox form-check-input" />
-                        Remember me
-                    </label>
-                </div>
-                <div>
-                    <button type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
-                </div>
-                <div>
-                    <p>
-                        <a href="Account/ForgotPassword">Forgot your password?</a>
-                    </p>
-                    <p>
-                        <a href="@(NavigationManager.GetUriWithQueryParameters("Account/Register", new Dictionary<string, object?> { ["ReturnUrl"] = ReturnUrl }))">Register as a new user</a>
-                    </p>
-                    <p>
-                        <a href="Account/ResendEmailConfirmation">Resend email confirmation</a>
-                    </p>
-                </div>
-            </EditForm>
-        </section>
-    </div>
-    <div class="col-lg-4 col-lg-offset-2">
-        <section>
-            <h3>Use another service to log in.</h3>
-            <hr />
-            <ExternalLoginPicker />
-        </section>
+            </Card>
+        </div>
     </div>
 </div>
 

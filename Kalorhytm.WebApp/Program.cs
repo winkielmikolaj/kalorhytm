@@ -23,6 +23,7 @@ using Kalorhytm.Logic.UseCases.MyFridgeUseCases;
 using Kalorhytm.Logic.UseCases.WaterIntakeUseCases;
 using Kalorhytm.Logic.Validation;
 using MudBlazor.Services;
+using Microsoft.AspNetCore.Authentication.Google;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,12 +35,29 @@ builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityUserAccessor>();
 builder.Services.AddScoped<IdentityRedirectManager>();
 
-builder.Services.AddAuthentication(options =>
+// Add Google OAuth first
+var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
+var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+
+var authBuilder = builder.Services.AddAuthentication(options =>
     {
         options.DefaultScheme = IdentityConstants.ApplicationScheme;
         options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
-    })
-    .AddIdentityCookies();
+    });
+
+// Add Google OAuth if configured
+if (!string.IsNullOrWhiteSpace(googleClientId) && !string.IsNullOrWhiteSpace(googleClientSecret))
+{
+    authBuilder.AddGoogle(GoogleDefaults.AuthenticationScheme, options =>
+    {
+        options.ClientId = googleClientId!;
+        options.ClientSecret = googleClientSecret!;
+    });
+}
+
+// Add Identity cookies after external providers
+authBuilder.AddIdentityCookies();
+
 builder.Services.AddAuthorization();
 
 builder.Services.AddHttpContextAccessor();

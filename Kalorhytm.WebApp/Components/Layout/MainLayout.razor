@@ -3,6 +3,8 @@
    - Top navbar layout
    - Full-width content area
    - Responsive design
+   - Footer
+   - Global animations
 *@
 @inherits LayoutComponentBase
 
@@ -20,8 +22,13 @@
     @* Top Navigation Bar *@
     <NavBar />
 
-    @* Main Content Area *@
-    <main class="flex-1">
-        @Body
+    @* Main Content Area with smooth transitions *@
+    <main class="flex-1 transition-all duration-300 ease-in-out">
+        <div class="animate-fade-in">
+            @Body
+        </div>
     </main>
+
+    @* Footer *@
+    <Footer />
 </div>

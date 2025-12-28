@@ -10,6 +10,7 @@
 @using Kalorhytm.Logic.Interfaces.IFavouriteRecipesUseCases
 @using Kalorhytm.Logic.Interfaces.IMyFridgeUseCases
 @using Kalorhytm.Logic.UseCases.MyFridgeUseCases
+@using Kalorhytm.WebApp.Components.Shared
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject ISpoonacularRecipesService RecipesService
 @inject IAddIngredientUseCase AddIngredientUseCase
@@ -18,392 +19,305 @@
 @inject IAddRecipeToMealUseCase AddRecipeToMealUseCase
 @inject IAddFavouriteRecipeUseCase AddFavouriteRecipeUseCase
 
+<PageTitle>My Fridge</PageTitle>
 
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-white mb-8 transition-all duration-300">My Fridge</h1>
 
-@*@if (isProcessing)
-{
-    <p>Loading fridge...</p>
-}*@
+    @* Add Ingredient Section *@
+    <Card Title="Add Ingredients">
+        <Input Label="Ingredient Name" 
+               @bind-Value="newIngredient" 
+               Placeholder="Enter ingredient name..."
+               ErrorMessage="@validationMessageForAddingToFridge" />
+        
+        <div class="flex flex-wrap gap-3">
+            <Button OnClick="AddIngredientsToFridge">
+                Add to Fridge
+            </Button>
+            <Button OnClick="OpenFridge" Variant="ButtonVariant.Secondary">
+                @(buttonForOpenningFridge ? "Close Fridge" : "Open Fridge")
+            </Button>
+        </div>
+    </Card>
 
-<h3 class="mt-4">My Fridge</h3>
-
-<div class="mb-3">
-    <input @bind="newIngredient" class="form-control" placeholder="Add ingredient name..."/>
-    @if (!string.IsNullOrEmpty(validationMessageForAddingToFridge))
+    @* Fridge Items List *@
+    @if (buttonForOpenningFridge && myFridgeItems.Any())
     {
-        <div class="text-danger mt-1">@validationMessageForAddingToFridge</div>
-    }
-</div>
-<div class="mb-3">
-    <button class="btn btn-success" @onclick="AddIngredientsToFridge">Add to Fridge</button>
-</div>
-
-<button class="btn btn-success" @onclick="OpenFridge">Open Fridge</button>
-<button class="btn btn-danger" @onclick="CloseFridge">Close Fridge</button>
-
-
-@if (buttonForOpenningFridge == true)
-{
-    <ul class="list-group mt-3">
-        @foreach (var ingredient in myFridgeItems)
-        {
-            <li class="list-group-item">@ingredient.Name
-                <button class="btn btn-danger" @onclick="() => DeleteIngredientFromFridge(ingredient.Id)">Delete
-                </button>
-            </li>
-        }
-    </ul>
-}
-
-
-
-<h3 class="mb-3">Search Recipes by Ingredients</h3>
-
-
-<div class="mb-3">
-    <button class="btn btn-primary" @onclick="SearchRecipes">Search</button>
-</div>
-@if (!string.IsNullOrEmpty(validateMessageForSearching))
-{
-    <div class="text-danger mt-1">@validateMessageForSearching</div>
-}
-@if (recipes == null)
-{
-    <p>Enter ingredients to search for recipes.</p>
-}
-else if (recipes.Count == 0)
-{
-    <p>No recipes found.</p>
-}
-else
-{
-    <div class="row">
-        @foreach (var recipe in recipes)
-        {
-            <div class="col-md-4 mb-3">
-                <div class="card">
-                    <img class="card-img-top" src="@recipe.ImageUrl" alt="@recipe.Title"/>
-                    <div class="card-body">
-                        <h5 class="card-title">@recipe.Title</h5>
-                        <p><button @onclick="() => LikingSystem(recipe.RecipeId)">🤍</button> @recipe.Likes</p>
-                        <p>
-                            <b>Used:</b> @string.Join(", ", recipe.UsedIngredients)<br/>
-                            <b>Missing:</b> @string.Join(", ", recipe.MissedIngredients)
-                        </p>
-                        <div class="flex justify-content-end">
-                            <button class="btn btn-primary mt-2" @onclick="() => SaveToFavourites(recipe)">Save Recipe</button>
-                        </div>
-                        <button class="btn btn-primary mt-2" @onclick="() => ShowAddRecipeModal(recipe)">Add to Meal</button>
+        <Card Title="My Ingredients" AdditionalClass="mt-6">
+            <div class="space-y-2">
+                @foreach (var ingredient in myFridgeItems)
+                {
+                    <div class="flex items-center justify-between p-3 bg-gray-600 rounded-lg hover:bg-gray-500 transition-all duration-200">
+                        <span class="text-white font-medium">@ingredient.Name</span>
+                        <Button OnClick="@(() => DeleteIngredientFromFridge(ingredient.Id))" 
+                                Variant="ButtonVariant.Danger"
+                                AdditionalClass="text-sm">
+                            Delete
+                        </Button>
                     </div>
+                }
+            </div>
+        </Card>
+    }
+
+    @* Search Recipes by Ingredients *@
+    <Card Title="Search Recipes by Ingredients" AdditionalClass="mt-6">
+        <div class="mb-4">
+            <p class="text-gray-300 mb-4">Search for recipes using ingredients from your fridge.</p>
+            <Button OnClick="SearchRecipes">
+                Search Recipes
+            </Button>
+        </div>
+        
+        @if (!string.IsNullOrEmpty(validateMessageForSearching))
+        {
+            <p class="text-red-400 text-sm">@validateMessageForSearching</p>
+        }
+    </Card>
+
+    @* Recipe Results *@
+    @if (recipes != null)
+    {
+        @if (recipes.Count == 0)
+        {
+            <Card AdditionalClass="mt-6 text-center">
+                <p class="text-gray-300">No recipes found with your ingredients.</p>
+            </Card>
+        }
+        else
+        {
+            <div class="mt-6">
+                <h2 class="text-2xl font-semibold text-white mb-6">Found Recipes</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    @foreach (var recipe in recipes)
+                    {
+                        <Card AdditionalClass="overflow-hidden hover:scale-105 transform transition-all duration-300">
+                            <img class="w-full h-48 object-cover rounded-t-xl -mx-6 -mt-6 mb-4" 
+                                 src="@recipe.ImageUrl" 
+                                 alt="@recipe.Title"/>
+                            <h5 class="text-white font-semibold text-lg mb-2">@recipe.Title</h5>
+                            <div class="flex items-center gap-2 mb-3">
+                                <button @onclick="() => LikingSystem(recipe.RecipeId)" 
+                                        class="text-2xl hover:scale-110 transition-transform duration-200">
+                                    🤍
+                                </button>
+                                <span class="text-gray-300">@recipe.Likes likes</span>
+                            </div>
+                            <div class="mb-4 space-y-2">
+                                <p class="text-sm text-gray-300">
+                                    <span class="font-medium text-green-400">Used:</span> @string.Join(", ", recipe.UsedIngredients)
+                                </p>
+                                <p class="text-sm text-gray-300">
+                                    <span class="font-medium text-orange-400">Missing:</span> @string.Join(", ", recipe.MissedIngredients)
+                                </p>
+                            </div>
+                            <div class="flex flex-wrap gap-2">
+                                <Button OnClick="@(() => SaveToFavourites(recipe))" 
+                                        Variant="ButtonVariant.Outline"
+                                        AdditionalClass="text-sm">
+                                    Save Recipe
+                                </Button>
+                                <Button OnClick="@(() => ShowAddRecipeModal(recipe))" 
+                                        AdditionalClass="text-sm">
+                                    Add to Meal
+                                </Button>
+                            </div>
+                        </Card>
+                    }
                 </div>
             </div>
         }
-    </div>
-}
+    }
+    else
+    {
+        <Card AdditionalClass="mt-6 text-center">
+            <p class="text-gray-300">Enter ingredients to search for recipes.</p>
+        </Card>
+    }
+</div>
 
-<!-- Modal for adding recipe to meal -->
-@if (showRecipeModal && selectedRecipe != null)
+@* Add Recipe to Meal Modal *@
+@if (showAddRecipeModal && selectedRecipe != null)
 {
-    <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999;">
-        <div class="bg-white rounded-lg p-6 w-96 mx-4 shadow-xl">
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" 
+         @onclick="CloseAddRecipeModal"
+         @onkeydown="@(e => { if (e.Key == "Escape") CloseAddRecipeModal(); })">
+        <div class="bg-gray-700 rounded-xl p-6 w-96 max-w-[90vw] shadow-2xl" 
+             @onclick:stopPropagation="true">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold text-gray-900">Add Recipe to Meal</h3>
-                <button @onclick="CloseRecipeModal" class="text-gray-400 hover:text-gray-600 bg-transparent border-none cursor-pointer">
+                <h3 class="text-xl font-semibold text-white">Add Recipe to Meal</h3>
+                <button @onclick="CloseAddRecipeModal" 
+                        class="text-gray-400 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 rounded">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
                 </button>
             </div>
-            <div class="mb-4">
-                <h4 class="font-medium text-gray-900 mb-2">@selectedRecipe.Title</h4>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Meal Type:</label>
+                    <select @bind="selectedMealTypeForRecipe" 
+                            class="w-full bg-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                        <option value="@MealType.Breakfast">Breakfast</option>
+                        <option value="@MealType.SecondBreakfast">Second Breakfast</option>
+                        <option value="@MealType.Lunch">Lunch</option>
+                        <option value="@MealType.Snack">Snack</option>
+                        <option value="@MealType.Dinner">Dinner</option>
+                    </select>
+                </div>
+                <div class="flex gap-2">
+                    <Button OnClick="AddRecipeToMeal" AdditionalClass="flex-1">
+                        Add to Meal
+                    </Button>
+                    <Button OnClick="CloseAddRecipeModal" Variant="ButtonVariant.Secondary" AdditionalClass="flex-1">
+                        Cancel
+                    </Button>
+                </div>
             </div>
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Meal Type:</label>
-                <select @bind="selectedMealType" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="@MealType.Breakfast">Breakfast</option>
-                    <option value="@MealType.SecondBreakfast">Second Breakfast</option>
-                    <option value="@MealType.Lunch">Lunch</option>
-                    <option value="@MealType.Snack">Snack</option>
-                    <option value="@MealType.Dinner">Dinner</option>
-                </select>
-            </div>
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Number of Servings:</label>
-                <input type="number" @bind="recipeServings" min="0.5" step="0.5" 
-                       class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
-            </div>
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Date:</label>
-                <input type="date" @bind="selectedDate" @bind:format="yyyy-MM-dd"
-                       class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
-            </div>
-            <div class="flex gap-2">
-                <button @onclick="AddRecipeToMeal" class="flex-1 bg-green-500 text-white px-4 py-2 rounded-md border-none cursor-pointer hover:bg-green-600 transition">Add to Meal</button>
-                <button @onclick="CloseRecipeModal" class="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-md border-none cursor-pointer hover:bg-gray-400 transition">Cancel</button>
-            </div>
-            @if (!string.IsNullOrEmpty(recipeModalError))
-            {
-                <div class="text-danger mt-2">@recipeModalError</div>
-            }
         </div>
     </div>
 }
 
-
 @code {
-
-    private bool isProcessing { get; set; } = true;
-
-    //api
-    private string ingredientsInput = "apples, flour, sugar";
-    private List<RecipeModel> recipes;
-
-    //myFridge
+    private string userId = "";
     private string newIngredient = "";
+    private string validationMessageForAddingToFridge = "";
+    private string validateMessageForSearching = "";
+    private bool buttonForOpenningFridge = false;
     private List<MyFridgeModel> myFridgeItems = new();
-    private MyFridgeModel newFridgeModel = new();
-    private int Id { get; set; }
-    private string Name { get; set; }
-    private bool buttonForOpenningFridge;
-
-    private string userId { get; set; }
-
-    //validator
-    private string validationMessageForAddingToFridge;
-    private string validateMessageForSearching;
-    private string validateMessageForDeleting;
-    
-    //recipe modal
-    private bool showRecipeModal = false;
-    private RecipeModel? selectedRecipe;
-    private MealType selectedMealType = MealType.Breakfast;
-    private double recipeServings = 1.0;
-    private DateTime selectedDate = DateTime.Today;
-    private string recipeModalError = "";
-
-    private void LikingSystem(int id)
-    {
-        var recipe = recipes.FirstOrDefault(r => r.RecipeId == id);
-
-        if (recipe != null)
-        {
-            recipe.Likes++;
-
-            Console.WriteLine("You liked a recipe");
-        }
-        
-        StateHasChanged();
-    }
-
-    //saving favourite recipe
-    private async Task SaveToFavourites(RecipeModel recipe)
-    {
-        try
-        {
-            Console.WriteLine($"[myFridge] Saving recipe {recipe.RecipeId} for user {userId}");
-        
-            var favourite = new FavouriteRecipesModel
-            {
-                UserId = userId,
-                RecipeId = recipe.RecipeId,
-                Title = recipe.Title,
-                ImageUrl = recipe.ImageUrl,
-                Likes = recipe.Likes
-            };
-
-            var saved = await AddFavouriteRecipeUseCase.ExecuteAsync(favourite);
-            Console.WriteLine($"[myFridge] Recipe saved successfully with Id: {saved.Id}");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"[myFridge] Error saving favourite: {ex.Message}");
-            Console.WriteLine($"[myFridge] Stack trace: {ex.StackTrace}");
-        }
-    }
-    
-    //saving ingredients to database (fridge)
+    private List<RecipeModel>? recipes = null;
+    private bool showAddRecipeModal = false;
+    private RecipeModel? selectedRecipe = null;
+    private MealType selectedMealTypeForRecipe = MealType.Breakfast;
 
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
-
-        userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-        foreach (var claim in user.Claims)
+        userId = authState.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "";
+        
+        if (!string.IsNullOrEmpty(userId))
         {
-            Console.WriteLine($"Claim {claim.Type} = {claim.Value}");
+            await LoadFridgeItems();
         }
-
-        Console.WriteLine($"User is loaded {userId}");
-
-        await LoadMyFridge(); //reload fridge
     }
 
-    private void OpenFridge()
+    private async Task LoadFridgeItems()
     {
-        buttonForOpenningFridge = true;
-    }
-
-    private void CloseFridge()
-    {
-        buttonForOpenningFridge = false;
-    }
-
-    // protected override async Task OnAfterRenderAsync(bool firstRender)
-    // {
-    //     if (firstRender)
-    //     {
-    //         await LoadMyFridge();
-    //         isProcessing = true;
-    //         StateHasChanged();
-    //
-    //     }
-    // }
-
-    private async Task LoadMyFridge()
-    {
-        isProcessing = true;
-
         myFridgeItems = await GetIngredientUseCase.ExecuteAsync(userId);
-
-        isProcessing = false;
-        StateHasChanged();
     }
 
     private async Task AddIngredientsToFridge()
     {
-        validationMessageForAddingToFridge = string.Empty;
+        validationMessageForAddingToFridge = "";
+        
+        if (string.IsNullOrWhiteSpace(newIngredient))
+        {
+            validationMessageForAddingToFridge = "Ingredient name cannot be empty.";
+            return;
+        }
 
         try
         {
             var model = new MyFridgeModel
             {
                 Name = newIngredient,
-                UserId = userId,
+                UserId = userId
             };
-
-            var saved = await AddIngredientUseCase.ExecuteAsync(model);
-
-            myFridgeItems.Add(saved);
+            await AddIngredientUseCase.ExecuteAsync(model);
             newIngredient = "";
-        }
-        catch (FluentValidation.ValidationException ex)
-        {
-            Console.WriteLine($"Validation error: {ex.Message}");
-            validationMessageForAddingToFridge = ex.Message;
-        }
-
-        StateHasChanged();
-    }
-
-
-    private async Task DeleteIngredientFromFridge(int id)
-    {
-        validateMessageForDeleting = string.Empty;
-
-        try
-        {
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-            throw;
-        }
-
-        Console.WriteLine($"Deleting item id = {id}");
-
-        var deleted = await DeleteIngredientUseCase.ExecuteAsync(id, userId);
-
-        if (deleted != null)
-        {
-            myFridgeItems.RemoveAll(b => b.Id == deleted.Id);
-            await LoadMyFridge();
-        }
-        else
-        {
-            Console.WriteLine($"Item with id {id} not found or doesn't belong to user {userId}");
-        }
-
-        StateHasChanged();
-    }
-
-    //searching recipes from API
-    private async Task SearchRecipes()
-    {
-        validateMessageForSearching = string.Empty;
-
-
-        var fridgeItems = await GetIngredientUseCase.ExecuteAsync(userId);
-        var ingredients = fridgeItems.Select(i => i.Name).ToList();
-
-
-        Console.WriteLine($"Searching recipes for:{ingredients}");
-
-        recipes = await RecipesService.SearchRecipesByIngredientsAsync(
-            ingredients,
-            number: 20,
-            ranking: 1,
-            ignorePantry: true);
-
-        if (ingredients.Count == 0)
-        {
-            Console.WriteLine("User did not provide any products");
-            validateMessageForSearching = "The fridge is empty!";
-            StateHasChanged();
-        }
-
-        Console.WriteLine($"Found {recipes.Count} recipes");
-    }
-    
-    private void ShowAddRecipeModal(RecipeModel recipe)
-    {
-        selectedRecipe = recipe;
-        showRecipeModal = true;
-        recipeServings = 1.0;
-        selectedDate = DateTime.Today;
-        recipeModalError = "";
-        StateHasChanged();
-    }
-    
-    private void CloseRecipeModal()
-    {
-        showRecipeModal = false;
-        selectedRecipe = null;
-        recipeModalError = "";
-        StateHasChanged();
-    }
-    
-    private async Task AddRecipeToMeal()
-    {
-        if (selectedRecipe == null || recipeServings <= 0)
-        {
-            recipeModalError = "Please select a recipe and enter a valid number of servings.";
-            StateHasChanged();
-            return;
-        }
-        
-        try
-        {
-            recipeModalError = "";
-            Console.WriteLine($"Adding recipe {selectedRecipe.RecipeId} to meal: {selectedMealType}, {recipeServings} servings, {selectedDate:yyyy-MM-dd}");
-            
-            await AddRecipeToMealUseCase.ExecuteAsync(
-                selectedRecipe.RecipeId,
-                selectedRecipe.Title,
-                recipeServings,
-                selectedMealType,
-                selectedDate,
-                userId);
-            
-            Console.WriteLine("Recipe added successfully to meal");
-            CloseRecipeModal();
+            await LoadFridgeItems();
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error adding recipe to meal: {ex.Message}");
-            recipeModalError = $"Error: {ex.Message}";
-            StateHasChanged();
+            validationMessageForAddingToFridge = ex.Message;
         }
+    }
+
+    private void OpenFridge()
+    {
+        buttonForOpenningFridge = !buttonForOpenningFridge;
+    }
+
+    private async Task DeleteIngredientFromFridge(int ingredientId)
+    {
+        await DeleteIngredientUseCase.ExecuteAsync(ingredientId, userId);
+        await LoadFridgeItems();
+    }
+
+    private async Task SearchRecipes()
+    {
+        validateMessageForSearching = "";
+        
+        if (!myFridgeItems.Any())
+        {
+            validateMessageForSearching = "Please add ingredients to your fridge first.";
+            return;
+        }
+
+        try
+        {
+            var ingredients = myFridgeItems.Select(i => i.Name).ToList();
+            recipes = await RecipesService.SearchRecipesByIngredientsAsync(ingredients, 10);
+        }
+        catch (Exception ex)
+        {
+            validateMessageForSearching = ex.Message;
+        }
+    }
+
+    private async Task SaveToFavourites(RecipeModel recipe)
+    {
+        try
+        {
+            var favouriteModel = new FavouriteRecipesModel
+            {
+                UserId = userId,
+                RecipeId = recipe.RecipeId,
+                Title = recipe.Title,
+                ImageUrl = recipe.ImageUrl,
+                Likes = recipe.Likes,
+                UsedIngredientsJson = System.Text.Json.JsonSerializer.Serialize(recipe.UsedIngredients),
+                MissedIngredientsJson = System.Text.Json.JsonSerializer.Serialize(recipe.MissedIngredients)
+            };
+            await AddFavouriteRecipeUseCase.ExecuteAsync(favouriteModel);
+        }
+        catch (Exception ex)
+        {
+            // Handle error
+        }
+    }
+
+    private void ShowAddRecipeModal(RecipeModel recipe)
+    {
+        selectedRecipe = recipe;
+        showAddRecipeModal = true;
+    }
+
+    private void CloseAddRecipeModal()
+    {
+        showAddRecipeModal = false;
+        selectedRecipe = null;
+    }
+
+    private async Task AddRecipeToMeal()
+    {
+        if (selectedRecipe != null)
+        {
+            try
+            {
+                await AddRecipeToMealUseCase.ExecuteAsync(selectedRecipe.RecipeId, selectedRecipe.Title, 1.0, selectedMealTypeForRecipe, DateTime.Today, userId);
+                CloseAddRecipeModal();
+            }
+            catch (Exception ex)
+            {
+                // Handle error
+            }
+        }
+    }
+
+    private async Task LikingSystem(int recipeId)
+    {
+        // Implement liking system
     }
 }
