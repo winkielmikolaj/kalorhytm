@@ -1,0 +1,476 @@
+@* Modern Calendar Component for Fitness/Lifestyle App
+   Features:
+   - Horizontal scrolling days
+   - Month/Year navigation with arrow buttons
+   - Modern, minimalist design
+   - Smooth animations
+   - Accessibility support
+*@
+@namespace Kalorhytm.WebApp.Components.Shared
+
+<div class="w-full bg-gray-700 rounded-xl shadow-lg p-4 mb-6" style="min-height: 200px;">
+    @if (DaysInMonth == null || DaysInMonth.Count == 0)
+    {
+        <div class="text-white p-4 text-center">
+            <p>Loading calendar...</p>
+            <p class="text-xs text-gray-400">DaysInMonth count: @(DaysInMonth?.Count ?? -1)</p>
+        </div>
+    }
+    else
+    {
+        @* Month/Year Navigation *@
+        <div class="flex items-center justify-between mb-4">
+        <button @onclick="ScrollLeft" 
+                class="p-2 rounded-lg bg-gray-600 hover:bg-gray-500 text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                aria-label="Scroll left">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+        </button>
+        
+        <div class="flex items-center gap-2">
+            <button @onclick="ShowMonthYearPicker" 
+                    class="px-4 py-2 rounded-lg bg-gray-600 hover:bg-gray-500 text-white font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[140px]">
+                <span class="text-lg">@CurrentMonthYear</span>
+            </button>
+        </div>
+        
+        <button @onclick="ScrollRight" 
+                class="p-2 rounded-lg bg-gray-600 hover:bg-gray-500 text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                aria-label="Scroll right">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+        </button>
+    </div>
+
+    @* Horizontal Scrolling Days *@
+    <div class="relative">
+        <div class="overflow-x-auto scrollbar-hide" style="scrollbar-width: none; -ms-overflow-style: none;" 
+             @ref="scrollContainer"
+             data-calendar-scroll
+             @onscroll="OnScroll">
+            <div class="flex gap-2 pb-2" style="min-width: max-content;">
+                @foreach (var day in DaysInMonth)
+                {
+                    var isSelected = day.Date == SelectedDate.Date;
+                    var isToday = day.Date == DateTime.Today.Date;
+                    var isOtherMonth = day.Month != CurrentMonth;
+                    
+                    <button @onclick="() => SelectDate(day)"
+                            @onkeydown="@(e => HandleKeyDown(e, day))"
+                            class="flex flex-col items-center justify-center min-w-[60px] h-20 px-3 py-2 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-700
+                                   @(isSelected ? "bg-blue-500 text-white shadow-lg scale-105" : 
+                                     isToday ? "bg-blue-400 text-white shadow-md" : 
+                                     isOtherMonth ? "bg-gray-600 text-gray-400 opacity-60" : 
+                                     "bg-gray-600 text-white hover:bg-gray-500")"
+                            aria-label="@day.ToString("dddd, MMMM dd, yyyy", System.Globalization.CultureInfo.InvariantCulture)"
+                            aria-pressed="@isSelected">
+                        <span class="text-xs font-medium mb-1">@GetDayName(day)</span>
+                        <span class="text-lg font-bold">@day.Day</span>
+                    </button>
+                }
+            </div>
+        </div>
+        
+        @* Scroll Indicators *@
+        <div class="absolute left-0 top-0 bottom-2 w-8 bg-gradient-to-r from-gray-700 to-transparent pointer-events-none" 
+             style="display: @(showLeftScroll ? "block" : "none");"></div>
+        <div class="absolute right-0 top-0 bottom-2 w-8 bg-gradient-to-l from-gray-700 to-transparent pointer-events-none"
+             style="display: @(showRightScroll ? "block" : "none");"></div>
+    </div>
+    }
+</div>
+
+@* Month/Year Picker Modal *@
+@if (showMonthYearPicker)
+{
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" 
+         @onclick="CloseMonthYearPicker"
+         @onkeydown="@(e => { if (e.Key == "Escape") CloseMonthYearPicker(); })">
+        <div class="bg-gray-700 rounded-xl p-6 w-80 max-w-[90vw] shadow-2xl" 
+             @onclick:stopPropagation="true">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-white">Select Month & Year</h3>
+                <button @onclick="CloseMonthYearPicker" 
+                        class="text-gray-400 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 rounded">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            @* Year Selection *@
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-300 mb-2">Year</label>
+                <div class="flex items-center gap-2">
+                    <button @onclick="() => ChangeYear(-1)" 
+                            class="p-2 rounded-lg bg-gray-600 hover:bg-gray-500 text-white transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                    </button>
+                    <input type="number" @bind="pickerYear" @bind:after="UpdatePickerDate" 
+                           min="1900" max="2100"
+                           class="flex-1 px-4 py-2 rounded-lg bg-gray-600 text-white text-center font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <button @onclick="() => ChangeYear(1)" 
+                            class="p-2 rounded-lg bg-gray-600 hover:bg-gray-500 text-white transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            @* Month Selection Grid *@
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Month</label>
+                <div class="grid grid-cols-3 gap-2">
+                    @foreach (var month in Months)
+                    {
+                        var monthDate = new DateTime(pickerYear, month.Number, 1);
+                        var isSelected = monthDate.Month == CurrentMonth && pickerYear == CurrentYear;
+                        
+                        <button @onclick="() => SelectMonthYear(month.Number, pickerYear)"
+                                class="px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200
+                                       @(isSelected ? "bg-blue-500 text-white shadow-lg" : "bg-gray-600 text-white hover:bg-gray-500")
+                                       focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            @month.Name
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public DateTime SelectedDate { get; set; } = DateTime.Today;
+    [Parameter] public EventCallback<DateTime> SelectedDateChanged { get; set; }
+
+    private DateTime currentViewDate = DateTime.Today;
+    private int CurrentMonth => currentViewDate.Month;
+    private int CurrentYear => currentViewDate.Year;
+    private string CurrentMonthYear => currentViewDate.ToString("MMMM yyyy", System.Globalization.CultureInfo.InvariantCulture);
+    
+    private List<DateTime> DaysInMonth = new();
+    private readonly string[] DayNames = { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
+    
+    private bool showMonthYearPicker = false;
+    private int pickerYear = DateTime.Today.Year;
+    
+    private ElementReference scrollContainer;
+    private bool showLeftScroll = false;
+    private bool showRightScroll = true;
+    
+    private readonly List<MonthInfo> Months = new()
+    {
+        new(1, "Jan"), new(2, "Feb"), new(3, "Mar"), new(4, "Apr"),
+        new(5, "May"), new(6, "Jun"), new(7, "Jul"), new(8, "Aug"),
+        new(9, "Sep"), new(10, "Oct"), new(11, "Nov"), new(12, "Dec")
+    };
+
+    protected override void OnInitialized()
+    {
+        try
+        {
+            currentViewDate = new DateTime(SelectedDate.Year, SelectedDate.Month, 1);
+            pickerYear = SelectedDate.Year;
+            GenerateDaysInMonth();
+            Console.WriteLine($"Calendar initialized with {DaysInMonth.Count} days for {CurrentMonth}/{CurrentYear}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error initializing calendar: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await ScrollToSelectedDate();
+            await UpdateScrollIndicators();
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        // Update view if selected date changed externally
+        if (SelectedDate.Year != CurrentYear || SelectedDate.Month != CurrentMonth)
+        {
+            currentViewDate = new DateTime(SelectedDate.Year, SelectedDate.Month, 1);
+            pickerYear = SelectedDate.Year;
+            GenerateDaysInMonth();
+        }
+    }
+
+    /// <summary>
+    /// Generates list of days for the current month view, including ALL days of the month
+    /// For horizontal scrolling, we show all days of the month plus extra days from previous/next month for smooth scrolling
+    /// </summary>
+    private void GenerateDaysInMonth()
+    {
+        DaysInMonth.Clear();
+        
+        var firstDayOfMonth = new DateTime(CurrentYear, CurrentMonth, 1);
+        var lastDayOfMonth = firstDayOfMonth.AddMonths(1).AddDays(-1);
+        
+        // Add extra days from previous month (2 weeks) for smooth scrolling
+        var startDate = firstDayOfMonth.AddDays(-14);
+        
+        // Add extra days from next month (2 weeks) for smooth scrolling
+        var endDate = lastDayOfMonth.AddDays(14);
+        
+        // Generate all days from start to end
+        var currentDate = startDate;
+        while (currentDate <= endDate)
+        {
+            DaysInMonth.Add(currentDate);
+            currentDate = currentDate.AddDays(1);
+        }
+    }
+
+    /// <summary>
+    /// Selects a date and triggers the SelectedDateChanged event
+    /// </summary>
+    private async Task SelectDate(DateTime date)
+    {
+        SelectedDate = date;
+        
+        // Update view if selected date is in different month
+        if (date.Year != CurrentYear || date.Month != CurrentMonth)
+        {
+            currentViewDate = new DateTime(date.Year, date.Month, 1);
+            pickerYear = date.Year;
+            GenerateDaysInMonth();
+            StateHasChanged();
+            // Wait for render before scrolling
+            await Task.Delay(150);
+        }
+        else
+        {
+            // Small delay to ensure DOM is updated
+            await Task.Delay(50);
+        }
+        
+        // Always scroll to center the selected date
+        await ScrollToSelectedDate();
+        
+        await SelectedDateChanged.InvokeAsync(SelectedDate);
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Scrolls the day list one day to the left (previous day)
+    /// </summary>
+    private async Task ScrollLeft()
+    {
+        var previousDate = SelectedDate.AddDays(-1);
+        
+        // If we're going to a different month, update the view
+        if (previousDate.Year != CurrentYear || previousDate.Month != CurrentMonth)
+        {
+            currentViewDate = new DateTime(previousDate.Year, previousDate.Month, 1);
+            pickerYear = previousDate.Year;
+            GenerateDaysInMonth();
+            StateHasChanged();
+            await Task.Delay(100); // Wait for render
+        }
+        
+        // Select the previous date and center it
+        await SelectDate(previousDate);
+    }
+
+    /// <summary>
+    /// Scrolls the day list one day to the right (next day)
+    /// </summary>
+    private async Task ScrollRight()
+    {
+        var nextDate = SelectedDate.AddDays(1);
+        
+        // If we're going to a different month, update the view
+        if (nextDate.Year != CurrentYear || nextDate.Month != CurrentMonth)
+        {
+            currentViewDate = new DateTime(nextDate.Year, nextDate.Month, 1);
+            pickerYear = nextDate.Year;
+            GenerateDaysInMonth();
+            StateHasChanged();
+            await Task.Delay(100); // Wait for render
+        }
+        
+        // Select the next date and center it
+        await SelectDate(nextDate);
+    }
+
+    /// <summary>
+    /// Shows month/year picker modal
+    /// </summary>
+    private void ShowMonthYearPicker()
+    {
+        pickerYear = CurrentYear;
+        showMonthYearPicker = true;
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Closes month/year picker modal
+    /// </summary>
+    private void CloseMonthYearPicker()
+    {
+        showMonthYearPicker = false;
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Changes year in picker
+    /// </summary>
+    private void ChangeYear(int delta)
+    {
+        pickerYear += delta;
+        UpdatePickerDate();
+    }
+
+    /// <summary>
+    /// Updates picker date when year changes
+    /// </summary>
+    private void UpdatePickerDate()
+    {
+        // Ensure year is within valid range
+        pickerYear = Math.Max(1900, Math.Min(2100, pickerYear));
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Selects month and year from picker
+    /// </summary>
+    private void SelectMonthYear(int month, int year)
+    {
+        currentViewDate = new DateTime(year, month, 1);
+        pickerYear = year;
+        GenerateDaysInMonth();
+        CloseMonthYearPicker();
+        
+        // Select first day of the month if current selection is in different month
+        if (SelectedDate.Year != year || SelectedDate.Month != month)
+        {
+            _ = Task.Run(async () => await SelectDate(new DateTime(year, month, 1)));
+        }
+        else
+        {
+            _ = Task.Run(async () => await ScrollToSelectedDate());
+        }
+    }
+
+    /// <summary>
+    /// Gets abbreviated day name (Mon, Tue, etc.)
+    /// </summary>
+    private string GetDayName(DateTime date)
+    {
+        return DayNames[(int)date.DayOfWeek == 0 ? 6 : (int)date.DayOfWeek - 1];
+    }
+
+    /// <summary>
+    /// Scrolls calendar to center the selected date
+    /// </summary>
+    private async Task ScrollToSelectedDate()
+    {
+        try
+        {
+            // Ensure the selected date is in the DaysInMonth list
+            if (!DaysInMonth.Any(d => d.Date == SelectedDate.Date))
+            {
+                // If not, regenerate the list to include it
+                GenerateDaysInMonth();
+                StateHasChanged();
+                await Task.Delay(50);
+            }
+            
+            var selectedIndex = DaysInMonth.FindIndex(d => d.Date == SelectedDate.Date);
+            if (selectedIndex >= 0 && scrollContainer.Context != null)
+            {
+                // Use JavaScript to calculate exact position and center the selected day
+                await JSRuntime.InvokeVoidAsync("scrollCalendarToCenter", scrollContainer, selectedIndex);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error scrolling to date: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Updates scroll indicators based on scroll position
+    /// </summary>
+    private Task UpdateScrollIndicators()
+    {
+        try
+        {
+            // This would require JS interop to check scroll position
+            // For now, we'll show indicators based on month boundaries
+            showLeftScroll = DaysInMonth.First().Month < CurrentMonth;
+            showRightScroll = DaysInMonth.Last().Month > CurrentMonth;
+            StateHasChanged();
+        }
+        catch
+        {
+            // Ignore errors
+        }
+        
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Handles scroll event to update indicators
+    /// </summary>
+    private void OnScroll()
+    {
+        // Could implement scroll position tracking here
+    }
+
+    /// <summary>
+    /// Handles keyboard navigation for accessibility
+    /// </summary>
+    private async Task HandleKeyDown(KeyboardEventArgs e, DateTime day)
+    {
+        switch (e.Key)
+        {
+            case "Enter":
+            case " ":
+                await SelectDate(day);
+                break;
+            case "ArrowLeft":
+                await SelectDate(day.AddDays(-1));
+                break;
+            case "ArrowRight":
+                await SelectDate(day.AddDays(1));
+                break;
+            case "ArrowUp":
+                await SelectDate(day.AddDays(-7));
+                break;
+            case "ArrowDown":
+                await SelectDate(day.AddDays(7));
+                break;
+        }
+    }
+
+    [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
+
+    /// <summary>
+    /// Helper class for month information
+    /// </summary>
+    private record MonthInfo(int Number, string Name);
+}
+
+<style>
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+    
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+</style>
+
