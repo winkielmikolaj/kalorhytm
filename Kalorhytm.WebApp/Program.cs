@@ -64,12 +64,17 @@ builder.Services.AddMudServices();
 // Add HttpClient for Spoonacular API
 builder.Services.AddSpoonacular();
 
+// Add HttpClient for API Ninjas
+builder.Services.AddApiNinjas();
 
 builder.Services.AddInfrastructure();
 
 // Register Spoonacular Food Service and Recipes Service
 builder.Services.AddScoped<ISpoonacularFoodService, SpoonacularFoodService>();
 builder.Services.AddScoped<ISpoonacularRecipesService, SpoonacularRecipesService>();
+
+// Register API Ninjas Calories Service
+builder.Services.AddScoped<IApiNinjasCaloriesService, ApiNinjasCaloriesService>();
 
 // Register use cases
 builder.Services.AddScoped<IGetDailyNutritionUseCase, GetDailyNutritionUseCase>();
@@ -84,6 +89,11 @@ builder.Services.AddScoped<IUpdateDailyRequirementsUseCase, UpdateDailyRequireme
 builder.Services.AddScoped<IGetDailyWaterIntakeUseCase, GetDailyWaterIntakeUseCase>();
 builder.Services.AddScoped<IAddWaterGlassUseCase, AddWaterGlassUseCase>();
 builder.Services.AddScoped<IRemoveWaterGlassUseCase, RemoveWaterGlassUseCase>();
+
+// Workout Use Cases
+builder.Services.AddScoped<IAddWorkoutUseCase, AddWorkoutUseCase>();
+builder.Services.AddScoped<IGetDailyWorkoutsUseCase, GetDailyWorkoutsUseCase>();
+builder.Services.AddScoped<IRemoveWorkoutUseCase, RemoveWorkoutUseCase>();
 
 // Body Measurement Use Cases
 builder.Services.AddScoped<IGetBodyMeasurementUseCase, GetBodyMeasurementUseCase>();

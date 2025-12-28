@@ -19,3 +19,4 @@ namespace Kalorhytm.Logic.UseCases
     }
 }
 
+

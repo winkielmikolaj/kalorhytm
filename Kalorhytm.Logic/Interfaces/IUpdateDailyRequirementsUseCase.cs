@@ -8,3 +8,4 @@ namespace Kalorhytm.Logic.Interfaces
     }
 }
 
+

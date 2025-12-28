@@ -16,6 +16,10 @@
 @inject IRemoveWaterGlassUseCase RemoveWaterGlassUseCase
 @inject IGetDailyRequirementsUseCase GetDailyRequirementsUseCase
 @inject IUpdateDailyRequirementsUseCase UpdateDailyRequirementsUseCase
+@inject IAddWorkoutUseCase AddWorkoutUseCase
+@inject IGetDailyWorkoutsUseCase GetDailyWorkoutsUseCase
+@inject IRemoveWorkoutUseCase RemoveWorkoutUseCase
+@inject IApiNinjasCaloriesService ApiNinjasCaloriesService
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject MudBlazor.ISnackbar Snackbar
 @inject IJSRuntime JSRuntime
@@ -23,7 +27,10 @@
 
 
 <div class="container mx-auto px-4 py-8 bg-gray-600 min-h-screen">
-    <h1 class="text-3xl font-bold text-white mb-8">Meal Plan</h1>
+    <h1 class="text-3xl font-bold text-white mb-8">Dashboard</h1>
+    
+    <MudTabs Elevation="2" Rounded="true" Variant="@Variant.Filled" Color="@Color.Primary" PanelClass="pa-4">
+        <MudTabPanel Text="Meal Plan">
     
     <!-- Date Selector -->
     <div class="mb-6">
@@ -49,8 +56,11 @@
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                 <div class="bg-gray-700 p-6 rounded-lg shadow-md border border-gray-500">
                     <h3 class="text-lg font-semibold text-white mb-2">Calories</h3>
-                    <p class="text-3xl font-bold text-white">@dailyNutrition.TotalCalories.ToString("F0")</p>
-                    <p class="text-sm text-white opacity-80">of @dailyRequirements.CalorieGoal.ToString("F0") kcal</p>
+                    <p class="text-3xl font-bold text-white">@GetNetCalories().ToString("F0")</p>
+                    <p class="text-sm text-white opacity-80">
+                        @dailyNutrition.TotalCalories.ToString("F0") consumed - @GetTotalCaloriesBurned().ToString("F0") burned
+                        <br />of @dailyRequirements.CalorieGoal.ToString("F0") kcal
+                    </p>
                     <div class="mt-2 w-full bg-gray-500 rounded-full h-2 relative overflow-hidden">
                         @if (GetCaloriePercentage() > 100)
                         {
@@ -420,6 +430,82 @@
             }
         </div>
     </div>
+        </MudTabPanel>
+        
+        <MudTabPanel Text="Workout">
+            <!-- Date Selector -->
+            <div class="mb-6">
+                <label for="selectedDateWorkout" class="block text-sm font-medium text-white mb-2">Date:</label>
+                <input type="date" id="selectedDateWorkout" @bind="selectedDate" @bind:format="yyyy-MM-dd" 
+                       @bind:after="OnDateChanged"
+                       class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <button @onclick="LoadWorkouts" class="ml-2 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">
+                    Load
+                </button>
+            </div>
+
+            <!-- Workout Summary -->
+            @if (dailyWorkouts != null)
+            {
+                <div class="bg-gray-700 rounded-lg shadow-md p-6 mb-8">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold text-white">Workout Summary</h2>
+                        <button @onclick="ShowAddWorkoutModal" class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 text-sm">
+                            Add Workout
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div class="bg-gray-700 p-6 rounded-lg shadow-md border border-gray-500">
+                            <h3 class="text-lg font-semibold text-white mb-2">Total Workouts</h3>
+                            <p class="text-3xl font-bold text-white">@dailyWorkouts.Count</p>
+                        </div>
+                        <div class="bg-gray-700 p-6 rounded-lg shadow-md border border-gray-500">
+                            <h3 class="text-lg font-semibold text-white mb-2">Total Duration</h3>
+                            <p class="text-3xl font-bold text-white">@GetTotalDurationMinutes().ToString("F0")</p>
+                            <p class="text-sm text-white opacity-80">minutes</p>
+                        </div>
+                        <div class="bg-gray-700 p-6 rounded-lg shadow-md border border-gray-500">
+                            <h3 class="text-lg font-semibold text-white mb-2">Calories Burned</h3>
+                            <p class="text-3xl font-bold text-white">@GetTotalCaloriesBurned().ToString("F0")</p>
+                            <p class="text-sm text-white opacity-80">kcal</p>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Workout List -->
+            <div class="bg-gray-700 rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold text-white mb-4">Today's Workouts</h2>
+                @if (dailyWorkouts != null && dailyWorkouts.Any())
+                {
+                    @foreach (var workout in dailyWorkouts)
+                    {
+                        <div class="flex justify-between items-center p-3 bg-gray-600 rounded-md mb-2">
+                            <div class="flex-1">
+                                <h4 class="font-medium text-white">@workout.Name</h4>
+                                <p class="text-sm text-white opacity-80">@workout.DurationMinutes.ToString("F0") minutes</p>
+                            </div>
+                            <div class="text-right text-sm text-white mr-4">
+                                <div class="text-lg font-semibold">@workout.CaloriesBurned.ToString("F0") kcal</div>
+                            </div>
+                            <button @onclick="() => RemoveWorkout(workout)" 
+                                    class="bg-red-500 text-white p-2 rounded-md hover:bg-red-600 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-center py-4 text-white opacity-70">
+                        <p>No workouts added yet</p>
+                    </div>
+                }
+            </div>
+        </MudTabPanel>
+    </MudTabs>
 </div>
 
 <!-- Modal for editing daily requirements -->
@@ -531,11 +617,81 @@
     </div>
 }
 
+<!-- Modal for adding workout -->
+@if (showAddWorkoutModal)
+{
+    <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999;">
+        <div class="bg-white rounded-lg p-6 w-96 mx-4 shadow-xl max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">Add Workout</h3>
+                <button @onclick="CloseAddWorkoutModal" class="text-gray-400 hover:text-gray-600 bg-transparent border-none cursor-pointer">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Search Activity:</label>
+                    <input type="text" @bind="workoutSearchTerm" @bind:after="SearchWorkoutActivities" 
+                           placeholder="e.g., running, cycling, swimming..." 
+                           class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
+                </div>
+                @if (workoutSearchResults.Any())
+                {
+                    <div class="max-h-40 overflow-y-auto border border-gray-200 rounded-md mb-4">
+                        @foreach (var activity in workoutSearchResults)
+                        {
+                            <div class="px-3 py-2 border-b border-gray-100 cursor-pointer hover:bg-gray-50" @onclick="() => SelectWorkoutActivity(activity)">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <h4 class="font-medium text-gray-900">@activity.Name</h4>
+                                        <p class="text-xs text-gray-400">@activity.CaloriesPerHour kcal/hour</p>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                @if (selectedWorkoutActivity != null)
+                {
+                    <div class="mb-4 p-4 bg-blue-50 rounded-md">
+                        <h4 class="font-medium text-gray-900 mb-2">Selected: @selectedWorkoutActivity.Name</h4>
+                        <p class="text-xs text-gray-500">
+                            Calories per hour: @selectedWorkoutActivity.CaloriesPerHour kcal
+                        </p>
+                    </div>
+                }
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Weight (kg):</label>
+                    <input type="number" @bind="userWeight" @bind:after="CalculateWorkoutCalories" min="1" step="0.1" 
+                           class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Duration (minutes):</label>
+                    <input type="number" @bind="newWorkoutDuration" @bind:after="CalculateWorkoutCalories" min="1" step="1" 
+                           class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Calories Burned:</label>
+                    <input type="number" @bind="newWorkoutCalories" min="0" step="1" readonly
+                           class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-gray-100" />
+                </div>
+                <div class="flex gap-2 mt-6">
+                    <button @onclick="AddWorkout" class="flex-1 bg-green-500 text-white px-4 py-2 rounded-md border-none cursor-pointer hover:bg-green-600 transition">Add Workout</button>
+                    <button @onclick="CloseAddWorkoutModal" class="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-md border-none cursor-pointer hover:bg-gray-400 transition">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private DateTime selectedDate = DateTime.Today;
     private DailyNutritionModel? dailyNutrition;
     private DailyWaterIntakeModel? dailyWaterIntake;
     private DailyRequirementsModel? dailyRequirements;
+    private List<WorkoutModel>? dailyWorkouts;
     private int additionalWaterGlasses = 0; // Local state for additional empty glasses
     private string _searchTerm = "";
     private List<FoodModel> searchResults = new();
@@ -543,12 +699,22 @@
     // Modal state
     private bool showModal = false;
     private bool showEditRequirementsModal = false;
+    private bool showAddWorkoutModal = false;
     private MealType selectedMealType = MealType.Breakfast;
     private string searchTerm = "";
     private List<FoodModel> modalSearchResults = new();
     private FoodModel? selectedFoodForModal;
     private double modalQuantity = 100;
     private DailyRequirementsModel editRequirements = new();
+    
+    // Workout modal state
+    private string newWorkoutName = "";
+    private double newWorkoutDuration = 30;
+    private double newWorkoutCalories = 200;
+    private string workoutSearchTerm = "";
+    private List<WorkoutActivityModel> workoutSearchResults = new();
+    private WorkoutActivityModel? selectedWorkoutActivity;
+    private double userWeight = 70; // Default weight in kg
 
     private string SearchTerm
     {
@@ -600,9 +766,11 @@
 
         searchResults = new List<FoodModel>();
         dailyNutrition = new DailyNutritionModel { Date = selectedDate };
+        dailyWorkouts = new List<WorkoutModel>();
         await LoadDailyNutrition();
         await LoadWaterIntake();
         await LoadDailyRequirements();
+        await LoadWorkouts();
     }
 
     private async Task LoadDailyNutrition()
@@ -1069,6 +1237,264 @@
     {
         await LoadDailyNutrition();
         await LoadWaterIntake();
+        await LoadWorkouts();
+    }
+    
+    private async Task LoadWorkouts()
+    {
+        if (string.IsNullOrEmpty(userId))
+        {
+            // Load from localStorage for anonymous users
+            await LoadWorkoutsFromLocalStorage();
+            return;
+        }
+        
+        try
+        {
+            dailyWorkouts = await GetDailyWorkoutsUseCase.ExecuteAsync(selectedDate, userId);
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading workouts: {ex.Message}");
+            dailyWorkouts = new List<WorkoutModel>();
+        }
+    }
+
+    private async Task LoadWorkoutsFromLocalStorage()
+    {
+        try
+        {
+            var key = $"workouts_{selectedDate:yyyy-MM-dd}";
+            var json = await JSRuntime.InvokeAsync<string>("localStorage.getItem", key);
+            
+            if (!string.IsNullOrEmpty(json))
+            {
+                var workouts = System.Text.Json.JsonSerializer.Deserialize<List<WorkoutModel>>(json);
+                dailyWorkouts = workouts ?? new List<WorkoutModel>();
+            }
+            else
+            {
+                dailyWorkouts = new List<WorkoutModel>();
+            }
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading workouts from localStorage: {ex.Message}");
+            dailyWorkouts = new List<WorkoutModel>();
+        }
+    }
+
+    private async Task SaveWorkoutsToLocalStorage()
+    {
+        try
+        {
+            if (dailyWorkouts == null) return;
+            
+            var key = $"workouts_{selectedDate:yyyy-MM-dd}";
+            var json = System.Text.Json.JsonSerializer.Serialize(dailyWorkouts);
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", key, json);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving workouts to localStorage: {ex.Message}");
+        }
+    }
+
+    private void ShowAddWorkoutModal()
+    {
+        newWorkoutName = "";
+        newWorkoutDuration = 30;
+        newWorkoutCalories = 200;
+        workoutSearchTerm = "";
+        workoutSearchResults = new();
+        selectedWorkoutActivity = null;
+        userWeight = 70; // Default weight
+        showAddWorkoutModal = true;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task SearchWorkoutActivities()
+    {
+        if (string.IsNullOrWhiteSpace(workoutSearchTerm))
+        {
+            workoutSearchResults = new();
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        try
+        {
+            workoutSearchResults = await ApiNinjasCaloriesService.SearchActivitiesAsync(workoutSearchTerm);
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error searching activities: {ex.Message}");
+            workoutSearchResults = new();
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task SelectWorkoutActivity(WorkoutActivityModel activity)
+    {
+        selectedWorkoutActivity = activity;
+        newWorkoutName = activity.Name;
+        await CalculateWorkoutCalories();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task CalculateWorkoutCalories()
+    {
+        if (selectedWorkoutActivity == null || newWorkoutDuration <= 0)
+        {
+            newWorkoutCalories = 0;
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        // If we have user weight, try to get more accurate calculation from API
+        // Otherwise, use the calories per hour from the selected activity
+        if (userWeight > 0)
+        {
+            try
+            {
+                var result = await ApiNinjasCaloriesService.GetCaloriesBurnedAsync(
+                    selectedWorkoutActivity.Name,
+                    userWeight,
+                    (int)newWorkoutDuration);
+
+                if (result != null && result.TotalCalories > 0)
+                {
+                    // Use API result if available
+                    newWorkoutCalories = result.TotalCalories;
+                    newWorkoutName = result.Name;
+                    // Update the selected activity with API data
+                    selectedWorkoutActivity.CaloriesPerHour = result.CaloriesPerHour;
+                }
+                else
+                {
+                    // Fallback: use calories per hour from selected activity
+                    newWorkoutCalories = (int)(selectedWorkoutActivity.CaloriesPerHour * newWorkoutDuration / 60.0);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error calculating calories: {ex.Message}");
+                // Fallback: use calories per hour from selected activity
+                newWorkoutCalories = (int)(selectedWorkoutActivity.CaloriesPerHour * newWorkoutDuration / 60.0);
+            }
+        }
+        else
+        {
+            // No weight provided, use calories per hour from selected activity
+            newWorkoutCalories = (int)(selectedWorkoutActivity.CaloriesPerHour * newWorkoutDuration / 60.0);
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void CloseAddWorkoutModal()
+    {
+        showAddWorkoutModal = false;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task AddWorkout()
+    {
+        if (selectedWorkoutActivity == null)
+        {
+            Snackbar.Add("Please select an activity", MudBlazor.Severity.Warning);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(newWorkoutName) || newWorkoutDuration <= 0 || newWorkoutCalories < 0)
+        {
+            Snackbar.Add("Please fill in all fields correctly", MudBlazor.Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            if (string.IsNullOrEmpty(userId))
+            {
+                // Add to localStorage for anonymous users
+                if (dailyWorkouts == null)
+                {
+                    dailyWorkouts = new List<WorkoutModel>();
+                }
+                
+                var workout = new WorkoutModel
+                {
+                    WorkoutId = dailyWorkouts.Any() ? dailyWorkouts.Max(w => w.WorkoutId) + 1 : 1,
+                    Name = newWorkoutName,
+                    DurationMinutes = newWorkoutDuration,
+                    CaloriesBurned = newWorkoutCalories,
+                    Date = selectedDate
+                };
+                
+                dailyWorkouts.Add(workout);
+                await SaveWorkoutsToLocalStorage();
+                await InvokeAsync(StateHasChanged);
+            }
+            else
+            {
+                await AddWorkoutUseCase.ExecuteAsync(newWorkoutName, newWorkoutDuration, newWorkoutCalories, selectedDate, userId);
+                await LoadWorkouts();
+            }
+            
+            CloseAddWorkoutModal();
+            Snackbar.Add("Workout added successfully", MudBlazor.Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error adding workout: {ex.Message}");
+            Snackbar.Add("Error adding workout", MudBlazor.Severity.Error);
+        }
+    }
+
+    private async Task RemoveWorkout(WorkoutModel workout)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(userId))
+            {
+                // Remove from localStorage for anonymous users
+                if (dailyWorkouts != null)
+                {
+                    dailyWorkouts.RemoveAll(w => w.WorkoutId == workout.WorkoutId);
+                    await SaveWorkoutsToLocalStorage();
+                    await InvokeAsync(StateHasChanged);
+                }
+            }
+            else
+            {
+                await RemoveWorkoutUseCase.ExecuteAsync(workout.WorkoutId, userId);
+                await LoadWorkouts();
+            }
+            
+            Snackbar.Add("Workout removed successfully", MudBlazor.Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error removing workout: {ex.Message}");
+            Snackbar.Add("Error removing workout", MudBlazor.Severity.Error);
+        }
+    }
+
+    private double GetTotalCaloriesBurned()
+    {
+        if (dailyWorkouts == null || !dailyWorkouts.Any())
+            return 0;
+        return dailyWorkouts.Sum(w => w.CaloriesBurned);
+    }
+
+    private double GetTotalDurationMinutes()
+    {
+        if (dailyWorkouts == null || !dailyWorkouts.Any())
+            return 0;
+        return dailyWorkouts.Sum(w => w.DurationMinutes);
     }
 
     private string GetMealTypeName(MealType mealType)
@@ -1255,8 +1681,18 @@
     {
         if (dailyNutrition == null || dailyRequirements == null || dailyRequirements.CalorieGoal <= 0)
             return 0;
-        var percentage = (dailyNutrition.TotalCalories / dailyRequirements.CalorieGoal) * 100;
+        
+        // Calculate net calories (consumed - burned)
+        var netCalories = dailyNutrition.TotalCalories - GetTotalCaloriesBurned();
+        var percentage = (netCalories / dailyRequirements.CalorieGoal) * 100;
         return Math.Max(0, percentage);
+    }
+    
+    private double GetNetCalories()
+    {
+        if (dailyNutrition == null)
+            return 0;
+        return dailyNutrition.TotalCalories - GetTotalCaloriesBurned();
     }
 
     private double GetProteinPercentage()
