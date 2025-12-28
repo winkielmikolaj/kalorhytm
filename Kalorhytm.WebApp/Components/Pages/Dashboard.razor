@@ -29,7 +29,7 @@
 <div class="container mx-auto px-4 py-8 bg-gray-600 min-h-screen">
     <h1 class="text-3xl font-bold text-white mb-8">Dashboard</h1>
     
-    <MudTabs Elevation="2" Rounded="true" Variant="@Variant.Filled" Color="@Color.Primary" PanelClass="pa-4">
+    <MudTabs Elevation="2" Rounded="true" Variant="@Variant.Filled" Color="@Color.Success" PanelClass="pa-4">
         <MudTabPanel Text="Meal Plan">
             <!-- Modern Calendar Component -->
             <div class="w-full">
@@ -100,12 +100,12 @@
                             var carbTotalPercentage = GetCarbohydratePercentage();
                             var carbNormalWidth = (100 / carbTotalPercentage) * 100;
                             var carbRedWidth = 100 - carbNormalWidth;
-                            <div class="bg-violet-300 h-2 rounded-full absolute top-0 left-0" style="width: 100%"></div>
+                            <div class="bg-green-300 h-2 rounded-full absolute top-0 left-0" style="width: 100%"></div>
                             <div class="bg-red-600 h-2 rounded-full absolute top-0" style="left: @carbNormalWidth.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)%; width: @carbRedWidth.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)%"></div>
                         }
                         else
                         {
-                            <div class="bg-violet-300 h-2 rounded-full" style="width: @GetCarbohydratePercentage().ToString("F2", System.Globalization.CultureInfo.InvariantCulture)%"></div>
+                            <div class="bg-green-300 h-2 rounded-full" style="width: @GetCarbohydratePercentage().ToString("F2", System.Globalization.CultureInfo.InvariantCulture)%"></div>
                         }
                     </div>
                 </div>

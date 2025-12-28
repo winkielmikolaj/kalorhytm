@@ -1,7 +1,12 @@
-﻿@inherits LayoutComponentBase
+﻿@* Main Layout Component
+   Features:
+   - Top navbar layout
+   - Full-width content area
+   - Responsive design
+*@
+@inherits LayoutComponentBase
 
 @* Required for MudBlazor components *@
-@* Required *@
 <MudThemeProvider />
 <MudPopoverProvider />
 
@@ -11,18 +16,12 @@
 @* Needed for snackbars *@
 <MudSnackbarProvider />
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
+<div class="min-h-screen flex flex-col bg-gray-600">
+    @* Top Navigation Bar *@
+    <NavBar />
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
-
-        <article class="content px-4">
-            @Body
-        </article>
+    @* Main Content Area *@
+    <main class="flex-1">
+        @Body
     </main>
 </div>
