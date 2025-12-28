@@ -9,6 +9,6 @@ namespace Kalorhytm.Logic.Interfaces
 {
     public interface IGetDailyNutritionUseCase
     {
-        Task<DailyNutritionModel> ExecuteAsync(DateTime date);
+        Task<DailyNutritionModel> ExecuteAsync(DateTime date, string userId);
     }
 }

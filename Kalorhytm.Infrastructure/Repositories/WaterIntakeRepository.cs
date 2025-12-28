@@ -19,34 +19,34 @@ namespace Kalorhytm.Infrastructure.Repositories
                 .FirstOrDefaultAsync(w => w.WaterIntakeId == id);
         }
 
-        public async Task<List<WaterIntakeEntity>> GetByDateAsync(DateTime date)
+        public async Task<List<WaterIntakeEntity>> GetByDateAsync(DateTime date, string userId)
         {
             return await _context.WaterIntakes
-                .Where(w => w.Date.Date == date.Date)
+                .Where(w => w.Date.Date == date.Date && w.UserId == userId)
                 .OrderBy(w => w.GlassNumber)
                 .ToListAsync();
         }
 
-        public async Task<List<WaterIntakeEntity>> GetByDateRangeAsync(DateTime startDate, DateTime endDate)
+        public async Task<List<WaterIntakeEntity>> GetByDateRangeAsync(DateTime startDate, DateTime endDate, string userId)
         {
             return await _context.WaterIntakes
-                .Where(w => w.Date.Date >= startDate.Date && w.Date.Date <= endDate.Date)
+                .Where(w => w.Date.Date >= startDate.Date && w.Date.Date <= endDate.Date && w.UserId == userId)
                 .OrderBy(w => w.Date)
                 .ThenBy(w => w.GlassNumber)
                 .ToListAsync();
         }
 
-        public async Task<double> GetTotalWaterForDateAsync(DateTime date)
+        public async Task<double> GetTotalWaterForDateAsync(DateTime date, string userId)
         {
             return await _context.WaterIntakes
-                .Where(w => w.Date.Date == date.Date)
+                .Where(w => w.Date.Date == date.Date && w.UserId == userId)
                 .SumAsync(w => w.Amount);
         }
 
-        public async Task<int> GetGlassCountForDateAsync(DateTime date)
+        public async Task<int> GetGlassCountForDateAsync(DateTime date, string userId)
         {
             return await _context.WaterIntakes
-                .Where(w => w.Date.Date == date.Date)
+                .Where(w => w.Date.Date == date.Date && w.UserId == userId)
                 .CountAsync();
         }
 
@@ -71,10 +71,10 @@ namespace Kalorhytm.Infrastructure.Repositories
             return await _context.WaterIntakes.AnyAsync(w => w.WaterIntakeId == id);
         }
 
-        public async Task DeleteByDateAndGlassNumberAsync(DateTime date, int glassNumber)
+        public async Task DeleteByDateAndGlassNumberAsync(DateTime date, int glassNumber, string userId)
         {
             var waterIntake = await _context.WaterIntakes
-                .FirstOrDefaultAsync(w => w.Date.Date == date.Date && w.GlassNumber == glassNumber);
+                .FirstOrDefaultAsync(w => w.Date.Date == date.Date && w.GlassNumber == glassNumber && w.UserId == userId);
             
             if (waterIntake != null)
             {

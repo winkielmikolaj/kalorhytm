@@ -27,38 +27,38 @@ namespace Kalorhytm.Infrastructure.Repositories
                 .ToListAsync();
         }
 
-        public async Task<List<MealEntryEntity>> GetByDateAsync(DateTime date)
+        public async Task<List<MealEntryEntity>> GetByDateAsync(DateTime date, string userId)
         {
             return await _context.MealEntries
                 .Include(me => me.Food)
-                .Where(me => me.Date.Date == date.Date)
+                .Where(me => me.Date.Date == date.Date && me.UserId == userId)
                 .OrderBy(me => me.MealType)
                 .ToListAsync();
         }
 
-        public async Task<List<MealEntryEntity>> GetByDateAndMealTypeAsync(DateTime date, Domain.Enums.MealType mealType)
+        public async Task<List<MealEntryEntity>> GetByDateAndMealTypeAsync(DateTime date, Domain.Enums.MealType mealType, string userId)
         {
             return await _context.MealEntries
                 .Include(me => me.Food)
-                .Where(me => me.Date.Date == date.Date && me.MealType == mealType)
+                .Where(me => me.Date.Date == date.Date && me.MealType == mealType && me.UserId == userId)
                 .ToListAsync();
         }
 
-        public async Task<List<MealEntryEntity>> GetByDateRangeAsync(DateTime startDate, DateTime endDate)
+        public async Task<List<MealEntryEntity>> GetByDateRangeAsync(DateTime startDate, DateTime endDate, string userId)
         {
             return await _context.MealEntries
                 .Include(me => me.Food)
-                .Where(me => me.Date.Date >= startDate.Date && me.Date.Date <= endDate.Date)
+                .Where(me => me.Date.Date >= startDate.Date && me.Date.Date <= endDate.Date && me.UserId == userId)
                 .OrderBy(me => me.Date)
                 .ThenBy(me => me.MealType)
                 .ToListAsync();
         }
 
-        public async Task<double> GetTotalCaloriesForDateAsync(DateTime date)
+        public async Task<double> GetTotalCaloriesForDateAsync(DateTime date, string userId)
         {
             return await _context.MealEntries
                 .Include(me => me.Food)
-                .Where(me => me.Date.Date == date.Date)
+                .Where(me => me.Date.Date == date.Date && me.UserId == userId)
                 .SumAsync(me => me.TotalCalories);
         }
 

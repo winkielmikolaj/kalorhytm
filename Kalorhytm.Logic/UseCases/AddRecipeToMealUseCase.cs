@@ -19,12 +19,12 @@ namespace Kalorhytm.Logic.UseCases
             _addMealEntryUseCase = addMealEntryUseCase;
         }
 
-        public async Task<MealEntryModel> ExecuteAsync(int recipeId, double servings, MealType mealType, DateTime date)
+        public async Task<MealEntryModel> ExecuteAsync(int recipeId, double servings, MealType mealType, DateTime date, string userId)
         {
-            return await ExecuteAsync(recipeId, $"Recipe {recipeId}", servings, mealType, date);
+            return await ExecuteAsync(recipeId, $"Recipe {recipeId}", servings, mealType, date, userId);
         }
 
-        public async Task<MealEntryModel> ExecuteAsync(int recipeId, string recipeName, double servings, MealType mealType, DateTime date)
+        public async Task<MealEntryModel> ExecuteAsync(int recipeId, string recipeName, double servings, MealType mealType, DateTime date, string userId)
         {
             var nutrition = await _recipesService.GetRecipeNutritionWidgetAsync(recipeId);
             if (nutrition == null)
@@ -57,7 +57,7 @@ namespace Kalorhytm.Logic.UseCases
 
             Console.WriteLine($"Total weight: {totalWeight} {nutrition.WeightUnit}, Servings: {servings}");
 
-            var result = await _addMealEntryUseCase.ExecuteAsync(foodModel, totalWeight, mealType, date);
+            var result = await _addMealEntryUseCase.ExecuteAsync(foodModel, totalWeight, mealType, date, userId);
             
             Console.WriteLine($"Result - TotalCalories: {result.TotalCalories}, TotalProtein: {result.TotalProtein}");
 

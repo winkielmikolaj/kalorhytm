@@ -10,6 +10,7 @@ namespace Kalorhytm.Domain.Entities
         public double Quantity { get; set; }
         public DateTime Date { get; set; } = DateTime.Today;
         public MealType MealType { get; set; }
+        public string UserId { get; set; } = string.Empty;
         
         // Calculated properties
         public double TotalCalories => (Food.Calories * Quantity) / Food.ServingSize;

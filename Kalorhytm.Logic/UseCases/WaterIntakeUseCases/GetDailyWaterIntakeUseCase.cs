@@ -13,11 +13,11 @@ namespace Kalorhytm.Logic.UseCases.WaterIntakeUseCases
             _waterIntakeRepository = waterIntakeRepository;
         }
 
-        public async Task<DailyWaterIntakeModel> ExecuteAsync(DateTime date)
+        public async Task<DailyWaterIntakeModel> ExecuteAsync(DateTime date, string userId)
         {
-            var waterIntakes = await _waterIntakeRepository.GetByDateAsync(date);
-            var totalWater = await _waterIntakeRepository.GetTotalWaterForDateAsync(date);
-            var glassCount = await _waterIntakeRepository.GetGlassCountForDateAsync(date);
+            var waterIntakes = await _waterIntakeRepository.GetByDateAsync(date, userId);
+            var totalWater = await _waterIntakeRepository.GetTotalWaterForDateAsync(date, userId);
+            var glassCount = await _waterIntakeRepository.GetGlassCountForDateAsync(date, userId);
 
             var waterGlasses = waterIntakes.Select(w => new WaterIntakeModel
             {
