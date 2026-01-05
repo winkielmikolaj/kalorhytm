@@ -4,6 +4,9 @@ namespace Kalorhytm.Domain.Interfaces.IRepositories
 {
     public interface IFavouriteRecipesRepository
     {
+        //od lajkow do bazy danych
+        Task<Dictionary<int, int>> GetLikesCountForRecipesAsync(List<int> recipeIds);
+        
         Task<FavouriteRecipesEntity> AddAsync(FavouriteRecipesEntity recipe);
         
         Task<IEnumerable<FavouriteRecipesEntity>> GetMyFavRecipesAsync(string userId);

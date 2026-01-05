@@ -13,6 +13,18 @@ namespace Kalorhytm.Infrastructure.Repositories
             _context = context;
         }
 
+        public async Task<Dictionary<int, int>> GetLikesCountForRecipesAsync(List<int> recipeIds)
+        {
+            // Pobieramy tylko te lajki, które dotyczą wyświetlanych przepisów
+            var counts = await _context.FavouriteRecipes
+                .Where(f => recipeIds.Contains(f.RecipeId))
+                .GroupBy(f => f.RecipeId)
+                .Select(g => new { RecipeId = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.RecipeId, x => x.Count);
+
+            return counts;
+        }
+        
         public async Task<FavouriteRecipesEntity> AddAsync(FavouriteRecipesEntity recipe)
         {
             _context.FavouriteRecipes.Add(recipe);
