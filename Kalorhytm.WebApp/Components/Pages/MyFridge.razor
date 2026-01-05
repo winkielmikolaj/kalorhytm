@@ -11,6 +11,7 @@
 @using Kalorhytm.Logic.Interfaces.IMyFridgeUseCases
 @using Kalorhytm.Logic.UseCases.MyFridgeUseCases
 @using Kalorhytm.Logic.StateContainer
+@using Kalorhytm.Logic.Interfaces.IRecipeLikes
 
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject ISpoonacularRecipesService RecipesService
@@ -22,6 +23,7 @@
 @inject IDeleteFavouriteRecipeUseCase DeleteFavouriteRecipeUseCase
 @inject IGetFavouriteRecipeUseCase GetFavouriteRecipeUseCase
 @inject FridgeStateContainer FridgeState
+@inject IGetRecipeLikesUseCase GetRecipeLikesUseCase
 
 
 
@@ -451,6 +453,26 @@ else
             ranking: 1,
             ignorePantry: true);
 
+        //sprawdzanie ile mamy lajkow w bazie danych i dodajemy je do tych z API
+        if (recipes != null && recipes.Any())
+        {
+            // Pobieramy ID wszystkich znalezionych przepisów
+            var recipeIds = recipes.Select(r => r.RecipeId).ToList();
+
+            // Pytamy naszą bazę: "Ile lajków mają te przepisy u nas?"
+            var dbLikes = await GetRecipeLikesUseCase.ExecuteAsync(recipeIds);
+
+            // Dla każdego przepisu doliczamy lajki z bazy
+            foreach (var recipe in recipes)
+            {
+                if (dbLikes.TryGetValue(recipe.RecipeId, out int myAppLikes))
+                {
+                    // Nadpisujemy/Dodajemy: Lajki API + Lajki Naszej Bazy
+                    recipe.Likes += myAppLikes;
+                }
+            }
+        }
+        
         FridgeState.StoredRecipes = recipes;
 
         if (ingredients.Count == 0)

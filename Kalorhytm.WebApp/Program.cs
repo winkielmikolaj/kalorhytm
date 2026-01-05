@@ -16,11 +16,13 @@ using Kalorhytm.Logic.Interfaces;
 using Kalorhytm.Logic.Interfaces.IBodyMeasurementGoalUseCases;
 using Kalorhytm.Logic.Interfaces.IFavouriteRecipesUseCases;
 using Kalorhytm.Logic.Interfaces.IMyFridgeUseCases;
+using Kalorhytm.Logic.Interfaces.IRecipeLikes;
 using Kalorhytm.Logic.StateContainer;
 using Kalorhytm.Logic.UseCases.BodyMeasurementGoalUseCases;
 using Kalorhytm.Logic.UseCases.BodyMeasurementUseCases;
 using Kalorhytm.Logic.UseCases.FavouriteRecipesUseCase;
 using Kalorhytm.Logic.UseCases.MyFridgeUseCases;
+using Kalorhytm.Logic.UseCases.RecipeLikes;
 using Kalorhytm.Logic.UseCases.WaterIntakeUseCases;
 using Kalorhytm.Logic.Validation;
 using MudBlazor.Services;
@@ -112,6 +114,9 @@ builder.Services.AddScoped<IValidator<MyFridgeModel>, MyFridgeModelValidator>();
 
 //stateContainer
 builder.Services.AddScoped<FridgeStateContainer>();
+
+//RecipeLikes
+builder.Services.AddScoped<IGetRecipeLikesUseCase, GetRecipeLikesUseCase>();
 
 var app = builder.Build();
 
