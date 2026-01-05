@@ -16,6 +16,7 @@ using Kalorhytm.Logic.Interfaces;
 using Kalorhytm.Logic.Interfaces.IBodyMeasurementGoalUseCases;
 using Kalorhytm.Logic.Interfaces.IFavouriteRecipesUseCases;
 using Kalorhytm.Logic.Interfaces.IMyFridgeUseCases;
+using Kalorhytm.Logic.StateContainer;
 using Kalorhytm.Logic.UseCases.BodyMeasurementGoalUseCases;
 using Kalorhytm.Logic.UseCases.BodyMeasurementUseCases;
 using Kalorhytm.Logic.UseCases.FavouriteRecipesUseCase;
@@ -108,6 +109,9 @@ builder.Services.AddScoped<IDeleteFavouriteRecipeUseCase, DeleteFavouriteRecipeU
 
 //validator
 builder.Services.AddScoped<IValidator<MyFridgeModel>, MyFridgeModelValidator>();
+
+//stateContainer
+builder.Services.AddScoped<FridgeStateContainer>();
 
 var app = builder.Build();
 

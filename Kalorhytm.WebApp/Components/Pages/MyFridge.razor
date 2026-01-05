@@ -10,6 +10,8 @@
 @using Kalorhytm.Logic.Interfaces.IFavouriteRecipesUseCases
 @using Kalorhytm.Logic.Interfaces.IMyFridgeUseCases
 @using Kalorhytm.Logic.UseCases.MyFridgeUseCases
+@using Kalorhytm.Logic.StateContainer
+
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject ISpoonacularRecipesService RecipesService
 @inject IAddIngredientUseCase AddIngredientUseCase
@@ -17,9 +19,9 @@
 @inject IDeleteIngredientUseCase DeleteIngredientUseCase
 @inject IAddRecipeToMealUseCase AddRecipeToMealUseCase
 @inject IAddFavouriteRecipeUseCase AddFavouriteRecipeUseCase
-
 @inject IDeleteFavouriteRecipeUseCase DeleteFavouriteRecipeUseCase
 @inject IGetFavouriteRecipeUseCase GetFavouriteRecipeUseCase
+@inject FridgeStateContainer FridgeState
 
 
 
@@ -333,6 +335,12 @@ else
         {
             await LoadMyFridge();     // Ładowanie lodówki
             await LoadLikedRecipes(); // Ładowanie polubionych przepisów
+
+            if (FridgeState.StoredRecipes != null)
+            {
+                recipes = FridgeState.StoredRecipes;
+                validateMessageForSearching = FridgeState.SearchMessage;
+            }
         }
     }
 
@@ -428,6 +436,7 @@ else
     private async Task SearchRecipes()
     {
         validateMessageForSearching = string.Empty;
+        FridgeState.SearchMessage = String.Empty; //czyszczenie stanu bledu
 
 
         var fridgeItems = await GetIngredientUseCase.ExecuteAsync(userId);
@@ -441,6 +450,8 @@ else
             number: 20,
             ranking: 1,
             ignorePantry: true);
+
+        FridgeState.StoredRecipes = recipes;
 
         if (ingredients.Count == 0)
         {
