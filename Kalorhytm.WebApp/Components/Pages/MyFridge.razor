@@ -18,6 +18,9 @@
 @inject IAddRecipeToMealUseCase AddRecipeToMealUseCase
 @inject IAddFavouriteRecipeUseCase AddFavouriteRecipeUseCase
 
+@inject IDeleteFavouriteRecipeUseCase DeleteFavouriteRecipeUseCase
+@inject IGetFavouriteRecipeUseCase GetFavouriteRecipeUseCase
+
 
 
 @*@if (isProcessing)
@@ -85,14 +88,29 @@ else
                     <img class="card-img-top" src="@recipe.ImageUrl" alt="@recipe.Title"/>
                     <div class="card-body">
                         <h5 class="card-title">@recipe.Title</h5>
-                        <p><button @onclick="() => LikingSystem(recipe.RecipeId)">🤍</button> @recipe.Likes</p>
+
+                        <div class="d-flex align-items-center mb-2">
+                            <button class="btn btn-link p-0 me-2" 
+                                    style="text-decoration: none; box-shadow: none;" 
+                                    @onclick="() => ToggleLike(recipe)">
+            
+                                @* Sprawdzamy w mapie, czy przepis jest polubiony *@
+                                @if (_likedRecipesMap.ContainsKey(recipe.RecipeId))
+                                {
+                                    <span style="font-size: 1.5rem; color: red;">❤️</span> 
+                                }
+                                else
+                                {
+                                    <span style="font-size: 1.5rem;">🤍</span>
+                                }
+                            </button>
+                            <span>@recipe.Likes Likes</span>
+                        </div>
                         <p>
                             <b>Used:</b> @string.Join(", ", recipe.UsedIngredients)<br/>
                             <b>Missing:</b> @string.Join(", ", recipe.MissedIngredients)
                         </p>
-                        <div class="flex justify-content-end">
-                            <button class="btn btn-primary mt-2" @onclick="() => SaveToFavourites(recipe)">Save Recipe</button>
-                        </div>
+
                         <button class="btn btn-primary mt-2" @onclick="() => ShowAddRecipeModal(recipe)">Add to Meal</button>
                     </div>
                 </div>
@@ -153,6 +171,11 @@ else
 @code {
 
     private bool isProcessing { get; set; } = true;
+    
+    
+    //like system
+    private Dictionary<int, int> _likedRecipesMap = new();
+    
 
     //api
     private string ingredientsInput = "apples, flour, sugar";
@@ -181,6 +204,82 @@ else
     private DateTime selectedDate = DateTime.Today;
     private string recipeModalError = "";
 
+
+
+    private async Task LoadLikedRecipes()
+    {
+        try 
+        {
+            // Pobieramy ulubione z Twojej bazy
+            var favourites = await GetFavouriteRecipeUseCase.ExecuteAsync(userId);
+            
+            // Zamieniamy listę na słownik dla szybkiego wyszukiwania
+            _likedRecipesMap = favourites.ToDictionary(f => f.RecipeId, f => f.Id);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading favourites: {ex.Message}");
+        }
+    }
+
+    // Funkcja sprawdzająca czy przepis jest polubiony (dla UI)
+    private bool IsRecipeLiked(int spoonacularId)
+    {
+        return _likedRecipesMap.ContainsKey(spoonacularId);
+    }
+
+    // Główna funkcja: Kliknięcie serduszka
+    private async Task ToggleLike(RecipeModel recipe)
+    {
+        // Sprawdzamy czy przepis jest w mapie (czy jest polubiony)
+        if (_likedRecipesMap.TryGetValue(recipe.RecipeId, out int databaseId))
+        {
+            // Odlajkowanie
+            try
+            {
+                // TUTAJ POPRAWKA: Podajemy databaseId ORAZ userId
+                await DeleteFavouriteRecipeUseCase.ExecuteAsync(databaseId, userId);
+                
+                _likedRecipesMap.Remove(recipe.RecipeId);
+                recipe.Likes--; 
+                Console.WriteLine($"Unliked recipe: {recipe.Title}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error removing like: {ex.Message}");
+            }
+        }
+        else
+        {
+            // Lajkowanie
+            try
+            {
+                var favourite = new FavouriteRecipesModel
+                {
+                    UserId = userId,
+                    RecipeId = recipe.RecipeId,
+                    Title = recipe.Title,
+                    ImageUrl = recipe.ImageUrl,
+                    Likes = recipe.Likes + 1
+                };
+
+                var saved = await AddFavouriteRecipeUseCase.ExecuteAsync(favourite);
+                
+                if (saved != null)
+                {
+                    _likedRecipesMap.Add(recipe.RecipeId, saved.Id);
+                    recipe.Likes++;
+                    Console.WriteLine($"Liked recipe: {recipe.Title}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error adding like: {ex.Message}");
+            }
+        }
+        StateHasChanged();
+    }
+    
     private void LikingSystem(int id)
     {
         var recipe = recipes.FirstOrDefault(r => r.RecipeId == id);
@@ -225,19 +324,16 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        // Pobieranie użytkownika
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
-
         userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-        foreach (var claim in user.Claims)
+        if (!string.IsNullOrEmpty(userId))
         {
-            Console.WriteLine($"Claim {claim.Type} = {claim.Value}");
+            await LoadMyFridge();     // Ładowanie lodówki
+            await LoadLikedRecipes(); // Ładowanie polubionych przepisów
         }
-
-        Console.WriteLine($"User is loaded {userId}");
-
-        await LoadMyFridge(); //reload fridge
     }
 
     private void OpenFridge()
