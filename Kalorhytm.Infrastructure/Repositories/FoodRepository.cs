@@ -6,9 +6,9 @@ namespace Kalorhytm.Infrastructure.Repositories
 {
     public class FoodRepository : IFoodRepository
     {
-        private readonly InMemoryDbContext _context;
+        private readonly ApplicationDbContext _context;
 
-        public FoodRepository(InMemoryDbContext context)
+        public FoodRepository(ApplicationDbContext context)
         {
             _context = context;
         }

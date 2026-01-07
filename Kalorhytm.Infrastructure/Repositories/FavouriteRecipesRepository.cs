@@ -6,9 +6,9 @@ namespace Kalorhytm.Infrastructure.Repositories
 {
     public class FavouriteRecipesRepository : IFavouriteRecipesRepository
     {
-        private readonly InMemoryDbContext _context;
+        private readonly ApplicationDbContext _context;
 
-        public FavouriteRecipesRepository(InMemoryDbContext context)
+        public FavouriteRecipesRepository(ApplicationDbContext context)
         {
             _context = context;
         }

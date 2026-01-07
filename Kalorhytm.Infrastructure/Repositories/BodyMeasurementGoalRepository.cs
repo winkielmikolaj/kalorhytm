@@ -7,9 +7,9 @@ namespace Kalorhytm.Infrastructure.Repositories
 {
     public class BodyMeasurementGoalRepository : IBodyMeasurementGoalRepository
     {
-        private readonly InMemoryDbContext _context;
+        private readonly ApplicationDbContext _context;
 
-        public BodyMeasurementGoalRepository(InMemoryDbContext context)
+        public BodyMeasurementGoalRepository(ApplicationDbContext context)
         {
             _context = context;
         }
