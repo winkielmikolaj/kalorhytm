@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration; // Ważne: ten using jest wymagany
 using Kalorhytm.Domain.Interfaces.IRepositories;
 using Kalorhytm.Infrastructure.Repositories;
 
@@ -7,11 +8,17 @@ namespace Kalorhytm.Infrastructure.Extensions
 {
     public static class StartupExtension
     {
-        public static IServiceCollection AddInfrastructure(this IServiceCollection serviceCollection)
+        public static IServiceCollection AddInfrastructure(this IServiceCollection serviceCollection, IConfiguration configuration)
         {
-            serviceCollection.AddDbContext<InMemoryDbContext>(opt => opt.UseInMemoryDatabase("KalorhytmDb"));
+            // 1. Pobieramy Connection String
+            var connectionString = configuration.GetConnectionString("DefaultConnection");
 
-            // Register repositories
+            // 2. REJESTRUJEMY BAZĘ DANYCH - Ta linia jest kluczowa!
+            // Bez niej otrzymasz błąd "Unable to resolve service..."
+            serviceCollection.AddDbContext<InMemoryDbContext>(options => 
+                options.UseSqlServer(connectionString));
+
+            // Rejestracja repozytoriów
             serviceCollection.AddScoped<IFoodRepository, FoodRepository>();
             serviceCollection.AddScoped<IMealEntryRepository, MealEntryRepository>();
             serviceCollection.AddScoped<IWaterIntakeRepository, WaterIntakeRepository>();
@@ -19,9 +26,6 @@ namespace Kalorhytm.Infrastructure.Extensions
             serviceCollection.AddScoped<IBodyMeasurementRepository, BodyMeasurementRepository>();
             serviceCollection.AddScoped<IBodyMeasurementGoalRepository, BodyMeasurementGoalRepository>();
 
-            serviceCollection.AddScoped<IMyFridgeRepository, MyFridgeRepository>();
-            
-            //Adding Ingredients to MyFridge
             serviceCollection.AddScoped<IMyFridgeRepository, MyFridgeRepository>();
 
             return serviceCollection;

@@ -47,9 +47,9 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddHttpContextAccessor();
 
-//var connectionString = builder.Configuration.GetConnectionString("ApplicationDbContextConnection") ?? throw new InvalidOperationException("Connection string 'ApplicationDbContextConnection' not found.");
+// USUNIĘTO RĘCZNĄ REJESTRACJĘ BAZY - TERAZ JEST W ADDINFRASTRUCTURE
+// builder.Services.AddDbContext<InMemoryDbContext>(opt => opt.UseSqlServer("KalorhytmDb"));
 
-builder.Services.AddDbContext<InMemoryDbContext>(opt => opt.UseInMemoryDatabase("KalorhytmDb"));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddIdentityCore<ApplicationUser>(options => { options.SignIn.RequireConfirmedAccount = true; })
@@ -67,8 +67,8 @@ builder.Services.AddMudServices();
 // Add HttpClient for Spoonacular API
 builder.Services.AddSpoonacular();
 
-
-builder.Services.AddInfrastructure();
+// ZMIANA: PRZEKAZANIE KONFIGURACJI DO INFRASTRUKTURY
+builder.Services.AddInfrastructure(builder.Configuration);
 
 // Register Spoonacular Food Service and Recipes Service
 builder.Services.AddScoped<ISpoonacularFoodService, SpoonacularFoodService>();
