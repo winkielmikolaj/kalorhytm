@@ -7,7 +7,7 @@ namespace Kalorhytm.Infrastructure.Extensions
     public static class AppSeeder
     {
         public static async Task SeedAsync(
-            InMemoryDbContext context,
+            ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
             RoleManager<IdentityRole> roleManager)
         {
@@ -62,7 +62,7 @@ namespace Kalorhytm.Infrastructure.Extensions
             }
         }
 
-        private static void SeedMeasurements(InMemoryDbContext context, string userId)
+        private static void SeedMeasurements(ApplicationDbContext context, string userId)
         {
             var now = DateTime.UtcNow;
 
@@ -103,7 +103,7 @@ namespace Kalorhytm.Infrastructure.Extensions
             context.SaveChanges();
         }
 
-        private static void SeedMeasurementGoals(InMemoryDbContext context, string userId)
+        private static void SeedMeasurementGoals(ApplicationDbContext context, string userId)
         {
             var now = DateTime.UtcNow;
             var threeMonthsAgo = now.AddMonths(-3);

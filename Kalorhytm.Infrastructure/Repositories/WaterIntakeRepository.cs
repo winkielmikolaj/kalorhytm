@@ -6,9 +6,9 @@ namespace Kalorhytm.Infrastructure.Repositories
 {
     public class WaterIntakeRepository : IWaterIntakeRepository
     {
-        private readonly InMemoryDbContext _context;
+        private readonly ApplicationDbContext _context;
 
-        public WaterIntakeRepository(InMemoryDbContext context)
+        public WaterIntakeRepository(ApplicationDbContext context)
         {
             _context = context;
         }
