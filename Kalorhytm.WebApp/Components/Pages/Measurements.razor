@@ -36,17 +36,17 @@ else
 
     <div class="mb-4">
         <label>Measurement Type:</label>
-        <select @bind="selectedType" class="form-select">
+        <select value="@selectedType" @onchange="OnTypeChanged" class="form-select">
             @foreach (var type in Enum.GetValues<BodyMeasurementType>())
             {
                 <option value="@type">@type</option>
             }
         </select>
     </div>
-    
+
     <div class="mb-4">
         <label>Measurement Date Range:</label>
-        <select @bind="selectedRange" class="form-select">
+        <select value="@selectedRange" @onchange="OnRangeChanged" class="form-select">
             @foreach (var option in preselectedDateRanges)
             {
                 <option value="@option.Key">@option.Key</option>
@@ -54,33 +54,29 @@ else
         </select>
     </div>
     
-    @if (selectedRange == "Własna Data")
+    @if (selectedRange == "Custom Date")
     {
         <div class="mb-4">
-            <label>Data od:</label>
+            <label>Date From:</label>
             <input type="date" class="form-control" @bind="customStartDate" />
             
         @if (customStartDate != default)
         {
-            <label class="mt-2">Data do:</label>
+            <label class="mt-2">Date To:</label>
             <input type="date" class="form-control" @bind="customEndDate" min="@customStartDate.ToString("yyyy-MM-dd")" />
         }
         </div>
     }
     
-    // TODO: dane na wykresie
-    // TODO: uporzadkowac kod - pousuwac niepotrzebne wlasciwosci, uzyc blazorwych komponentow zamiast htmlowych
-    // TODO: weryfikacja inputu
-    // TODO: uporzadkowac daty - usunac utcnow z modelu i ustawiac w tym pliku
-    // TODO: QuickGrid zamiast tabeli 
+    <button class="btn btn-primary mb-4" @onclick="LoadBodyMeasurements">Show Data in Table</button>
     
-    <button class="btn btn-primary mb-4" @onclick="LoadBodyMeasurements">Pokaż dane w tabeli</button>
+    <button class="btn btn-primary mb-4" @onclick="HandleShowChart">
+        @(showChart ? "Hide Chart" : "Show Chart")
+    </button>
     
-    <button class="btn btn-primary mb-4">Pokaż dane na wykresie</button>
-    
-    <button class="btn btn-primary mb-4" @onclick="() => ShowModal(ModalType.AddMeasurement)">Dodaj Pomiar</button>
+    <button class="btn btn-primary mb-4" @onclick="() => ShowModal(ModalType.AddMeasurement)">Add Measurement</button>
 
-    <button class="btn btn-primary mb-4" @onclick="() => ShowModal(ModalType.AddGoal)">Dodaj Cel</button>
+    <button class="btn btn-primary mb-4" @onclick="() => ShowModal(ModalType.AddGoal)">Add Goal</button>
 
     @if (showModal)
     {
@@ -97,8 +93,8 @@ else
                 @if (currentModal == ModalType.AddMeasurement)
                 {
                     <div>
-                        <h3 class="text-lg font-semibold mb-4">Dodaj Pomiar</h3>
-                        <label class="">Typ pomiaru</label>
+                        <h3 class="text-lg font-semibold mb-4">Add Measurement</h3>
+                        <label class="">Measurement Type</label>
                         <select @bind="newMeasurement.Type"
                                 class="border border-gray-300 rounded-lg px-3 py-2 w-full">
                             @foreach (var type in Enum.GetValues<BodyMeasurementType>())
@@ -108,13 +104,13 @@ else
                         </select>
 
                         <div class="mt-4">
-                            <label class="font-medium block mb-1">Wartość</label>
+                            <label class="font-medium block mb-1">Value</label>
                             <input type="number" @bind="newMeasurement.Value"
                                    class="border border-gray-300 rounded-lg px-3 py-2 w-full"/>
                         </div>
 
                         <div class="mt-4">
-                            <label class="block mb-1">Data pomiaru</label>
+                            <label class="block mb-1">Measurement Date</label>
                             <input type="date" @bind="newMeasurementDate"
                                    class="border border-gray-300 rounded-lg px-3 py-2 w-full"/>
                         </div>
@@ -122,17 +118,17 @@ else
                         <div class="mt-6">
                             <button @onclick="AddMeasurement"
                                     class="flex-1 bg-blue-500 text-white px-4 py-2 rounded-md border-none cursor-pointer hover:bg-blue-600 transition">
-                                Zapisz Pomiar
+                                Save Measurement
                             </button>
                         </div>
                     </div>
                 }
                 else if (currentModal == ModalType.AddGoal)
                 {
-                    <h3 class="text-xl font-semibold mb-4">Dodaj Cel</h3>
+                    <h3 class="text-xl font-semibold mb-4">Add Goal</h3>
                     <div class="">
                         <div>
-                            <label class="block mb-1">Typ celu</label>
+                            <label class="block mb-1">Goal Type</label>
                             <select @bind="newMeasurementGoal.Type"
                                     class="border border-gray-300 rounded-lg px-3 py-2 w-full">
                                 @foreach (var type in Enum.GetValues<BodyMeasurementType>())
@@ -143,19 +139,19 @@ else
                         </div>
 
                         <div class="mt-4">
-                            <label class="">Wartość docelowa</label>
-                            <input @bind="newMeasurementGoal.TargetValue" type="number" placeholder="Wartość docelowa"
+                            <label class="">Target Value</label>
+                            <input @bind="newMeasurementGoal.TargetValue" type="number" placeholder="Target Value"
                                    class="border border-gray-300 rounded-lg px-3 py-2 w-full"/>
                         </div>
 
                         <div class="mt-4">
-                            <label class="">Data Od</label>
+                            <label class="">Effective From</label>
                             <input type="date" @bind="newMeasurementGoal.EffectiveFrom"
                                    class="border border-gray-300 rounded-lg px-3 py-2 w-full"/>
                         </div>
 
                         <div class="mt-4">
-                            <label class="">Data Do</label>
+                            <label class="">Effective To</label>
                             <input @bind="newMeasurementGoal.EffectiveTo" type="date"
                                    min="@newMeasurementGoal.EffectiveFrom.ToString("yyyy-MM-dd")"
                                    class="border border-gray-300 rounded-lg px-3 py-2 w-full"/>
@@ -164,28 +160,28 @@ else
                         <div class="mt-6">
                             <button @onclick="AddGoal"
                                     class="flex-1 bg-blue-500 text-white px-4 py-2 rounded-md border-none cursor-pointer hover:bg-blue-600 transition">
-                                Zapisz Cel
+                                Save Goal
                             </button>
                         </div>
                     </div>
                 }
                 else if (currentModal == ModalType.EditMeasurement)
                 {
-                    <h3 class="text-lg font-semibold mb-4">Edytuj Pomiar</h3>
+                    <h3 class="text-lg font-semibold mb-4">Edit Measurement</h3>
                     <div>
-                        <label class="block mb-1">Typ pomiaru</label>
+                        <label class="block mb-1">Measurement Type</label>
                         <input type="text" value="@newMeasurement.Type" disabled
                                class="border border-gray-300 rounded-lg px-3 py-2 w-full bg-gray-100" />
                     </div>
 
                     <div class="mt-4">
-                        <label class="block mb-1">Wartość</label>
+                        <label class="block mb-1">Value</label>
                         <input type="number" @bind="newMeasurement.Value"
                                class="border border-gray-300 rounded-lg px-3 py-2 w-full" />
                     </div>
 
                     <div class="mt-4">
-                        <label class="block mb-1">Data pomiaru</label>
+                        <label class="block mb-1">Measurement Date</label>
                         <input type="date" @bind="newMeasurement.MeasurementDate"
                                class="border border-gray-300 rounded-lg px-3 py-2 w-full" />
                     </div>
@@ -193,37 +189,37 @@ else
                     <div class="mt-6 flex gap-2">
                         <button @onclick="SaveEditedMeasurement"
                                 class="flex-1 bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition">
-                            Zapisz zmiany
+                            Save Changes
                         </button>
                         <button @onclick="DeleteMeasurement"
                                 class="flex-1 bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition">
-                            Usuń
+                            Delete
                         </button>
                     </div>
                 }
                 else if (currentModal == ModalType.EditGoal)
                 {
-                    <h3 class="text-lg font-semibold mb-4">Edytuj Cel</h3>
+                    <h3 class="text-lg font-semibold mb-4">Edit Goal</h3>
                     <div>
-                        <label class="block mb-1">Typ Celu</label>
+                        <label class="block mb-1">Goal Type</label>
                         <input type="text" value="@newMeasurementGoal.Type" disabled
                                class="border border-gray-300 rounded-lg px-3 py-2 w-full bg-gray-100" />
                     </div>
 
                     <div class="mt-4">
-                        <label class="block mb-1">Wartość</label>
+                        <label class="block mb-1">Target Value</label>
                         <input type="number" @bind="newMeasurementGoal.TargetValue"
                                class="border border-gray-300 rounded-lg px-3 py-2 w-full" />
                     </div>
 
                     <div class="mt-4">
-                        <label class="block mb-1">Data od:</label>
+                        <label class="block mb-1">Date From:</label>
                         <input type="date" @bind="newMeasurementGoal.EffectiveFrom"
                                class="border border-gray-300 rounded-lg px-3 py-2 w-full" />
                     </div>
                     
                     <div class="mt-4">
-                        <label class="block mb-1">Data do:</label>
+                        <label class="block mb-1">Date To:</label>
                         <input type="date" @bind="newMeasurementGoal.EffectiveTo"
                                class="border border-gray-300 rounded-lg px-3 py-2 w-full" />
                     </div>
@@ -231,11 +227,11 @@ else
                     <div class="mt-6 flex gap-2">
                         <button @onclick="SaveEditedGoal"
                                 class="flex-1 bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition">
-                            Zapisz zmiany
+                            Save Changes
                         </button>
                         <button @onclick="DeleteGoal"
                                 class="flex-1 bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition">
-                            Usuń
+                            Delete
                         </button>
                     </div>
                 }
@@ -244,19 +240,33 @@ else
         </div>
     }
     
+    @if (showChart && Series.Count > 0)
+    {
+        <div class="mt-4 p-4 bg-white rounded-lg shadow border overflow-hidden">
+            <h4 class="text-lg font-bold mb-4">Trend for: @selectedType</h4>
+        
+            <MudChart ChartType="ChartType.Line" 
+                      ChartSeries="@Series" 
+                      XAxisLabels="@XAxisLabels" 
+                      Width="100%" 
+                      Height="350px"
+                      ChartOptions="@options"
+                      Class="hide-measurement-line" />
+        </div>
+    }
     
     @if (BodyMeasurements != null && BodyMeasurements.Any())
     {
-        <h4 class="text-lg font-semibold mt-6 mb-2">Pomiary i cele</h4>
+        <h4 class="text-lg font-semibold mt-6 mb-2">Measurements and Goals</h4>
         <table class="table-auto w-full border border-gray-300 bg-white shadow-sm rounded-lg">
             <thead class="bg-gray-100 text-gray-700">
             <tr>
-                <th class="border px-4 py-2 text-left">Typ</th>
-                <th class="border px-4 py-2 text-left">Wartość</th>
-                <th class="border px-4 py-2 text-left">Data</th>
-                <th class="border px-4 py-2 text-left">Cel</th>
-                <th class="border px-4 py-2 text-left">Od</th>
-                <th class="border px-4 py-2 text-left">Do</th>
+                <th class="border px-4 py-2 text-left">Type</th>
+                <th class="border px-4 py-2 text-left">Value</th>
+                <th class="border px-4 py-2 text-left">Date</th>
+                <th class="border px-4 py-2 text-left">Goal</th>
+                <th class="border px-4 py-2 text-left">From</th>
+                <th class="border px-4 py-2 text-left">To</th>
             </tr>
             </thead>
             <tbody>
@@ -288,7 +298,7 @@ else
     }
     else
     {
-        <p class="text-gray-600">Brak danych pomiarowych dla wybranego zakresu.</p>
+        <p class="text-gray-600">No measurement data available for the selected range.</p>
     }
 }
 
@@ -299,7 +309,7 @@ else
     private ModalType currentModal;
     
     private BodyMeasurementType selectedType { get; set; } = BodyMeasurementType.BodyWeight;
-    private string selectedRange = "1 miesiąc";
+    private string selectedRange = "1 Month";
     
     private DateTime customStartDate = DateTime.UtcNow;
     private DateTime customEndDate = DateTime.UtcNow;
@@ -312,6 +322,11 @@ else
 
     private BodyMeasurementModel newMeasurement = new();
     private BodyMeasurementGoalModel newMeasurementGoal = new();
+    
+    private bool showChart = false;
+    private List<ChartSeries> Series = new List<ChartSeries>();
+    private string[] XAxisLabels = Array.Empty<string>();
+    private ChartOptions options = new ChartOptions();
 
     protected override async Task OnInitializedAsync()
     {
@@ -322,14 +337,17 @@ else
         
         preselectedDateRanges = new Dictionary<string, Func<(DateTime From, DateTime To)>>()
         {
-            { "1 miesiąc", () => (DateTime.UtcNow.AddMonths(-1), DateTime.UtcNow) },
-            { "3 miesiące", () => (DateTime.UtcNow.AddMonths(-3), DateTime.UtcNow) },
-            { "6 miesięcy", () => (DateTime.UtcNow.AddMonths(-6), DateTime.UtcNow) },
-            { "12 miesięcy", () => (DateTime.UtcNow.AddMonths(-12), DateTime.UtcNow) },
-            { "Od początku", () => (DateTime.MinValue, DateTime.UtcNow) },
-            { "Własna Data", () => (customStartDate, customEndDate)}
-            // zmienic minvalue na date zalozenia konta
+            { "1 Month", () => (DateTime.UtcNow.AddMonths(-1), DateTime.UtcNow) },
+            { "3 Months", () => (DateTime.UtcNow.AddMonths(-3), DateTime.UtcNow) },
+            { "6 Months", () => (DateTime.UtcNow.AddMonths(-6), DateTime.UtcNow) },
+            { "12 Months", () => (DateTime.UtcNow.AddMonths(-12), DateTime.UtcNow) },
+            { "From Beginning", () => (DateTime.MinValue, DateTime.UtcNow) },
+            { "Custom Date", () => (customStartDate, customEndDate)}
         };
+        
+        options.InterpolationOption = InterpolationOption.Straight; 
+        options.YAxisTicks = 5;
+        
         isProcessing = false;
     }
 
@@ -342,18 +360,89 @@ else
             StateHasChanged();
         }
     }
+    
+    private void OnTypeChanged(ChangeEventArgs e)
+    {
+        if (Enum.TryParse<BodyMeasurementType>(e.Value?.ToString(), out var result))
+        {
+            selectedType = result;
+            showChart = false;
+            Series.Clear();
+        }
+    }
+
+    private void OnRangeChanged(ChangeEventArgs e)
+    {
+        selectedRange = e.Value?.ToString();
+        showChart = false;
+        Series.Clear();
+    }
+    
+    private async Task HandleShowChart()
+    {
+        if (showChart)
+        {
+            showChart = false;
+        }
+        else
+        {
+            await LoadBodyMeasurements();
+            PrepareChartData();
+            
+            if (BodyMeasurements != null && BodyMeasurements.Any())
+            {
+                showChart = true;
+            }
+        }
+        StateHasChanged();
+    }
+
+    private void PrepareChartData()
+    {
+        if (BodyMeasurements == null || !BodyMeasurements.Any()) return;
+
+        var ordered = BodyMeasurements.OrderBy(m => m.MeasurementDate).ToList();
+        XAxisLabels = ordered.Select(m => m.MeasurementDate.ToString("dd.MM")).ToArray();
+
+        var newSeries = new List<ChartSeries>();
+
+        var measurementValues = ordered.Select(m => (double)m.Value).ToArray();
+        newSeries.Add(new ChartSeries { Name = "Your Measurement", Data = measurementValues });
+
+        var relevantGoals = BodyMeasurementGoals?.Where(g => g.Type == selectedType).ToList();
+
+        if (relevantGoals != null && relevantGoals.Any())
+        {
+            var goalValues = ordered.Select(m =>
+            {
+                var activeGoal = relevantGoals.FirstOrDefault(g =>
+                g.EffectiveFrom.Date <= m.MeasurementDate.Date &&
+                (g.EffectiveTo == null || g.EffectiveTo.Value.Date >= m.MeasurementDate.Date));
+
+                return activeGoal != null ? (double)activeGoal.TargetValue : 0.0;
+            }).ToArray();
+
+            if (goalValues.Any(v => v > 0))
+            {
+                newSeries.Add(new ChartSeries { Name = "Goal", Data = goalValues });
+            }
+        }
+
+        Series = newSeries;
+    }
 
     private async Task LoadBodyMeasurements()
     {
         isProcessing = true;
 
-        var (from, to) = selectedRange == "customDate"
+        var (from, to) = selectedRange == "Custom Date"
             ? (customStartDate, customEndDate)
             : preselectedDateRanges[selectedRange]();
 
         BodyMeasurements = await GetBodyMeasurementUseCase.ExecuteAsync(userId, selectedType, from, to);
         BodyMeasurementGoals = await GetBodyMeasurementGoalUseCase.ExecuteAsync(userId, selectedType, from, to);
-
+        PrepareChartData();
+        
         isProcessing = false;
     }
 
@@ -451,6 +540,8 @@ else
     
     private void EditGoal(BodyMeasurementGoalModel g)
     {
+        if (g == null) return;
+
         newMeasurementGoal = new BodyMeasurementGoalModel()
         {
             Id = g.Id,
