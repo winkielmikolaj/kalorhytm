@@ -285,8 +285,9 @@ else
                         @onclick="() => EditMeasurement(m)">@m.Value</td>
                     <td class="border px-4 py-2 cursor-pointer hover:bg-gray-500"
                         @onclick="() => EditMeasurement(m)">@m.MeasurementDate.ToString("yyyy-MM-dd")</td>
+                    
                     <td class="border px-4 py-2 cursor-pointer hover:bg-gray-500"
-                        @onclick="() => EditMeasurement(m)">@((goal != null) ? goal.TargetValue.ToString() : "-")</td>
+                        @onclick="() => EditGoal(goal)">@((goal != null) ? goal.TargetValue.ToString() : "-")</td>
                     <td class="border px-4 py-2 cursor-pointer hover:bg-gray-500"
                         @onclick="() => EditGoal(goal)">@((goal != null) ? goal.EffectiveFrom.ToString("yyyy-MM-dd") : "-")</td>
                     <td class="border px-4 py-2 cursor-pointer hover:bg-gray-500"
@@ -530,7 +531,7 @@ else
 
     private async Task DeleteMeasurement()
     {
-        await DeleteBodyMeasurementUseCase.ExecuteAsync(newMeasurement.Id);
+        await DeleteBodyMeasurementUseCase.ExecuteAsync(newMeasurement.Id, userId);
         
         BodyMeasurements.RemoveAll(b => b.Id == newMeasurement.Id);
 
@@ -581,8 +582,8 @@ else
 
     private async Task DeleteGoal()
     {
-        await DeleteBodyMeasurementGoalUseCase.ExecuteAsync(newMeasurementGoal.Id);
-        
+        await DeleteBodyMeasurementGoalUseCase.ExecuteAsync(newMeasurementGoal.Id, userId);
+    
         BodyMeasurementGoals.RemoveAll(g => g.Id == newMeasurementGoal.Id);
 
         CloseModal();

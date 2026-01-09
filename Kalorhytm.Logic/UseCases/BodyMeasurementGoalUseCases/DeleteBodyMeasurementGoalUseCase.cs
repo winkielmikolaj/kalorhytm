@@ -13,12 +13,16 @@ namespace Kalorhytm.Logic.UseCases.BodyMeasurementGoalUseCases
             _measurementGoalRepository = measurementGoalRepository;
         }
 
-        public async Task<BodyMeasurementGoalModel?> ExecuteAsync(int id)
+        public async Task<BodyMeasurementGoalModel?> ExecuteAsync(int id, string userId)
         {
             var goal = await _measurementGoalRepository.GetByIdAsync(id);
-            if (goal == null) return null;
-
-            await _measurementGoalRepository.DeleteAsync(id);
+            
+            if (goal == null || goal.UserId != userId) 
+            {
+                return null;
+            }
+            
+            await _measurementGoalRepository.DeleteAsync(id, userId); 
 
             return new BodyMeasurementGoalModel
             {

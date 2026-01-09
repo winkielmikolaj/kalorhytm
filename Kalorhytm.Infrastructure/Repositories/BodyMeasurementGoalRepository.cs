@@ -45,10 +45,12 @@ namespace Kalorhytm.Infrastructure.Repositories
             _context.BodyMeasurementGoals.Update(bodyMeasurementGoal);
             await _context.SaveChangesAsync();
         }
-
-        public async Task DeleteAsync(int id)
+        
+        public async Task DeleteAsync(int id, string userId)
         {
-            var bodyMeasurementGoal = await GetByIdAsync(id);
+            var bodyMeasurementGoal = await _context.BodyMeasurementGoals
+                .FirstOrDefaultAsync(g => g.Id == id && g.UserId == userId);
+
             if (bodyMeasurementGoal != null)
             {
                 _context.BodyMeasurementGoals.Remove(bodyMeasurementGoal);

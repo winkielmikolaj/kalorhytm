@@ -48,9 +48,11 @@ namespace Kalorhytm.Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task DeleteAsync(int id)
+        public async Task DeleteAsync(int id, string userId)
         {
-            var bodyMeasurement = await GetByIdAsync(id);
+            var bodyMeasurement = await _context.BodyMeasurements
+                .FirstOrDefaultAsync(m => m.Id == id && m.UserId == userId);
+
             if (bodyMeasurement != null)
             {
                 _context.BodyMeasurements.Remove(bodyMeasurement);
