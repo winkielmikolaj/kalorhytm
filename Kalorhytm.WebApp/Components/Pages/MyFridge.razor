@@ -13,6 +13,7 @@
 @using Kalorhytm.Logic.StateContainer
 @using Kalorhytm.Logic.Interfaces.IRecipeLikes
 
+@inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject ISpoonacularRecipesService RecipesService
 @inject IAddIngredientUseCase AddIngredientUseCase
@@ -116,6 +117,10 @@ else
                         </p>
 
                         <button class="btn btn-primary mt-2" @onclick="() => ShowAddRecipeModal(recipe)">Add to Meal</button>
+                        
+                        <button class="btn btn-info text-white mt-2" @onclick="() => GoToRecipeDetails(recipe.RecipeId)">
+                            View Details
+                        </button>
                     </div>
                 </div>
             </div>
@@ -209,6 +214,13 @@ else
     private string recipeModalError = "";
 
 
+    //details link
+    private void GoToRecipeDetails(int recipeId)
+    {
+        // Przekierowanie do strony szczegółów, tak jak w Recipes.razor
+        NavigationManager.NavigateTo($"/recipes/recipe-{recipeId}");
+    }
+    
 
     private async Task LoadLikedRecipes()
     {
