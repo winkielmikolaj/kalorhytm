@@ -4,6 +4,7 @@
 @using Microsoft.AspNetCore.Identity
 @using Kalorhytm.Infrastructure
 @using Microsoft.AspNetCore.Http
+@using System.IO 
 
 @inject UserManager<ApplicationUser> UserManager
 @inject SignInManager<ApplicationUser> SignInManager
@@ -40,6 +41,7 @@
                 <div class="mt-3">
                     <label for="imageUpload" class="form-label fw-bold">Wybierz nowe zdjęcie</label>
                     <input type="file" id="imageUpload" name="Input.ImageFile" class="form-control" accept=".png,.jpg,.jpeg" />
+                    <ValidationMessage For="() => Input.ImageFile" class="text-danger" />
                 </div>
             </div>
 
@@ -101,29 +103,21 @@
         bool hasChanges = false;
 
         // 1. OBSŁUGA ZDJĘCIA
-        // Sprawdzamy, czy w modelu pojawił się plik (dzięki name="Input.ImageFile")
+        // Jeśli plik przeszedł walidację (Attributes w InputModel), zapisujemy go
         if (Input.ImageFile != null)
         {
             using var memoryStream = new MemoryStream();
             await Input.ImageFile.CopyToAsync(memoryStream);
             
-            // Prosta walidacja rozmiaru (np. max 5MB)
-            if (memoryStream.Length < 5 * 1024 * 1024) 
+            user.ProfilePicture = memoryStream.ToArray();
+            // Wymuszamy aktualizację użytkownika, by zapisać zdjęcie
+            var photoResult = await UserManager.UpdateAsync(user);
+            if (!photoResult.Succeeded)
             {
-                user.ProfilePicture = memoryStream.ToArray();
-                var photoResult = await UserManager.UpdateAsync(user);
-                if (!photoResult.Succeeded)
-                {
-                    message = "Błąd: Nie udało się zaktualizować zdjęcia.";
-                    return;
-                }
-                hasChanges = true;
-            }
-            else
-            {
-                message = "Błąd: Plik jest zbyt duży (max 5MB).";
+                message = "Błąd: Nie udało się zaktualizować zdjęcia.";
                 return;
             }
+            hasChanges = true;
         }
 
         // 2. OBSŁUGA DANYCH TEKSTOWYCH
@@ -134,7 +128,7 @@
             var updateResult = await UserManager.UpdateAsync(user);
             if (!updateResult.Succeeded)
             {
-                message = "Błąd: Nie udało się zaktualizować danych.";
+                message = "Błąd: Nie udało się zaktualizować danych osobowych.";
                 return;
             }
             hasChanges = true;
@@ -152,7 +146,6 @@
             hasChanges = true;
         }
 
-        // 3. FINALIZACJA
         if (hasChanges)
         {
             await SignInManager.RefreshSignInAsync(user);
@@ -166,21 +159,85 @@
 
     private sealed class InputModel
     {
-        [Phone]
+        // WALIDACJA NUMERU TELEFONU
+        [Required(ErrorMessage = "Numer telefonu jest wymagany.")]
+        // Regex: Tylko cyfry, spacje, plus i myślnik. Zakaz liter.
+        [RegularExpression(@"^[\d\s\-\+]+$", ErrorMessage = "Numer telefonu może zawierać tylko cyfry oraz znaki +, - lub spacje (bez liter).")]
         [Display(Name = "Numer telefonu")]
         public string? PhoneNumber { get; set; }
 
+        // WALIDACJA IMIENIA
+        [Required(ErrorMessage = "Imię jest wymagane.")]
+        [StringLength(50, MinimumLength = 2, ErrorMessage = "Imię musi mieć od 2 do 50 znaków.")]
+        // Regex: Litery (w tym polskie), spacje i myślniki. Zakaz cyfr i kropek.
+        [RegularExpression(@"^[a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ\s\-]+$", ErrorMessage = "Imię może zawierać tylko litery (bez cyfr i znaków specjalnych jak kropki).")]
         [Display(Name = "Imię")]
         public string? FirstName { get; set; }
 
+        // WALIDACJA NAZWISKA
+        [Required(ErrorMessage = "Nazwisko jest wymagane.")]
+        [StringLength(50, MinimumLength = 2, ErrorMessage = "Nazwisko musi mieć od 2 do 50 znaków.")]
+        // Regex: To samo co imię
+        [RegularExpression(@"^[a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ\s\-]+$", ErrorMessage = "Nazwisko może zawierać tylko litery (bez cyfr i znaków specjalnych jak kropki).")]
         [Display(Name = "Nazwisko")]
         public string? LastName { get; set; }
 
         // To pole służy tylko do wyświetlania obecnego zdjęcia (z bazy)
         public byte[]? ProfilePicture { get; set; }
 
-        // To pole służy do pobrania nowego pliku z formularza
-        // Musi pasować do atrybutu name="Input.ImageFile" w HTML
+        // WALIDACJA PLIKU
+        [Display(Name = "Zdjęcie profilowe")]
+        [MaxFileSize(5 * 1024 * 1024, ErrorMessage = "Maksymalny rozmiar pliku to 5MB.")]
+        [AllowedExtensions(new string[] { ".jpg", ".jpeg", ".png" }, ErrorMessage = "Dozwolone są tylko pliki .jpg, .jpeg, .png")]
         public IFormFile? ImageFile { get; set; }
+    }
+
+    // --- KLASY POMOCNICZE DO WALIDACJI PLIKU (Backend) ---
+
+    // Sprawdza rozmiar pliku
+    public class MaxFileSizeAttribute : ValidationAttribute
+    {
+        private readonly int _maxFileSize;
+        public MaxFileSizeAttribute(int maxFileSize)
+        {
+            _maxFileSize = maxFileSize;
+        }
+
+        protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
+        {
+            var file = value as IFormFile;
+            if (file != null)
+            {
+                if (file.Length > _maxFileSize)
+                {
+                    return new ValidationResult(ErrorMessage ?? $"Maksymalny rozmiar pliku to {_maxFileSize / (1024 * 1024)}MB.");
+                }
+            }
+            return ValidationResult.Success;
+        }
+    }
+
+    // Sprawdza rozszerzenie pliku
+    public class AllowedExtensionsAttribute : ValidationAttribute
+    {
+        private readonly string[] _extensions;
+        public AllowedExtensionsAttribute(string[] extensions)
+        {
+            _extensions = extensions;
+        }
+
+        protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
+        {
+            var file = value as IFormFile;
+            if (file != null)
+            {
+                var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+                if (!_extensions.Contains(extension))
+                {
+                    return new ValidationResult(ErrorMessage ?? $"Dozwolone rozszerzenia: {string.Join(", ", _extensions)}");
+                }
+            }
+            return ValidationResult.Success;
+        }
     }
 }
