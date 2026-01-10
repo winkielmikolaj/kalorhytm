@@ -2,12 +2,16 @@
 @rendermode InteractiveServer
 
 @using System.Security.Claims
+@using Microsoft.AspNetCore.Identity
 @using Kalorhytm.Contracts.Models.FavouriteRecipes
 @using Kalorhytm.Logic.Interfaces.IFavouriteRecipesUseCases
+@using Kalorhytm.Infrastructure
+
 @inject IGetFavouriteRecipeUseCase GetFavUseCase
 @inject IDeleteFavouriteRecipeUseCase DeleteFavUseCase
 @inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager NavigationManager
+@inject UserManager<ApplicationUser> UserManager
 
 <PageTitle>Mój Profil</PageTitle>
 
@@ -15,12 +19,26 @@
     <div class="row mb-5">
         <div class="col-12">
             <div class="d-flex align-items-center p-4 bg-white rounded-3 shadow-sm border">
-                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-4" 
-                     style="width: 80px; height: 80px; font-size: 2.5rem;">
-                    <span>👤</span>
+                
+                <div class="me-4 flex-shrink-0">
+                    @if (UserProfilePicture != null && UserProfilePicture.Length > 0)
+                    {
+                        <img src="data:image/png;base64,@Convert.ToBase64String(UserProfilePicture)" 
+                             alt="Profile" 
+                             class="rounded-circle border"
+                             style="width: 80px; height: 80px; object-fit: cover;" />
+                    }
+                    else
+                    {
+                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" 
+                             style="width: 80px; height: 80px; font-size: 2.5rem;">
+                            <span>@(GetUserInitials())</span>
+                        </div>
+                    }
                 </div>
+
                 <div>
-                    <h2 class="fw-bold mb-1">Witaj, @(userName ?? "Użytkowniku")!</h2>
+                    <h2 class="fw-bold mb-1">Witaj, @(DisplayUserName)!</h2>
                     <p class="text-muted mb-0">Zarządzaj swoimi danymi, pomiarami i ulubionymi przepisami.</p>
                 </div>
             </div>
@@ -126,40 +144,61 @@
     private List<FavouriteRecipesModel> FavouriteRecipes = new();
     private bool isLoading = true;
     private string userId = "";
-    private string? userName;
+    
+    // Pola do obsługi danych użytkownika
+    private byte[]? UserProfilePicture;
+    private string DisplayUserName = "Użytkowniku";
+    private string? UserFirstName;
+    private string? UserLastName;
 
     protected override async Task OnInitializedAsync()
     {
         await LoadUserData();
     }
 
-    // Odśwież dane przy powrocie na stronę
+    // Odśwież dane przy powrocie na stronę (np. po edycji profilu)
     protected override async Task OnParametersSetAsync()
     {
-        // Sprawdzamy czy userId jest już załadowane, żeby nie pobierać usera dwa razy
-        if (!string.IsNullOrEmpty(userId))
-        {
-             await LoadFavouriteRecipes();
-        }
+        // Wywołujemy ponownie LoadUserData, aby odświeżyć zdjęcie/imię jeśli user wrócił z edycji
+        await LoadUserData();
     }
 
     private async Task LoadUserData()
     {
         isLoading = true;
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
+        var principal = authState.User;
 
-        if (user.Identity != null && user.Identity.IsAuthenticated)
+        if (principal.Identity != null && principal.Identity.IsAuthenticated)
         {
-            userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value 
-                     ?? user.FindFirst(c => c.Type == "sub")?.Value 
-                     ?? user.Identity.Name ?? "";
-            
-            // Pobieramy nazwę do wyświetlenia w nagłówku (np. email lub imię)
-            userName = user.Identity.Name;
-            if (userName != null && userName.Contains("@"))
+            userId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "";
+
+            // Pobieramy pełne dane użytkownika z bazy Identity
+            var user = await UserManager.GetUserAsync(principal);
+            if (user != null)
             {
-                userName = userName.Split('@')[0]; // Wyświetl część przed @
+                UserProfilePicture = user.ProfilePicture;
+                UserFirstName = user.FirstName;
+                UserLastName = user.LastName;
+
+                // Ustawiamy nazwę wyświetlaną (Imię Nazwisko lub nick)
+                if (!string.IsNullOrWhiteSpace(user.FirstName))
+                {
+                    DisplayUserName = $"{user.FirstName} {user.LastName}".Trim();
+                }
+                else 
+                {
+                    // Fallback do części maila lub "Użytkowniku"
+                    var userName = user.UserName;
+                    if (userName != null && userName.Contains("@"))
+                    {
+                        DisplayUserName = userName.Split('@')[0];
+                    }
+                    else
+                    {
+                        DisplayUserName = userName ?? "Użytkowniku";
+                    }
+                }
             }
 
             await LoadFavouriteRecipes();
@@ -168,6 +207,8 @@
         {
             isLoading = false;
         }
+        
+        StateHasChanged();
     }
 
     private async Task LoadFavouriteRecipes()
@@ -185,7 +226,6 @@
         finally
         {
             isLoading = false;
-            StateHasChanged();
         }
     }
 
@@ -201,6 +241,19 @@
         {
             Console.WriteLine($"Error deleting recipe: {ex.Message}");
         }
+    }
+
+    private string GetUserInitials()
+    {
+        if (!string.IsNullOrEmpty(UserFirstName))
+        {
+            return UserFirstName[0].ToString().ToUpper();
+        }
+        if (!string.IsNullOrEmpty(DisplayUserName) && DisplayUserName != "Użytkowniku")
+        {
+            return DisplayUserName[0].ToString().ToUpper();
+        }
+        return "👤";
     }
 
     // --- Nawigacja ---

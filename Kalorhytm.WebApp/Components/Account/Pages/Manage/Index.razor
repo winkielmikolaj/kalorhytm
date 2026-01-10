@@ -3,32 +3,70 @@
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Identity
 @using Kalorhytm.Infrastructure
+@using Microsoft.AspNetCore.Http
 
 @inject UserManager<ApplicationUser> UserManager
 @inject SignInManager<ApplicationUser> SignInManager
 @inject IdentityUserAccessor UserAccessor
 @inject IdentityRedirectManager RedirectManager
 
-<PageTitle>Profile</PageTitle>
+<PageTitle>Twój Profil</PageTitle>
 
-<h3>Profile</h3>
-<StatusMessage />
+<h3>Twój Profil</h3>
+<StatusMessage Message="@message" />
 
 <div class="row">
-    <div class="col-xl-6">
-        <EditForm Model="Input" FormName="profile" OnValidSubmit="OnValidSubmitAsync" method="post">
+    <div class="col-md-6">
+        <EditForm Model="Input" FormName="profile" OnValidSubmit="OnValidSubmitAsync" enctype="multipart/form-data">
             <DataAnnotationsValidator />
             <ValidationSummary class="text-danger" role="alert" />
-            <div class="form-floating mb-3">
-                <input type="text" value="@username" id="username" class="form-control" placeholder="Choose your username." disabled />
-                <label for="username" class="form-label">Username</label>
+
+            <div class="mb-4 text-center">
+                @if (Input.ProfilePicture != null && Input.ProfilePicture.Length > 0)
+                {
+                    <img src="data:image/png;base64,@Convert.ToBase64String(Input.ProfilePicture)"
+                         class="rounded-circle mb-2"
+                         style="width: 150px; height: 150px; object-fit: cover; border: 3px solid #eee;" 
+                         alt="Zdjęcie profilowe" />
+                }
+                else
+                {
+                    <div class="rounded-circle mb-2 bg-secondary d-flex align-items-center justify-content-center mx-auto"
+                         style="width: 150px; height: 150px; color: white; font-size: 3rem;">
+                        👤
+                    </div>
+                }
+
+                <div class="mt-3">
+                    <label for="imageUpload" class="form-label fw-bold">Wybierz nowe zdjęcie</label>
+                    <input type="file" id="imageUpload" name="Input.ImageFile" class="form-control" accept=".png,.jpg,.jpeg" />
+                </div>
             </div>
+
             <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.PhoneNumber" id="Input.PhoneNumber" class="form-control" placeholder="Enter your phone number" />
-                <label for="Input.PhoneNumber" class="form-label">Phone number</label>
+                <input type="text" value="@username" class="form-control" placeholder="Nazwa użytkownika" disabled />
+                <label>Nazwa użytkownika</label>
+            </div>
+
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="Input.FirstName" class="form-control" placeholder="Imię" />
+                <label>Imię</label>
+                <ValidationMessage For="() => Input.FirstName" class="text-danger" />
+            </div>
+
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="Input.LastName" class="form-control" placeholder="Nazwisko" />
+                <label>Nazwisko</label>
+                <ValidationMessage For="() => Input.LastName" class="text-danger" />
+            </div>
+
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="Input.PhoneNumber" class="form-control" placeholder="Numer telefonu" />
+                <label>Numer telefonu</label>
                 <ValidationMessage For="() => Input.PhoneNumber" class="text-danger" />
             </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Save</button>
+
+            <button type="submit" class="w-100 btn btn-lg btn-primary">Zapisz zmiany</button>
         </EditForm>
     </div>
 </div>
@@ -36,7 +74,7 @@
 @code {
     private ApplicationUser user = default!;
     private string? username;
-    private string? phoneNumber;
+    private string? message;
 
     [CascadingParameter]
     private HttpContext HttpContext { get; set; } = default!;
@@ -48,30 +86,101 @@
     {
         user = await UserAccessor.GetRequiredUserAsync(HttpContext);
         username = await UserManager.GetUserNameAsync(user);
-        phoneNumber = await UserManager.GetPhoneNumberAsync(user);
 
-        Input.PhoneNumber ??= phoneNumber;
+        if (Input.FirstName == null && Input.LastName == null && Input.PhoneNumber == null)
+        {
+            Input.PhoneNumber = await UserManager.GetPhoneNumberAsync(user);
+            Input.FirstName = user.FirstName;
+            Input.LastName = user.LastName;
+            Input.ProfilePicture = user.ProfilePicture;
+        }
     }
 
     private async Task OnValidSubmitAsync()
     {
+        bool hasChanges = false;
+
+        // 1. OBSŁUGA ZDJĘCIA
+        // Sprawdzamy, czy w modelu pojawił się plik (dzięki name="Input.ImageFile")
+        if (Input.ImageFile != null)
+        {
+            using var memoryStream = new MemoryStream();
+            await Input.ImageFile.CopyToAsync(memoryStream);
+            
+            // Prosta walidacja rozmiaru (np. max 5MB)
+            if (memoryStream.Length < 5 * 1024 * 1024) 
+            {
+                user.ProfilePicture = memoryStream.ToArray();
+                var photoResult = await UserManager.UpdateAsync(user);
+                if (!photoResult.Succeeded)
+                {
+                    message = "Błąd: Nie udało się zaktualizować zdjęcia.";
+                    return;
+                }
+                hasChanges = true;
+            }
+            else
+            {
+                message = "Błąd: Plik jest zbyt duży (max 5MB).";
+                return;
+            }
+        }
+
+        // 2. OBSŁUGA DANYCH TEKSTOWYCH
+        if (Input.FirstName != user.FirstName || Input.LastName != user.LastName)
+        {
+            user.FirstName = Input.FirstName;
+            user.LastName = Input.LastName;
+            var updateResult = await UserManager.UpdateAsync(user);
+            if (!updateResult.Succeeded)
+            {
+                message = "Błąd: Nie udało się zaktualizować danych.";
+                return;
+            }
+            hasChanges = true;
+        }
+
+        var phoneNumber = await UserManager.GetPhoneNumberAsync(user);
         if (Input.PhoneNumber != phoneNumber)
         {
             var setPhoneResult = await UserManager.SetPhoneNumberAsync(user, Input.PhoneNumber);
             if (!setPhoneResult.Succeeded)
             {
-                RedirectManager.RedirectToCurrentPageWithStatus("Error: Failed to set phone number.", HttpContext);
+                RedirectManager.RedirectToCurrentPageWithStatus("Błąd: Nie udało się ustawić numeru telefonu.", HttpContext);
+                return;
             }
+            hasChanges = true;
         }
 
-        await SignInManager.RefreshSignInAsync(user);
-        RedirectManager.RedirectToCurrentPageWithStatus("Your profile has been updated", HttpContext);
+        // 3. FINALIZACJA
+        if (hasChanges)
+        {
+            await SignInManager.RefreshSignInAsync(user);
+            RedirectManager.RedirectToCurrentPageWithStatus("Twój profil został zaktualizowany", HttpContext);
+        }
+        else
+        {
+             RedirectManager.RedirectToCurrentPageWithStatus("Nie wprowadzono żadnych zmian", HttpContext);
+        }
     }
 
     private sealed class InputModel
     {
         [Phone]
-        [Display(Name = "Phone number")]
+        [Display(Name = "Numer telefonu")]
         public string? PhoneNumber { get; set; }
+
+        [Display(Name = "Imię")]
+        public string? FirstName { get; set; }
+
+        [Display(Name = "Nazwisko")]
+        public string? LastName { get; set; }
+
+        // To pole służy tylko do wyświetlania obecnego zdjęcia (z bazy)
+        public byte[]? ProfilePicture { get; set; }
+
+        // To pole służy do pobrania nowego pliku z formularza
+        // Musi pasować do atrybutu name="Input.ImageFile" w HTML
+        public IFormFile? ImageFile { get; set; }
     }
-} 
+}
