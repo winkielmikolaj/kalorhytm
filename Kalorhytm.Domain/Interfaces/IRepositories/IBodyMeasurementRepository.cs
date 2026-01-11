@@ -13,6 +13,6 @@ namespace Kalorhytm.Domain.Interfaces.IRepositories
         Task AddAsync(BodyMeasurementEntity entity);
         
         Task UpdateAsync(BodyMeasurementEntity food);
-        Task DeleteAsync(int id);
+        Task DeleteAsync(int id, string userId);
     }
 }

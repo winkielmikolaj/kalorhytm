@@ -2,79 +2,231 @@
 @rendermode InteractiveServer
 
 @using System.Security.Claims
+@using Microsoft.AspNetCore.Identity
 @using Kalorhytm.Contracts.Models.FavouriteRecipes
 @using Kalorhytm.Logic.Interfaces.IFavouriteRecipesUseCases
+@using Kalorhytm.Infrastructure
+
 @inject IGetFavouriteRecipeUseCase GetFavUseCase
 @inject IDeleteFavouriteRecipeUseCase DeleteFavUseCase
 @inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavigationManager
+@inject UserManager<ApplicationUser> UserManager
 
-<h3>Twoje ulubione przepisy</h3>
+<PageTitle>Mój Profil</PageTitle>
 
-@if (isLoading)
-{
-    <p>Ładowanie przepisów...</p>
-}
-else if (FavouriteRecipes == null || !FavouriteRecipes.Any())
-{
-    <p>Brak ulubionych przepisów.</p>
-}
-else
-{
-    <div class="row">
-        @foreach (var recipe in FavouriteRecipes)
-        {
-            <div class="col-md-4 mb-3">
-                <div class="card">
-                    <img src="@recipe.ImageUrl" class="card-img-top" alt="@recipe.Title" />
-                    <div class="card-body">
-                        <h5 class="card-title">@recipe.Title</h5>
-                        <p>Lajki: @recipe.Likes</p>
-                        <button class="btn btn-danger" @onclick="() => DeleteRecipe(recipe.Id)">Usuń</button>
-                    </div>
+<div class="container py-5">
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="d-flex align-items-center p-4 bg-white rounded-3 shadow-sm border">
+                
+                <div class="me-4 flex-shrink-0">
+                    @if (UserProfilePicture != null && UserProfilePicture.Length > 0)
+                    {
+                        <img src="data:image/png;base64,@Convert.ToBase64String(UserProfilePicture)" 
+                             alt="Profile" 
+                             class="rounded-circle border"
+                             style="width: 80px; height: 80px; object-fit: cover;" />
+                    }
+                    else
+                    {
+                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" 
+                             style="width: 80px; height: 80px; font-size: 2.5rem;">
+                            <span>@(GetUserInitials())</span>
+                        </div>
+                    }
+                </div>
+
+                <div>
+                    <h2 class="fw-bold mb-1">Witaj, @(DisplayUserName)!</h2>
+                    <p class="text-muted mb-0">Zarządzaj swoimi danymi, pomiarami i ulubionymi przepisami.</p>
                 </div>
             </div>
-        }
+        </div>
     </div>
-}
+
+    <div class="row g-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light fw-bold text-uppercase small text-muted py-3">
+                    Menu
+                </div>
+                <div class="list-group list-group-flush">
+                    <button class="list-group-item list-group-item-action d-flex align-items-center gap-3 py-3" 
+                            @onclick="GoToMeasurements">
+                        <span class="fs-5">⚖️</span>
+                        <span class="fw-medium">Pomiary Ciała</span>
+                    </button>
+                    
+                    <a href="Account/Manage" class="list-group-item list-group-item-action d-flex align-items-center gap-3 py-3">
+                        <span class="fs-5">⚙️</span>
+                        <span class="fw-medium">Ustawienia Konta</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-9">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold text-primary">❤️ Twoje ulubione przepisy</h5>
+                    <span class="badge bg-secondary rounded-pill">@(FavouriteRecipes?.Count ?? 0)</span>
+                </div>
+                
+                <div class="card-body p-4">
+                    @if (isLoading)
+                    {
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status"></div>
+                            <p class="mt-3 text-muted">Ładowanie Twoich pyszności...</p>
+                        </div>
+                    }
+                    else if (FavouriteRecipes == null || !FavouriteRecipes.Any())
+                    {
+                        <div class="text-center py-5 text-muted">
+                            <div class="fs-1 mb-3">🍲</div>
+                            <h4>Brak ulubionych przepisów</h4>
+                            <p>Wygląda na to, że jeszcze nic nie polubiłeś.</p>
+                            <button class="btn btn-primary mt-2" @onclick="GoToRecipes">Szukaj Przepisów</button>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="row g-4">
+                            @foreach (var recipe in FavouriteRecipes)
+                            {
+                                <div class="col-lg-6 col-xl-4">
+                                    <div class="card h-100 border-0 shadow-sm hover-shadow transition-all">
+                                        <div class="position-relative" style="height: 180px; overflow: hidden;">
+                                            <img src="@recipe.ImageUrl" class="w-100 h-100" style="object-fit: cover;" alt="@recipe.Title" />
+                                            <div class="position-absolute top-0 end-0 p-2">
+                                                <span class="badge bg-white text-danger shadow-sm">❤️ @recipe.Likes</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="card-body d-flex flex-column">
+                                            <h6 class="card-title fw-bold text-truncate" title="@recipe.Title">@recipe.Title</h6>
+                                            
+                                            <div class="mt-auto pt-3 d-flex gap-2">
+                                                <button class="btn btn-sm btn-outline-primary flex-grow-1" 
+                                                        @onclick="() => GoToRecipeDetails(recipe.RecipeId)">
+                                                    Zobacz
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger" 
+                                                        @onclick="() => DeleteRecipe(recipe.Id)"
+                                                        title="Usuń z ulubionych">
+                                                    <span aria-hidden="true">&times;</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .hover-shadow:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+    }
+    .transition-all {
+        transition: all 0.3s ease;
+    }
+</style>
 
 @code {
     private List<FavouriteRecipesModel> FavouriteRecipes = new();
     private bool isLoading = true;
     private string userId = "";
+    
+    // Pola do obsługi danych użytkownika
+    private byte[]? UserProfilePicture;
+    private string DisplayUserName = "Użytkowniku";
+    private string? UserFirstName;
+    private string? UserLastName;
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadFavouriteRecipes();
+        await LoadUserData();
     }
 
-    // To się wywoła za każdym razem gdy wrócisz na stronę
+    // Odśwież dane przy powrocie na stronę (np. po edycji profilu)
     protected override async Task OnParametersSetAsync()
     {
-        await LoadFavouriteRecipes();
+        // Wywołujemy ponownie LoadUserData, aby odświeżyć zdjęcie/imię jeśli user wrócił z edycji
+        await LoadUserData();
+    }
+
+    private async Task LoadUserData()
+    {
+        isLoading = true;
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var principal = authState.User;
+
+        if (principal.Identity != null && principal.Identity.IsAuthenticated)
+        {
+            userId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "";
+
+            // Pobieramy pełne dane użytkownika z bazy Identity
+            var user = await UserManager.GetUserAsync(principal);
+            if (user != null)
+            {
+                UserProfilePicture = user.ProfilePicture;
+                UserFirstName = user.FirstName;
+                UserLastName = user.LastName;
+
+                // Ustawiamy nazwę wyświetlaną (Imię Nazwisko lub nick)
+                if (!string.IsNullOrWhiteSpace(user.FirstName))
+                {
+                    DisplayUserName = $"{user.FirstName} {user.LastName}".Trim();
+                }
+                else 
+                {
+                    // Fallback do części maila lub "Użytkowniku"
+                    var userName = user.UserName;
+                    if (userName != null && userName.Contains("@"))
+                    {
+                        DisplayUserName = userName.Split('@')[0];
+                    }
+                    else
+                    {
+                        DisplayUserName = userName ?? "Użytkowniku";
+                    }
+                }
+            }
+
+            await LoadFavouriteRecipes();
+        }
+        else
+        {
+            isLoading = false;
+        }
+        
+        StateHasChanged();
     }
 
     private async Task LoadFavouriteRecipes()
     {
-        isLoading = true;
-        StateHasChanged(); // Pokaż loading
-        
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
+        if (string.IsNullOrEmpty(userId)) return;
 
-        if (user.Identity != null && user.Identity.IsAuthenticated)
+        try
         {
-            // Użyj tej samej metody co w myFridge
-            userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value 
-                     ?? user.FindFirst(c => c.Type == "sub")?.Value 
-                     ?? user.Identity.Name;
-            
-            Console.WriteLine($"[Profile] Loading favourites for user: {userId}");
             FavouriteRecipes = await GetFavUseCase.ExecuteAsync(userId);
-            Console.WriteLine($"[Profile] Loaded {FavouriteRecipes.Count} favourite recipes");
         }
-
-        isLoading = false;
-        StateHasChanged();
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading favourites: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
     }
 
     private async Task DeleteRecipe(int recipeId)
@@ -84,11 +236,40 @@ else
             await DeleteFavUseCase.ExecuteAsync(recipeId, userId);
             FavouriteRecipes.RemoveAll(r => r.Id == recipeId);
             StateHasChanged();
-            Console.WriteLine($"[Profile] Deleted recipe {recipeId}");
         }
-        catch (InvalidOperationException ex)
+        catch (Exception ex)
         {
-            Console.WriteLine($"[Profile] Error deleting recipe: {ex.Message}");
+            Console.WriteLine($"Error deleting recipe: {ex.Message}");
         }
+    }
+
+    private string GetUserInitials()
+    {
+        if (!string.IsNullOrEmpty(UserFirstName))
+        {
+            return UserFirstName[0].ToString().ToUpper();
+        }
+        if (!string.IsNullOrEmpty(DisplayUserName) && DisplayUserName != "Użytkowniku")
+        {
+            return DisplayUserName[0].ToString().ToUpper();
+        }
+        return "👤";
+    }
+
+    // --- Nawigacja ---
+
+    private void GoToMeasurements()
+    {
+        NavigationManager.NavigateTo("/measurements");
+    }
+
+    private void GoToRecipes()
+    {
+        NavigationManager.NavigateTo("/recipes");
+    }
+
+    private void GoToRecipeDetails(int recipeId)
+    {
+        NavigationManager.NavigateTo($"/recipes/recipe-{recipeId}");
     }
 }

@@ -1,15 +1,22 @@
 @page "/recipes"
 @using System.Security.Claims
+@using Kalorhytm.Contracts.Models.FavouriteRecipes
 @using Kalorhytm.Contracts.Models.Recipes
 @using Kalorhytm.Domain.Enums
 @using Kalorhytm.Infrastructure.External.Spoonacular.Models
 @using Kalorhytm.Logic.Interfaces
+@using Kalorhytm.Logic.Interfaces.IFavouriteRecipesUseCases
+@using Kalorhytm.Logic.Interfaces.IRecipeLikes
 @using Kalorhytm.WebApp.Components.Shared
 @using Microsoft.AspNetCore.WebUtilities
 
 @inject AuthenticationStateProvider _AuthenticationStateProvider
 @inject NavigationManager _NavigationManager
 @inject ISpoonacularRecipesService _RecipesService
+@inject IAddFavouriteRecipeUseCase AddFavouriteRecipeUseCase
+@inject IDeleteFavouriteRecipeUseCase DeleteFavouriteRecipeUseCase
+@inject IGetFavouriteRecipeUseCase GetFavouriteRecipeUseCase
+@inject IGetRecipeLikesUseCase GetRecipeLikesUseCase
 
 <PageTitle>Search Recipes</PageTitle>
 
@@ -47,23 +54,51 @@
 </div>
 
 @* OnAfterSearch site*@
-@if (recipes?.Any() == true)
+@if (recipes != null && recipes.Any())
 {
-    <div class="">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-4">
         @foreach (var recipe in recipes)
         {
-            <div class="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300">
+            <div class="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col h-full">
+                
                 <img src="@recipe.ImageUrl"
                      alt="@recipe.Title"
-                     class="w h-48 object-cover" />
+                     class="w-full h-48 object-cover" />
 
-                <div class="p-4 text-left">
-                    <h4 class="font-semibold text-gray-800 text-lg mb-2 line-clamp-2">@recipe.Title</h4>
-                    <div class="flex justify-between items-center">
-                        <span class="text-xs text-gray-500">#@recipe.RecipeId</span>
-                        <button class="bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg" @onclick="() => GoToRecipeDetails(recipe.RecipeId)">
-                            View
+                <div class="p-4 flex flex-col flex-grow justify-between">
+                    <div>
+                        <h4 class="font-semibold text-gray-800 text-lg mb-2 line-clamp-2" title="@recipe.Title">
+                            @recipe.Title
+                        </h4>
+                        <span class="text-xs text-gray-400 block mb-3">#@recipe.RecipeId</span>
+                    </div>
+                    
+                    <div class="flex justify-between items-center mt-2 border-t pt-3 border-gray-100">
+                        
+                        <button class="bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium px-4 py-2 rounded-lg transition-colors shadow-sm" 
+                                @onclick="() => GoToRecipeDetails(recipe.RecipeId)">
+                            View Recipe
                         </button>
+                        
+                        <div class="flex items-center gap-2 bg-gray-50 rounded-lg px-2 py-1">
+                            <button @onclick="() => ToggleLike(recipe)" 
+                                    @onclick:stopPropagation="true"
+                                    class="focus:outline-none hover:scale-110 transition-transform active:scale-95 p-1">
+                                
+                                @if (_likedRecipesMap.ContainsKey(recipe.RecipeId))
+                                {
+                                    <span class="text-xl leading-none">❤️</span>
+                                }
+                                else
+                                {
+                                    <span class="text-xl leading-none opacity-50 hover:opacity-100 grayscale hover:grayscale-0">❤️</span>
+                                }
+                            </button>
+                            <span class="text-sm font-bold text-gray-600 min-w-[1.5rem] text-center">
+                                @recipe.Likes
+                            </span>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -72,15 +107,23 @@
 }
 else if (!string.IsNullOrWhiteSpace(filterModel.Query))
 {
-    <p class="mt-8 text-gray-500 text-center">No recipes found for your search.</p>
+    <div class="flex flex-col items-center justify-center py-12 text-gray-500">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <p class="text-lg font-medium">No recipes found for "@filterModel.Query"</p>
+        <p class="text-sm">Try adjusting your filters or search term.</p>
+    </div>
 }
 
 @code {
     private string? userId { get; set; }
     private bool isProcessing { get; set; } = true;
-
+    
     private List<RecipeSummaryModel> recipes = new();
     private RecipeFilterModel filterModel = new();
+
+    private Dictionary<int, int> _likedRecipesMap = new();
 
     private string selectedSort = "title";
 
@@ -95,9 +138,17 @@ else if (!string.IsNullOrWhiteSpace(filterModel.Query))
         };
     }
 
-    
     protected override async Task OnInitializedAsync()
     {
+        var authState = await _AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (!string.IsNullOrEmpty(userId))
+        {
+            await LoadLikedRecipes();
+        }
+        
         var uri = new Uri(_NavigationManager.Uri);
         var queryParams = QueryHelpers.ParseQuery(uri.Query);
 
@@ -119,10 +170,81 @@ else if (!string.IsNullOrWhiteSpace(filterModel.Query))
         if (queryParams.TryGetValue("type", out var type))
             filterModel.Types = type.ToString().Split(',', StringSplitOptions.RemoveEmptyEntries)
                 .Select(t => Enum.Parse<SpoonacularMealType>(t, true)).ToList();
+        
+
+        bool hasFilters = !string.IsNullOrEmpty(filterModel.Query) 
+                          || filterModel.Cuisines.Any() 
+                          || filterModel.Diets.Any()
+                          || filterModel.Intolerances.Any()
+                          || filterModel.Types.Any();
+
+        if (hasFilters)
+        {
+            await OnSearchRecipes();
+        }
 
         await base.OnInitializedAsync();
+        isProcessing = false;
     }
     
+
+    private async Task LoadLikedRecipes()
+    {
+        try 
+        {
+            var favourites = await GetFavouriteRecipeUseCase.ExecuteAsync(userId);
+            _likedRecipesMap = favourites.ToDictionary(f => f.RecipeId, f => f.Id);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading favourites: {ex.Message}");
+        }
+    }
+
+    private async Task ToggleLike(RecipeSummaryModel recipe)
+    {
+        if (string.IsNullOrEmpty(userId)) return;
+
+        if (_likedRecipesMap.TryGetValue(recipe.RecipeId, out int databaseId))
+        {
+            try
+            {
+                await DeleteFavouriteRecipeUseCase.ExecuteAsync(databaseId, userId);
+                _likedRecipesMap.Remove(recipe.RecipeId);
+                recipe.Likes--; 
+            }
+            catch (Exception ex) { Console.WriteLine(ex.Message); }
+        }
+        else
+        {
+            try
+            {
+                var favourite = new FavouriteRecipesModel
+                {
+                    UserId = userId,
+                    RecipeId = recipe.RecipeId,
+                    Title = recipe.Title,
+                    ImageUrl = recipe.ImageUrl,
+                    Likes = recipe.Likes + 1,
+                    
+                    UsedIngredientsJson = "[]", 
+                    MissedIngredientsJson = "[]"
+                };
+
+                var saved = await AddFavouriteRecipeUseCase.ExecuteAsync(favourite);
+            
+                if (saved != null)
+                {
+                    _likedRecipesMap.Add(recipe.RecipeId, saved.Id);
+                    recipe.Likes++;
+                }
+            }
+            catch (Exception ex) { Console.WriteLine(ex.Message); }
+        }
+        StateHasChanged();
+    }
+    
+
     private async Task OnSearchRecipes()
     {
         var request = new SpoonacularComplexSearchRequest
@@ -136,18 +258,39 @@ else if (!string.IsNullOrWhiteSpace(filterModel.Query))
             Offset = 0,
             AddRecipeInformation = true
         };
-
+        
         recipes = await _RecipesService.SearchRecipesAsync(request);
+        
+        await UpdateRecipeLikeCounts();
         
         UpdateUrlWithFilters();
     }
 
-
     private async Task GetRandomRecipes()
     {
         recipes = await _RecipesService.GetRandomRecipesAsync(3);
+        
+        await UpdateRecipeLikeCounts();
     }
     
+    private async Task UpdateRecipeLikeCounts()
+    {
+        if (recipes != null && recipes.Any())
+        {
+            var recipeIds = recipes.Select(r => r.RecipeId).ToList();
+            var dbLikes = await GetRecipeLikesUseCase.ExecuteAsync(recipeIds);
+
+            foreach (var recipe in recipes)
+            {
+                if (dbLikes.TryGetValue(recipe.RecipeId, out int myAppLikes))
+                {
+                    recipe.Likes += myAppLikes;
+                }
+            }
+        }
+    }
+    
+
     private void UpdateUrlWithFilters()
     {
         var queryParams = new Dictionary<string, string?>();
