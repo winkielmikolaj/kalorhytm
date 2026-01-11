@@ -57,26 +57,39 @@ else
     @if (selectedRange == "Custom Date")
     {
         <div class="mb-4">
-            <label>Date From:</label>
-            <input type="date" class="form-control" @bind="customStartDate" />
+            <label>Date from:</label>
+            <input type="date" class="form-control" 
+                   value="@customStartDate.ToString("yyyy-MM-dd")" 
+                   @onchange="OnCustomStartDateChanged" />
             
-        @if (customStartDate != default)
-        {
-            <label class="mt-2">Date To:</label>
-            <input type="date" class="form-control" @bind="customEndDate" min="@customStartDate.ToString("yyyy-MM-dd")" />
-        }
+            <label class="mt-2">Date to:</label>
+            <input type="date" class="form-control" 
+                   value="@customEndDate.ToString("yyyy-MM-dd")" 
+                   @onchange="OnCustomEndDateChanged" />
         </div>
     }
-    
-    <button class="btn btn-primary mb-4" @onclick="LoadBodyMeasurements">Show Data in Table</button>
-    
-    <button class="btn btn-primary mb-4" @onclick="HandleShowChart">
-        @(showChart ? "Hide Chart" : "Show Chart")
-    </button>
     
     <button class="btn btn-primary mb-4" @onclick="() => ShowModal(ModalType.AddMeasurement)">Add Measurement</button>
 
     <button class="btn btn-primary mb-4" @onclick="() => ShowModal(ModalType.AddGoal)">Add Goal</button>
+    
+    <div class="mb-4 inline-block" 
+         title="@(CanShowChart ? "" : "You need at least 5 measurements to display chart. ")">
+    
+        <button class="btn btn-primary @(!CanShowChart ? "opacity-50 cursor-not-allowed" : "")" 
+                @onclick="HandleShowChart"
+                disabled="@(!CanShowChart)">
+            @(showChart ? "Hide Chart" : "Show Chart")
+        </button>
+    
+    </div>
+
+    @if (!CanShowChart && BodyMeasurements != null && BodyMeasurements.Any())
+    {
+        <p class="text-sm text-gray-500 mt-1">
+            You currently have @BodyMeasurements.Count measurements. Add @(5 - BodyMeasurements.Count) or change date range to be able to display the chart.
+        </p>
+    }
 
     @if (showModal)
     {
@@ -328,6 +341,7 @@ else
     private List<ChartSeries> Series = new List<ChartSeries>();
     private string[] XAxisLabels = Array.Empty<string>();
     private ChartOptions options = new ChartOptions();
+    private bool CanShowChart => BodyMeasurements != null && BodyMeasurements.Count >= 5;
 
     protected override async Task OnInitializedAsync()
     {
@@ -362,40 +376,48 @@ else
         }
     }
     
-    private void OnTypeChanged(ChangeEventArgs e)
+    private async Task OnTypeChanged(ChangeEventArgs e)
     {
         if (Enum.TryParse<BodyMeasurementType>(e.Value?.ToString(), out var result))
         {
             selectedType = result;
-            showChart = false;
-            Series.Clear();
+            
+            await LoadBodyMeasurements();
+            
+            if (showChart)
+            {
+                PrepareChartData();
+            }
         }
     }
 
-    private void OnRangeChanged(ChangeEventArgs e)
+    private async Task OnRangeChanged(ChangeEventArgs e)
     {
         selectedRange = e.Value?.ToString();
-        showChart = false;
-        Series.Clear();
+    
+        await LoadBodyMeasurements();
+
+        if (showChart)
+        {
+            PrepareChartData();
+        }
     }
     
-    private async Task HandleShowChart()
+    private void HandleShowChart()
     {
+        if (!CanShowChart) return;
+    
         if (showChart)
         {
             showChart = false;
         }
         else
         {
-            await LoadBodyMeasurements();
             PrepareChartData();
-            
-            if (BodyMeasurements != null && BodyMeasurements.Any())
-            {
-                showChart = true;
-            }
+            showChart = true;
         }
-        StateHasChanged();
+        
+        //StateHasChanged();
     }
 
     private void PrepareChartData()
@@ -435,15 +457,18 @@ else
     private async Task LoadBodyMeasurements()
     {
         isProcessing = true;
-
         var (from, to) = selectedRange == "Custom Date"
             ? (customStartDate, customEndDate)
             : preselectedDateRanges[selectedRange]();
 
         BodyMeasurements = await GetBodyMeasurementUseCase.ExecuteAsync(userId, selectedType, from, to);
         BodyMeasurementGoals = await GetBodyMeasurementGoalUseCase.ExecuteAsync(userId, selectedType, from, to);
-        PrepareChartData();
         
+        if (showChart && !CanShowChart)
+        {
+            showChart = false;
+        }
+
         isProcessing = false;
     }
 
@@ -588,5 +613,39 @@ else
 
         CloseModal();
         StateHasChanged();
+    }
+    
+    private async Task OnCustomStartDateChanged(ChangeEventArgs e)
+    {
+        if (DateTime.TryParse(e.Value?.ToString(), out var date))
+        {
+            customStartDate = date;
+            
+            if (customStartDate > customEndDate)
+            {
+                customEndDate = customStartDate;
+            }
+
+            await LoadBodyMeasurements();
+            if (showChart) PrepareChartData();
+        }
+    }
+
+    private async Task OnCustomEndDateChanged(ChangeEventArgs e)
+    {
+        if (DateTime.TryParse(e.Value?.ToString(), out var date))
+        {
+            if (date < customStartDate) 
+            {
+                customEndDate = customStartDate; 
+            }
+            else 
+            {
+                customEndDate = date;
+            }
+
+            await LoadBodyMeasurements();
+            if (showChart) PrepareChartData();
+        }
     }
 }
