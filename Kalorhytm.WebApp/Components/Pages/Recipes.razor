@@ -8,6 +8,7 @@
 @using Kalorhytm.Logic.Interfaces.IFavouriteRecipesUseCases
 @using Kalorhytm.Logic.Interfaces.IRecipeLikes
 @using Kalorhytm.WebApp.Components.Shared
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.WebUtilities
 
 @inject AuthenticationStateProvider _AuthenticationStateProvider
@@ -17,6 +18,8 @@
 @inject IDeleteFavouriteRecipeUseCase DeleteFavouriteRecipeUseCase
 @inject IGetFavouriteRecipeUseCase GetFavouriteRecipeUseCase
 @inject IGetRecipeLikesUseCase GetRecipeLikesUseCase
+
+@attribute [Authorize]
 
 <PageTitle>Search Recipes</PageTitle>
 

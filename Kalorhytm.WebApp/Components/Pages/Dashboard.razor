@@ -7,6 +7,7 @@
 @using Kalorhytm.Logic.Interfaces
 @using Kalorhytm.Logic.UseCases
 @using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
 @inject IGetDailyNutritionUseCase GetDailyNutritionUseCase
 @inject ISearchFoodsUseCase SearchFoodsUseCase
 @inject IAddMealEntryUseCase AddMealEntryUseCase
@@ -14,6 +15,7 @@
 @inject IAddWaterGlassUseCase AddWaterGlassUseCase
 @inject IRemoveWaterGlassUseCase RemoveWaterGlassUseCase
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@attribute [Authorize]
 
 
 <div class="container mx-auto px-4 py-8">

@@ -1,7 +1,9 @@
 @using Kalorhytm.Contracts.Models.Recipes
 @using Kalorhytm.Logic.Interfaces
+@using Microsoft.AspNetCore.Authorization
 
 @inject ISpoonacularRecipesService _RecipesService
+@attribute [Authorize]
 
 @page "/recipes/recipe-{RecipeId}"
 

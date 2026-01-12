@@ -12,6 +12,7 @@
 @using Kalorhytm.Logic.UseCases.MyFridgeUseCases
 @using Kalorhytm.Logic.StateContainer
 @using Kalorhytm.Logic.Interfaces.IRecipeLikes
+@using Microsoft.AspNetCore.Authorization
 
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthenticationStateProvider
@@ -26,7 +27,7 @@
 @inject FridgeStateContainer FridgeState
 @inject IGetRecipeLikesUseCase GetRecipeLikesUseCase
 
-
+@attribute [Authorize]
 
 @*@if (isProcessing)
 {
