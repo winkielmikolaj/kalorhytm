@@ -13,65 +13,88 @@
 
 <PageTitle>Twój Profil</PageTitle>
 
-<h3>Twój Profil</h3>
-<StatusMessage Message="@message" />
+@using Kalorhytm.WebApp.Components.Shared
 
-<div class="row">
-    <div class="col-md-6">
-        <EditForm Model="Input" FormName="profile" OnValidSubmit="OnValidSubmitAsync" enctype="multipart/form-data">
-            <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert" />
-
+<Card>
+    <h3 class="text-2xl font-semibold text-white mb-6">Twój Profil</h3>
+    <StatusMessage Message="@message" />
+    
+    <EditForm Model="Input" FormName="profile" OnValidSubmit="OnValidSubmitAsync" enctype="multipart/form-data">
+        <DataAnnotationsValidator />
+        <ValidationSummary class="text-red-400 text-sm mb-4 p-3 bg-red-500/10 rounded-lg border border-red-500/30" role="alert" />
+        
+        <div class="space-y-4 max-w-md">
             <div class="mb-4 text-center">
                 @if (Input.ProfilePicture != null && Input.ProfilePicture.Length > 0)
                 {
                     <img src="data:image/png;base64,@Convert.ToBase64String(Input.ProfilePicture)"
-                         class="rounded-circle mb-2"
-                         style="width: 150px; height: 150px; object-fit: cover; border: 3px solid #eee;" 
+                         class="rounded-full mb-2 mx-auto"
+                         style="width: 150px; height: 150px; object-fit: cover; border: 3px solid rgb(34 197 94);" 
                          alt="Zdjęcie profilowe" />
                 }
                 else
                 {
-                    <div class="rounded-circle mb-2 bg-secondary d-flex align-items-center justify-content-center mx-auto"
-                         style="width: 150px; height: 150px; color: white; font-size: 3rem;">
+                    <div class="rounded-full mb-2 bg-gray-600 text-white flex items-center justify-center mx-auto"
+                         style="width: 150px; height: 150px; font-size: 3rem;">
                         👤
                     </div>
                 }
 
                 <div class="mt-3">
-                    <label for="imageUpload" class="form-label fw-bold">Wybierz nowe zdjęcie</label>
-                    <input type="file" id="imageUpload" name="Input.ImageFile" class="form-control" accept=".png,.jpg,.jpeg" />
-                    <ValidationMessage For="() => Input.ImageFile" class="text-danger" />
+                    <label for="imageUpload" class="block text-sm font-medium text-gray-300 mb-2">Wybierz nowe zdjęcie</label>
+                    <input type="file" id="imageUpload" name="Input.ImageFile" 
+                           class="w-full bg-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" 
+                           accept=".png,.jpg,.jpeg" />
+                    <ValidationMessage For="() => Input.ImageFile" class="text-red-400 text-sm mt-1" />
                 </div>
             </div>
 
-            <div class="form-floating mb-3">
-                <input type="text" value="@username" class="form-control" placeholder="Nazwa użytkownika" disabled />
-                <label>Nazwa użytkownika</label>
+            <div>
+                <label for="username" class="block text-sm font-medium text-gray-300 mb-2">Nazwa użytkownika</label>
+                <input type="text" 
+                       value="@username" 
+                       id="username" 
+                       class="w-full bg-gray-600 text-gray-400 rounded-lg px-3 py-2 text-sm cursor-not-allowed" 
+                       placeholder="Nazwa użytkownika" 
+                       disabled />
             </div>
 
-            <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.FirstName" class="form-control" placeholder="Imię" />
-                <label>Imię</label>
-                <ValidationMessage For="() => Input.FirstName" class="text-danger" />
+            <div>
+                <label for="Input.FirstName" class="block text-sm font-medium text-gray-300 mb-2">Imię</label>
+                <input type="text" 
+                       @bind="Input.FirstName" 
+                       id="Input.FirstName" 
+                       class="w-full bg-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-700 transition-all duration-200" 
+                       placeholder="Imię" />
+                <ValidationMessage For="() => Input.FirstName" class="text-red-400 text-sm mt-1" />
             </div>
 
-            <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.LastName" class="form-control" placeholder="Nazwisko" />
-                <label>Nazwisko</label>
-                <ValidationMessage For="() => Input.LastName" class="text-danger" />
+            <div>
+                <label for="Input.LastName" class="block text-sm font-medium text-gray-300 mb-2">Nazwisko</label>
+                <input type="text" 
+                       @bind="Input.LastName" 
+                       id="Input.LastName" 
+                       class="w-full bg-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-700 transition-all duration-200" 
+                       placeholder="Nazwisko" />
+                <ValidationMessage For="() => Input.LastName" class="text-red-400 text-sm mt-1" />
             </div>
 
-            <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.PhoneNumber" class="form-control" placeholder="Numer telefonu" />
-                <label>Numer telefonu</label>
-                <ValidationMessage For="() => Input.PhoneNumber" class="text-danger" />
+            <div>
+                <label for="Input.PhoneNumber" class="block text-sm font-medium text-gray-300 mb-2">Numer telefonu</label>
+                <input type="tel" 
+                       @bind="Input.PhoneNumber" 
+                       id="Input.PhoneNumber" 
+                       class="w-full bg-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-700 transition-all duration-200" 
+                       placeholder="Numer telefonu" />
+                <ValidationMessage For="() => Input.PhoneNumber" class="text-red-400 text-sm mt-1" />
             </div>
-
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Zapisz zmiany</button>
-        </EditForm>
-    </div>
-</div>
+            
+            <Button ButtonType="ButtonType.Submit" AdditionalClass="w-full">
+                Zapisz zmiany
+            </Button>
+        </div>
+    </EditForm>
+</Card>
 
 @code {
     private ApplicationUser user = default!;

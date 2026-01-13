@@ -18,6 +18,7 @@ namespace Kalorhytm.Infrastructure.Extensions
             serviceCollection.AddScoped<IFoodRepository, FoodRepository>();
             serviceCollection.AddScoped<IMealEntryRepository, MealEntryRepository>();
             serviceCollection.AddScoped<IWaterIntakeRepository, WaterIntakeRepository>();
+            serviceCollection.AddScoped<IWorkoutRepository, WorkoutRepository>();
             
             serviceCollection.AddScoped<IBodyMeasurementRepository, BodyMeasurementRepository>();
             serviceCollection.AddScoped<IBodyMeasurementGoalRepository, BodyMeasurementGoalRepository>();

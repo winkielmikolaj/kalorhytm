@@ -10,8 +10,12 @@
 
 <PageTitle>Confirm email</PageTitle>
 
-<h1>Confirm email</h1>
-<StatusMessage Message="@statusMessage" />
+<div class="container mx-auto px-4 py-8 max-w-2xl">
+    <Card>
+        <h1 class="text-3xl font-bold text-white mb-6">Confirm email</h1>
+        <StatusMessage Message="@statusMessage" />
+    </Card>
+</div>
 
 @code {
     private string? statusMessage;

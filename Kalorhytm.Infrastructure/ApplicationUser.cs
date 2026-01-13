@@ -10,5 +10,10 @@ namespace Kalorhytm.Infrastructure
         public string? LastName { get; set; }
         
         public byte[]? ProfilePicture { get; set; } //tablica bajtow
+        
+        public double? DailyCalorieGoal { get; set; }
+        public double? DailyProteinGoal { get; set; }
+        public double? DailyCarbohydrateGoal { get; set; }
+        public double? DailyFatGoal { get; set; }
     }
 } 

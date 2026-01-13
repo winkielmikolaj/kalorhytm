@@ -17,40 +17,74 @@
 
 <PageTitle>Register</PageTitle>
 
-<h1>Register</h1>
-
-<div class="row">
-    <div class="col-lg-6">
-        <StatusMessage Message="@Message" />
-        <EditForm Model="Input" asp-route-returnUrl="@ReturnUrl" method="post" OnValidSubmit="RegisterUser" FormName="register">
-            <DataAnnotationsValidator />
-            <h2>Create a new account.</h2>
-            <hr />
-            <ValidationSummary class="text-danger" role="alert" />
-            <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.Email" id="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
-                <label for="Input.Email">Email</label>
-                <ValidationMessage For="() => Input.Email" class="text-danger" />
-            </div>
-            <div class="form-floating mb-3">
-                <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
-                <label for="Input.Password">Password</label>
-                <ValidationMessage For="() => Input.Password" class="text-danger" />
-            </div>
-            <div class="form-floating mb-3">
-                <InputText type="password" @bind-Value="Input.ConfirmPassword" id="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
-                <label for="Input.ConfirmPassword">Confirm Password</label>
-                <ValidationMessage For="() => Input.ConfirmPassword" class="text-danger" />
-            </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
-        </EditForm>
-    </div>
-    <div class="col-lg-4 col-lg-offset-2">
-        <section>
-            <h3>Use another service to register.</h3>
-            <hr />
-            <ExternalLoginPicker />
-        </section>
+<div class="container mx-auto px-4 py-8 max-w-4xl">
+    <div class="flex flex-col md:flex-row gap-8">
+        @* Main Registration Form *@
+        <div class="flex-1">
+            <Card AdditionalClass="mb-6">
+                <h1 class="text-3xl font-bold text-white mb-2">Register</h1>
+                <p class="text-gray-300 mb-6">Create a new account.</p>
+                
+                <StatusMessage Message="@Message" />
+                
+                <EditForm Model="Input" asp-route-returnUrl="@ReturnUrl" method="post" OnValidSubmit="RegisterUser" FormName="register">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary class="text-red-400 text-sm mb-4 p-3 bg-red-500/10 rounded-lg border border-red-500/30" role="alert" />
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label for="Input.Email" class="block text-sm font-medium text-gray-300 mb-2">Email</label>
+                            <input type="email" 
+                                   @bind="Input.Email" 
+                                   id="Input.Email" 
+                                   class="w-full bg-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-700 transition-all duration-200" 
+                                   autocomplete="username" 
+                                   aria-required="true" 
+                                   placeholder="name@example.com" />
+                            <ValidationMessage For="() => Input.Email" class="text-red-400 text-sm mt-1" />
+                        </div>
+                        
+                        <div>
+                            <label for="Input.Password" class="block text-sm font-medium text-gray-300 mb-2">Password</label>
+                            <input type="password" 
+                                   @bind="Input.Password" 
+                                   id="Input.Password" 
+                                   class="w-full bg-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-700 transition-all duration-200" 
+                                   autocomplete="new-password" 
+                                   aria-required="true" 
+                                   placeholder="password" />
+                            <ValidationMessage For="() => Input.Password" class="text-red-400 text-sm mt-1" />
+                        </div>
+                        
+                        <div>
+                            <label for="Input.ConfirmPassword" class="block text-sm font-medium text-gray-300 mb-2">Confirm Password</label>
+                            <input type="password" 
+                                   @bind="Input.ConfirmPassword" 
+                                   id="Input.ConfirmPassword" 
+                                   class="w-full bg-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-700 transition-all duration-200" 
+                                   autocomplete="new-password" 
+                                   aria-required="true" 
+                                   placeholder="password" />
+                            <ValidationMessage For="() => Input.ConfirmPassword" class="text-red-400 text-sm mt-1" />
+                        </div>
+                        
+                        <Button ButtonType="ButtonType.Submit" AdditionalClass="w-full">
+                            Register
+                        </Button>
+                    </div>
+                </EditForm>
+            </Card>
+        </div>
+        
+        @* External Login Section *@
+        <div class="flex-1">
+            <Card>
+                <h3 class="text-xl font-semibold text-white mb-6 text-center">Use another service to register</h3>
+                <div class="flex justify-center">
+                    <ExternalLoginPicker />
+                </div>
+            </Card>
+        </div>
     </div>
 </div>
 

@@ -26,6 +26,7 @@ using Kalorhytm.Logic.UseCases.RecipeLikes;
 using Kalorhytm.Logic.UseCases.WaterIntakeUseCases;
 using Kalorhytm.Logic.Validation;
 using MudBlazor.Services;
+using Microsoft.AspNetCore.Authentication.Google;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,12 +38,29 @@ builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityUserAccessor>();
 builder.Services.AddScoped<IdentityRedirectManager>();
 
-builder.Services.AddAuthentication(options =>
+// Add Google OAuth first
+var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
+var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+
+var authBuilder = builder.Services.AddAuthentication(options =>
     {
         options.DefaultScheme = IdentityConstants.ApplicationScheme;
         options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
-    })
-    .AddIdentityCookies();
+    });
+
+// Add Google OAuth if configured
+if (!string.IsNullOrWhiteSpace(googleClientId) && !string.IsNullOrWhiteSpace(googleClientSecret))
+{
+    authBuilder.AddGoogle(GoogleDefaults.AuthenticationScheme, options =>
+    {
+        options.ClientId = googleClientId!;
+        options.ClientSecret = googleClientSecret!;
+    });
+}
+
+// Add Identity cookies after external providers
+authBuilder.AddIdentityCookies();
+
 builder.Services.AddAuthorization();
 
 builder.Services.AddHttpContextAccessor();
@@ -65,6 +83,9 @@ builder.Services.AddMudServices();
 // Add HttpClient for Spoonacular API
 builder.Services.AddSpoonacular();
 
+// Add HttpClient for API Ninjas
+builder.Services.AddApiNinjas();
+
 // ZMIANA: PRZEKAZANIE KONFIGURACJI DO INFRASTRUKTURY
 builder.Services.AddInfrastructure(builder.Configuration);
 
@@ -72,16 +93,27 @@ builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddScoped<ISpoonacularFoodService, SpoonacularFoodService>();
 builder.Services.AddScoped<ISpoonacularRecipesService, SpoonacularRecipesService>();
 
+// Register API Ninjas Calories Service
+builder.Services.AddScoped<IApiNinjasCaloriesService, ApiNinjasCaloriesService>();
+
 // Register use cases
 builder.Services.AddScoped<IGetDailyNutritionUseCase, GetDailyNutritionUseCase>();
 builder.Services.AddScoped<ISearchFoodsUseCase, SearchFoodsUseCase>();
 builder.Services.AddScoped<IAddMealEntryUseCase, AddMealEntryUseCase>();
+builder.Services.AddScoped<IRemoveMealEntryUseCase, RemoveMealEntryUseCase>();
 builder.Services.AddScoped<IAddRecipeToMealUseCase, AddRecipeToMealUseCase>();
+builder.Services.AddScoped<IGetDailyRequirementsUseCase, GetDailyRequirementsUseCase>();
+builder.Services.AddScoped<IUpdateDailyRequirementsUseCase, UpdateDailyRequirementsUseCase>();
 
 // Water Intake Use Cases
 builder.Services.AddScoped<IGetDailyWaterIntakeUseCase, GetDailyWaterIntakeUseCase>();
 builder.Services.AddScoped<IAddWaterGlassUseCase, AddWaterGlassUseCase>();
 builder.Services.AddScoped<IRemoveWaterGlassUseCase, RemoveWaterGlassUseCase>();
+
+// Workout Use Cases
+builder.Services.AddScoped<IAddWorkoutUseCase, AddWorkoutUseCase>();
+builder.Services.AddScoped<IGetDailyWorkoutsUseCase, GetDailyWorkoutsUseCase>();
+builder.Services.AddScoped<IRemoveWorkoutUseCase, RemoveWorkoutUseCase>();
 
 // Body Measurement Use Cases
 builder.Services.AddScoped<IGetBodyMeasurementUseCase, GetBodyMeasurementUseCase>();

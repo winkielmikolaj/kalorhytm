@@ -1,0 +1,178 @@
+@* Top Navigation Bar Component
+   Features:
+   - Responsive design with hamburger menu on mobile
+   - Active link highlighting
+   - Modern, minimalist fitness app styling
+   - Smooth animations
+*@
+@using Microsoft.AspNetCore.Components.Routing
+@implements IDisposable
+@inject NavigationManager NavigationManager
+
+<nav class="sticky top-0 z-50 bg-green-300 shadow-sm border-b border-green-400">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+            @* Logo / App Name - Left Side *@
+            <div class="flex items-center">
+                <NavLink href="/" class="flex items-center space-x-2 text-gray-800 hover:text-green-600 transition-colors duration-200">
+                    <span class="text-xl font-bold">Kalorhytm</span>
+                </NavLink>
+            </div>
+
+            @* Desktop Navigation - Right Side *@
+            <div class="hidden md:flex md:items-center md:space-x-4">
+                <NavLink href="/dashboard" class="nav-link-desktop" Match="NavLinkMatch.All">
+                    Dashboard
+                </NavLink>
+                
+                <NavLink href="/myFridge" class="nav-link-desktop" Match="NavLinkMatch.All">
+                    My Fridge
+                </NavLink>
+                
+                <NavLink href="/recipes" class="nav-link-desktop" Match="NavLinkMatch.All">
+                    Recipes
+                </NavLink>
+                
+                <NavLink href="/measurements" class="nav-link-desktop" Match="NavLinkMatch.All">
+                    Measurements
+                </NavLink>
+                
+                <NavLink href="/profile" class="nav-link-desktop" Match="NavLinkMatch.All">
+                    Profile
+                </NavLink>
+
+                <AuthorizeView>
+                    <Authorized>
+                        <div class="flex items-center space-x-4 ml-4 pl-4 border-l border-green-400">
+                            <span class="text-sm text-gray-800">@context.User.Identity?.Name</span>
+                            <form action="Account/Logout" method="post" class="inline">
+                                <AntiforgeryToken/>
+                                <input type="hidden" name="ReturnUrl" value="@currentUrl"/>
+                                <button type="submit" class="px-3 py-2 rounded-md text-sm font-medium text-red-600 transition-all duration-200 hover:text-red-700 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-green-300">
+                                    Logout
+                                </button>
+                            </form>
+                        </div>
+                    </Authorized>
+                    <NotAuthorized>
+                        <div class="flex items-center space-x-4 ml-4 pl-4 border-l border-green-400">
+                            <NavLink href="/Account/Register" class="nav-link-desktop">
+                                Register
+                            </NavLink>
+                            <NavLink href="/Account/Login" class="nav-link-desktop">
+                                Login
+                            </NavLink>
+                        </div>
+                    </NotAuthorized>
+                </AuthorizeView>
+            </div>
+
+            @* Mobile Hamburger Button *@
+            <div class="md:hidden">
+                <button @onclick="ToggleMobileMenu" 
+                        class="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-green-700 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-green-500 transition-all duration-200"
+                        aria-expanded="false"
+                        aria-label="Toggle navigation menu">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        @if (isMobileMenuOpen)
+                        {
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        }
+                        else
+                        {
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        }
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    @* Mobile Navigation Menu *@
+    <div class="md:hidden overflow-hidden transition-all duration-300 ease-in-out @(isMobileMenuOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0")">
+        <div class="px-2 pt-2 pb-3 space-y-1 bg-green-300 border-t border-green-400">
+            <NavLink href="/dashboard" class="nav-link-mobile" Match="NavLinkMatch.All" @onclick="CloseMobileMenu">
+                Dashboard
+            </NavLink>
+            
+            <NavLink href="/myFridge" class="nav-link-mobile" Match="NavLinkMatch.All" @onclick="CloseMobileMenu">
+                My Fridge
+            </NavLink>
+            
+            <NavLink href="/recipes" class="nav-link-mobile" Match="NavLinkMatch.All" @onclick="CloseMobileMenu">
+                Recipes
+            </NavLink>
+            
+            <NavLink href="/measurements" class="nav-link-mobile" Match="NavLinkMatch.All" @onclick="CloseMobileMenu">
+                Measurements
+            </NavLink>
+            
+            <NavLink href="/profile" class="nav-link-mobile" Match="NavLinkMatch.All" @onclick="CloseMobileMenu">
+                Profile
+            </NavLink>
+
+            <AuthorizeView>
+                <Authorized>
+                    <div class="pt-4 pb-3 border-t border-green-400 mt-2">
+                        <div class="px-3 mb-3">
+                            <div class="text-base font-medium text-gray-800">@context.User.Identity?.Name</div>
+                        </div>
+                        <form action="Account/Logout" method="post" class="px-3">
+                            <AntiforgeryToken/>
+                            <input type="hidden" name="ReturnUrl" value="@currentUrl"/>
+                            <button type="submit" class="nav-link-mobile text-red-600 hover:text-red-700 hover:bg-green-200 w-full text-left">
+                                Logout
+                            </button>
+                        </form>
+                    </div>
+                </Authorized>
+                <NotAuthorized>
+                    <div class="pt-4 pb-3 border-t border-green-400 mt-2 space-y-1">
+                        <NavLink href="/Account/Register" class="nav-link-mobile" @onclick="CloseMobileMenu">
+                            Register
+                        </NavLink>
+                        <NavLink href="/Account/Login" class="nav-link-mobile" @onclick="CloseMobileMenu">
+                            Login
+                        </NavLink>
+                    </div>
+                </NotAuthorized>
+            </AuthorizeView>
+        </div>
+    </div>
+</nav>
+
+
+@code {
+    private bool isMobileMenuOpen = false;
+    private string? currentUrl;
+
+    protected override void OnInitialized()
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        NavigationManager.LocationChanged += OnLocationChanged;
+    }
+
+    private void ToggleMobileMenu()
+    {
+        isMobileMenuOpen = !isMobileMenuOpen;
+    }
+
+    private void CloseMobileMenu()
+    {
+        isMobileMenuOpen = false;
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
+        // Close mobile menu when navigating
+        isMobileMenuOpen = false;
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+    }
+}
+

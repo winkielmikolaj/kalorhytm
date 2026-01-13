@@ -1,0 +1,54 @@
+/* NavBar Component Styles */
+/* Blazor NavLink automatically adds 'active' class when the link is active */
+
+::deep .nav-link-desktop {
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: rgb(31 41 55); /* text-gray-800 */
+    transition: all 0.2s;
+}
+
+::deep .nav-link-desktop:hover {
+    color: rgb(22 101 52); /* text-green-700 */
+    background-color: rgb(187 247 208); /* bg-green-200 */
+}
+
+::deep .nav-link-desktop:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgb(34 197 94), 0 0 0 4px rgb(187 247 208); /* focus:ring-green-500 focus:ring-offset-green-200 */
+}
+
+::deep .nav-link-desktop.active {
+    color: rgb(22 101 52); /* text-green-700 */
+    background-color: rgb(187 247 208); /* bg-green-200 */
+    font-weight: 600;
+}
+
+::deep .nav-link-mobile {
+    display: block;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.375rem;
+    font-size: 1rem;
+    font-weight: 500;
+    color: rgb(31 41 55); /* text-gray-800 */
+    transition: all 0.2s;
+}
+
+::deep .nav-link-mobile:hover {
+    color: rgb(22 101 52); /* text-green-700 */
+    background-color: rgb(187 247 208); /* bg-green-200 */
+}
+
+::deep .nav-link-mobile:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgb(34 197 94); /* focus:ring-green-500 */
+}
+
+::deep .nav-link-mobile.active {
+    color: rgb(22 101 52); /* text-green-700 */
+    background-color: rgb(187 247 208); /* bg-green-200 */
+    font-weight: 600;
+}
+

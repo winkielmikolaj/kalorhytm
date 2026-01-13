@@ -23,71 +23,71 @@
 
 <PageTitle>Search Recipes</PageTitle>
 
-<div class="container max-w-3xl mx-auto px-4 py-8 text-center">
-    <h3 class="text-3xl font-bold text-gray-900 mb-8">Search Recipes</h3>
-    <EditForm Model="@filterModel" OnValidSubmit="@OnSearchRecipes" FormName="SearchRecipesForm">
-        <InputText @bind-Value="filterModel.Query" placeholder="Search for recipes..." class="border rounded-md px-3 py-2 mb-3 w-full" />
-
-        <MultiSelectDropdown TEnum="SpoonacularCuisine"
-                             Label="Cuisine"
-                             SelectedValues="@filterModel.Cuisines"
-                             SelectedValuesChanged="(v => filterModel.Cuisines = v)" />
-
-
-        <MultiSelectDropdown TEnum="SpoonacularDiet"
-                             Label="Diet"
-                             SelectedValues="@filterModel.Diets"
-                             SelectedValuesChanged="(v => filterModel.Diets = v)" />
-
-        <MultiSelectDropdown TEnum="SpoonacularIntolerances"
-                             Label="Intolerance"
-                             SelectedValues="@filterModel.Intolerances"
-                             SelectedValuesChanged="(v => filterModel.Intolerances = v)" />
-
-        <MultiSelectDropdown TEnum="SpoonacularMealType"
-                             Label="Meal Type"
-                             SelectedValues="@filterModel.Types"
-                             SelectedValuesChanged="(v => filterModel.Types = v)" />
-
-        <button type="submit" class="mt-4 bg-blue-500 text-gray-100 px-4 py-2 rounded">Search</button>
-    </EditForm>
+<div class="container max-w-7xl mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-white mb-8 transition-all duration-300">Search Recipes</h1>
     
-    <button class="mt-4 bg-blue-500 text-gray-100 px-4 py-2 rounded" @onclick="GoToMyFridge">Search by ingredients</button>
-    <button class="mt-4 bg-blue-500 text-gray-100 px-4 py-2 rounded" @onclick="GetRandomRecipes">Show random recipes</button>
+    <Card Title="Search Filters">
+        <EditForm Model="@filterModel" OnValidSubmit="@OnSearchRecipes" FormName="SearchRecipesForm">
+            <Input Label="Search for recipes..." 
+                   @bind-Value="filterModel.Query" 
+                   Placeholder="Enter recipe name..." />
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <MultiSelectDropdown TEnum="SpoonacularCuisine"
+                                     Label="Cuisine"
+                                     SelectedValues="@filterModel.Cuisines"
+                                     SelectedValuesChanged="(v => filterModel.Cuisines = v)" />
+
+                <MultiSelectDropdown TEnum="SpoonacularDiet"
+                                     Label="Diet"
+                                     SelectedValues="@filterModel.Diets"
+                                     SelectedValuesChanged="(v => filterModel.Diets = v)" />
+
+                <MultiSelectDropdown TEnum="SpoonacularIntolerances"
+                                     Label="Intolerance"
+                                     SelectedValues="@filterModel.Intolerances"
+                                     SelectedValuesChanged="(v => filterModel.Intolerances = v)" />
+
+                <MultiSelectDropdown TEnum="SpoonacularMealType"
+                                     Label="Meal Type"
+                                     SelectedValues="@filterModel.Types"
+                                     SelectedValuesChanged="(v => filterModel.Types = v)" />
+            </div>
+
+            <div class="flex flex-wrap gap-3">
+                <Button OnClick="@(async () => await OnSearchRecipes())" ButtonType="ButtonType.Submit">
+                    Search
+                </Button>
+                <Button OnClick="GoToMyFridge" Variant="ButtonVariant.Outline">
+                    Search by ingredients
+                </Button>
+                <Button OnClick="GetRandomRecipes" Variant="ButtonVariant.Secondary">
+                    Show random recipes
+                </Button>
+            </div>
+        </EditForm>
+    </Card>
 </div>
 
-@* OnAfterSearch site*@
-@if (recipes != null && recipes.Any())
+@* Recipe Results *@
+@if (recipes?.Any() == true)
 {
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-4">
-        @foreach (var recipe in recipes)
-        {
-            <div class="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col h-full">
-                
-                <img src="@recipe.ImageUrl"
-                     alt="@recipe.Title"
-                     class="w-full h-48 object-cover" />
-
-                <div class="p-4 flex flex-col flex-grow justify-between">
-                    <div>
-                        <h4 class="font-semibold text-gray-800 text-lg mb-2 line-clamp-2" title="@recipe.Title">
-                            @recipe.Title
-                        </h4>
-                        <span class="text-xs text-gray-400 block mb-3">#@recipe.RecipeId</span>
-                    </div>
-                    
-                    <div class="flex justify-between items-center mt-2 border-t pt-3 border-gray-100">
-                        
-                        <button class="bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium px-4 py-2 rounded-lg transition-colors shadow-sm" 
-                                @onclick="() => GoToRecipeDetails(recipe.RecipeId)">
-                            View Recipe
-                        </button>
-                        
-                        <div class="flex items-center gap-2 bg-gray-50 rounded-lg px-2 py-1">
+    <div class="mt-8">
+        <h2 class="text-2xl font-semibold text-white mb-6">Search Results</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            @foreach (var recipe in recipes)
+            {
+                <Card AdditionalClass="overflow-hidden hover:scale-105 transform transition-all duration-300">
+                    <img src="@recipe.ImageUrl"
+                         alt="@recipe.Title"
+                         class="w-full h-48 object-cover rounded-t-xl -mx-6 -mt-6 mb-4" />
+                    <h4 class="font-semibold text-white text-lg mb-2 line-clamp-2">@recipe.Title</h4>
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs text-gray-400">#@recipe.RecipeId</span>
+                        <div class="flex items-center gap-2">
                             <button @onclick="() => ToggleLike(recipe)" 
                                     @onclick:stopPropagation="true"
                                     class="focus:outline-none hover:scale-110 transition-transform active:scale-95 p-1">
-                                
                                 @if (_likedRecipesMap.ContainsKey(recipe.RecipeId))
                                 {
                                     <span class="text-xl leading-none">❤️</span>
@@ -97,26 +97,24 @@
                                     <span class="text-xl leading-none opacity-50 hover:opacity-100 grayscale hover:grayscale-0">❤️</span>
                                 }
                             </button>
-                            <span class="text-sm font-bold text-gray-600 min-w-[1.5rem] text-center">
+                            <span class="text-sm font-bold text-white min-w-[1.5rem] text-center">
                                 @recipe.Likes
                             </span>
                         </div>
-
+                        <Button OnClick="@(() => GoToRecipeDetails(recipe.RecipeId))" AdditionalClass="text-sm">
+                            View Recipe
+                        </Button>
                     </div>
-                </div>
-            </div>
-        }
+                </Card>
+            }
+        </div>
     </div>
 }
 else if (!string.IsNullOrWhiteSpace(filterModel.Query))
 {
-    <div class="flex flex-col items-center justify-center py-12 text-gray-500">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-        <p class="text-lg font-medium">No recipes found for "@filterModel.Query"</p>
-        <p class="text-sm">Try adjusting your filters or search term.</p>
-    </div>
+    <Card AdditionalClass="mt-8 text-center">
+        <p class="text-gray-300">No recipes found for your search.</p>
+    </Card>
 }
 
 @code {

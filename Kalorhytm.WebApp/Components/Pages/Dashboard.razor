@@ -8,58 +8,129 @@
 @using Kalorhytm.Logic.UseCases
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Authorization
+@using Kalorhytm.WebApp.Components.Shared
 @inject IGetDailyNutritionUseCase GetDailyNutritionUseCase
 @inject ISearchFoodsUseCase SearchFoodsUseCase
 @inject IAddMealEntryUseCase AddMealEntryUseCase
+@inject IRemoveMealEntryUseCase RemoveMealEntryUseCase
 @inject IGetDailyWaterIntakeUseCase GetDailyWaterIntakeUseCase
 @inject IAddWaterGlassUseCase AddWaterGlassUseCase
 @inject IRemoveWaterGlassUseCase RemoveWaterGlassUseCase
+@inject IGetDailyRequirementsUseCase GetDailyRequirementsUseCase
+@inject IUpdateDailyRequirementsUseCase UpdateDailyRequirementsUseCase
+@inject IAddWorkoutUseCase AddWorkoutUseCase
+@inject IGetDailyWorkoutsUseCase GetDailyWorkoutsUseCase
+@inject IRemoveWorkoutUseCase RemoveWorkoutUseCase
+@inject IApiNinjasCaloriesService ApiNinjasCaloriesService
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject MudBlazor.ISnackbar Snackbar
+@inject IJSRuntime JSRuntime
+@implements IAsyncDisposable
 @attribute [Authorize]
 
 
-<div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold text-gray-900 mb-8">Meal Plan</h1>
+<div class="container mx-auto px-4 py-8 min-h-full">
+    <h1 class="text-3xl font-bold text-white mb-8 transition-all duration-300">Dashboard</h1>
     
-    <!-- Date Selector -->
-    <div class="mb-6">
-        <label for="selectedDate" class="block text-sm font-medium text-gray-700 mb-2">Date:</label>
-        <input type="date" id="selectedDate" @bind="selectedDate" @bind:format="yyyy-MM-dd" 
-               @bind:after="OnDateChanged"
-               class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        <button @onclick="LoadData" class="ml-2 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">
-            Load
-        </button>
-    </div>
-
-    <!-- Daily Nutrition Summary -->
-    @if (dailyNutrition != null)
+    <MudTabs Elevation="2" Rounded="true" Variant="@Variant.Filled" Color="@Color.Success" PanelClass="pa-4">
+        <MudTabPanel Text="Meal Plan">
+            <!-- Modern Calendar Component -->
+            <div class="w-full">
+                <ModernCalendar SelectedDate="selectedDate" SelectedDateChanged="OnDateChanged" />
+            </div>
+            
+            <!-- Daily Nutrition Summary -->
+    @if (dailyNutrition != null && dailyRequirements != null)
     {
-        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-            <h2 class="text-xl font-semibold text-gray-900 mb-4">Daily Summary</h2>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Calories</h3>
-                    <p class="text-3xl font-bold text-blue-600">@dailyNutrition.TotalCalories.ToString("F0")</p>
-                    <p class="text-sm text-gray-500">kcal</p>
+        <div class="bg-gray-700 rounded-lg shadow-md p-6 mb-8">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold text-white">Daily Summary</h2>
+                <Button OnClick="ShowEditRequirementsModal" AdditionalClass="text-sm">
+                    Edit Requirements
+                </Button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-gray-700 p-6 rounded-lg shadow-md border border-gray-500">
+                    <h3 class="text-lg font-semibold text-white mb-2">Calories</h3>
+                    <p class="text-3xl font-bold text-white">@GetNetCalories().ToString("F0")</p>
+                    <p class="text-sm text-white opacity-80">
+                        @dailyNutrition.TotalCalories.ToString("F0") consumed - @GetTotalCaloriesBurned().ToString("F0") burned
+                        <br />of @dailyRequirements.CalorieGoal.ToString("F0") kcal
+                    </p>
+                    <div class="mt-2 w-full bg-gray-500 rounded-full h-2 relative overflow-hidden">
+                        @if (GetCaloriePercentage() > 100)
+                        {
+                            var calorieTotalPercentage = GetCaloriePercentage();
+                            var calorieNormalWidth = (100 / calorieTotalPercentage) * 100;
+                            var calorieRedWidth = 100 - calorieNormalWidth;
+                            <div class="bg-pink-300 h-2 rounded-full absolute top-0 left-0" style="width: 100%"></div>
+                            <div class="bg-red-600 h-2 rounded-full absolute top-0" style="left: @calorieNormalWidth.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)%; width: @calorieRedWidth.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)%"></div>
+                        }
+                        else
+                        {
+                            <div class="bg-pink-300 h-2 rounded-full" style="width: @GetCaloriePercentage().ToString("F2", System.Globalization.CultureInfo.InvariantCulture)%"></div>
+                        }
+                    </div>
                 </div>
                 
-                <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Protein</h3>
-                    <p class="text-3xl font-bold text-green-600">@dailyNutrition.TotalProtein.ToString("F1")</p>
-                    <p class="text-sm text-gray-500">g</p>
+                <div class="bg-gray-700 p-6 rounded-lg shadow-md border border-gray-500">
+                    <h3 class="text-lg font-semibold text-white mb-2">Protein</h3>
+                    <p class="text-3xl font-bold text-white">@dailyNutrition.TotalProtein.ToString("F1")</p>
+                    <p class="text-sm text-white opacity-80">of @dailyRequirements.ProteinGoal.ToString("F1") g</p>
+                    <div class="mt-2 w-full bg-gray-500 rounded-full h-2 relative overflow-hidden">
+                        @if (IsProteinExceeded())
+                        {
+                            var proteinTotalPercentage = GetProteinPercentage();
+                            var proteinNormalWidth = (100 / proteinTotalPercentage) * 100;
+                            var proteinRedWidth = 100 - proteinNormalWidth;
+                            <div class="bg-sky-300 h-2 rounded-full absolute top-0 left-0" style="width: 100%"></div>
+                            <div class="bg-red-600 h-2 rounded-full absolute top-0" style="left: @proteinNormalWidth.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)%; width: @proteinRedWidth.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)%"></div>
+                        }
+                        else
+                        {
+                            <div class="bg-sky-300 h-2 rounded-full" style="width: @GetProteinPercentage().ToString("F2", System.Globalization.CultureInfo.InvariantCulture)%"></div>
+                        }
+                    </div>
                 </div>
                 
-                <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Carbohydrates</h3>
-                    <p class="text-3xl font-bold text-yellow-600">@dailyNutrition.TotalCarbohydrates.ToString("F1")</p>
-                    <p class="text-sm text-gray-500">g</p>
+                <div class="bg-gray-700 p-6 rounded-lg shadow-md border border-gray-500">
+                    <h3 class="text-lg font-semibold text-white mb-2">Carbohydrates</h3>
+                    <p class="text-3xl font-bold text-white">@dailyNutrition.TotalCarbohydrates.ToString("F1")</p>
+                    <p class="text-sm text-white opacity-80">of @dailyRequirements.CarbohydrateGoal.ToString("F1") g</p>
+                    <div class="mt-2 w-full bg-gray-500 rounded-full h-2 relative overflow-hidden">
+                        @if (IsCarbohydrateExceeded())
+                        {
+                            var carbTotalPercentage = GetCarbohydratePercentage();
+                            var carbNormalWidth = (100 / carbTotalPercentage) * 100;
+                            var carbRedWidth = 100 - carbNormalWidth;
+                            <div class="bg-green-300 h-2 rounded-full absolute top-0 left-0" style="width: 100%"></div>
+                            <div class="bg-red-600 h-2 rounded-full absolute top-0" style="left: @carbNormalWidth.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)%; width: @carbRedWidth.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)%"></div>
+                        }
+                        else
+                        {
+                            <div class="bg-green-300 h-2 rounded-full" style="width: @GetCarbohydratePercentage().ToString("F2", System.Globalization.CultureInfo.InvariantCulture)%"></div>
+                        }
+                    </div>
                 </div>
                 
-                <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Fat</h3>
-                    <p class="text-3xl font-bold text-red-600">@dailyNutrition.TotalFat.ToString("F1")</p>
-                    <p class="text-sm text-gray-500">g</p>
+                <div class="bg-gray-700 p-6 rounded-lg shadow-md border border-gray-500">
+                    <h3 class="text-lg font-semibold text-white mb-2">Fat</h3>
+                    <p class="text-3xl font-bold text-white">@dailyNutrition.TotalFat.ToString("F1")</p>
+                    <p class="text-sm text-white opacity-80">of @dailyRequirements.FatGoal.ToString("F1") g</p>
+                    <div class="mt-2 w-full bg-gray-500 rounded-full h-2 relative overflow-hidden">
+                        @if (IsFatExceeded())
+                        {
+                            var fatTotalPercentage = GetFatPercentage();
+                            var fatNormalWidth = (100 / fatTotalPercentage) * 100;
+                            var fatRedWidth = 100 - fatNormalWidth;
+                            <div class="bg-amber-200 h-2 rounded-full absolute top-0 left-0" style="width: 100%"></div>
+                            <div class="bg-red-600 h-2 rounded-full absolute top-0" style="left: @fatNormalWidth.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)%; width: @fatRedWidth.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)%"></div>
+                        }
+                        else
+                        {
+                            <div class="bg-amber-200 h-2 rounded-full" style="width: @GetFatPercentage().ToString("F2", System.Globalization.CultureInfo.InvariantCulture)%"></div>
+                        }
+                    </div>
                 </div>
             </div>
         </div>
@@ -67,12 +138,12 @@
 
     <!-- Meal Entries - Always Visible -->
     <div class="space-y-6">
-        <h2 class="text-xl font-semibold text-gray-900 mb-4">Today's Meals</h2>
+        <h2 class="text-xl font-semibold text-white mb-4">Today's Meals</h2>
         
         <!-- Breakfast -->
-        <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="bg-gray-700 rounded-lg shadow-md p-6">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-medium text-gray-900">🍳 Breakfast</h3>
+                <h3 class="text-lg font-medium text-white">🍳 Breakfast</h3>
                 <button @onclick="() => ShowAddFoodModal(MealType.Breakfast)" 
                         class="bg-green-500 text-white p-2 rounded-full hover:bg-green-600 transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -87,30 +158,36 @@
             {
                 @foreach (var entry in breakfastEntries)
                 {
-                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-md mb-2">
-                        <div>
-                            <h4 class="font-medium text-gray-900">@entry.Food.Name</h4>
-                            <p class="text-sm text-gray-500">@entry.Quantity g</p>
+                    <div class="flex justify-between items-center p-3 bg-gray-600 rounded-md mb-2">
+                        <div class="flex-1">
+                            <h4 class="font-medium text-white">@entry.Food.Name</h4>
+                            <p class="text-sm text-white opacity-80">@entry.Quantity g</p>
                         </div>
-                        <div class="text-right text-sm text-gray-600">
+                        <div class="text-right text-sm text-white mr-4">
                             <div>@entry.TotalCalories.ToString("F0") kcal</div>
                             <div>P: @entry.TotalProtein.ToString("F1")g C: @entry.TotalCarbohydrates.ToString("F1")g F: @entry.TotalFat.ToString("F1")g</div>
                         </div>
+                        <button @onclick="() => RemoveMealEntry(entry)" 
+                                class="bg-red-500 text-white p-2 rounded-md hover:bg-red-600 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
                     </div>
                 }
             }
             else
             {
-                <div class="text-center py-4 text-gray-500">
+                <div class="text-center py-4 text-white opacity-70">
                     <p>No meals</p>
                 </div>
             }
         </div>
 
         <!-- Second Breakfast -->
-        <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="bg-gray-700 rounded-lg shadow-md p-6">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-medium text-gray-900">🥐 Second Breakfast</h3>
+                <h3 class="text-lg font-medium text-white">🥐 Second Breakfast</h3>
                 <button @onclick="() => ShowAddFoodModal(MealType.SecondBreakfast)" 
                         class="bg-green-500 text-white p-2 rounded-full hover:bg-green-600 transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -125,30 +202,36 @@
             {
                 @foreach (var entry in secondBreakfastEntries)
                 {
-                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-md mb-2">
-                        <div>
-                            <h4 class="font-medium text-gray-900">@entry.Food.Name</h4>
-                            <p class="text-sm text-gray-500">@entry.Quantity g</p>
+                    <div class="flex justify-between items-center p-3 bg-gray-600 rounded-md mb-2">
+                        <div class="flex-1">
+                            <h4 class="font-medium text-white">@entry.Food.Name</h4>
+                            <p class="text-sm text-white opacity-80">@entry.Quantity g</p>
                         </div>
-                        <div class="text-right text-sm text-gray-600">
+                        <div class="text-right text-sm text-white mr-4">
                             <div>@entry.TotalCalories.ToString("F0") kcal</div>
                             <div>P: @entry.TotalProtein.ToString("F1")g C: @entry.TotalCarbohydrates.ToString("F1")g F: @entry.TotalFat.ToString("F1")g</div>
                         </div>
+                        <button @onclick="() => RemoveMealEntry(entry)" 
+                                class="bg-red-500 text-white p-2 rounded-md hover:bg-red-600 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
                     </div>
                 }
             }
             else
             {
-                <div class="text-center py-4 text-gray-500">
+                <div class="text-center py-4 text-white opacity-70">
                     <p>No meals</p>
                 </div>
             }
         </div>
 
         <!-- Lunch -->
-        <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="bg-gray-700 rounded-lg shadow-md p-6">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-medium text-gray-900">🍽️ Lunch</h3>
+                <h3 class="text-lg font-medium text-white">🍽️ Lunch</h3>
                 <button @onclick="() => ShowAddFoodModal(MealType.Lunch)" 
                         class="bg-green-500 text-white p-2 rounded-full hover:bg-green-600 transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -163,30 +246,36 @@
             {
                 @foreach (var entry in lunchEntries)
                 {
-                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-md mb-2">
-                        <div>
-                            <h4 class="font-medium text-gray-900">@entry.Food.Name</h4>
-                            <p class="text-sm text-gray-500">@entry.Quantity g</p>
+                    <div class="flex justify-between items-center p-3 bg-gray-600 rounded-md mb-2">
+                        <div class="flex-1">
+                            <h4 class="font-medium text-white">@entry.Food.Name</h4>
+                            <p class="text-sm text-white opacity-80">@entry.Quantity g</p>
                         </div>
-                        <div class="text-right text-sm text-gray-600">
+                        <div class="text-right text-sm text-white mr-4">
                             <div>@entry.TotalCalories.ToString("F0") kcal</div>
                             <div>P: @entry.TotalProtein.ToString("F1")g C: @entry.TotalCarbohydrates.ToString("F1")g F: @entry.TotalFat.ToString("F1")g</div>
                         </div>
+                        <button @onclick="() => RemoveMealEntry(entry)" 
+                                class="bg-red-500 text-white p-2 rounded-md hover:bg-red-600 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
                     </div>
                 }
             }
             else
             {
-                <div class="text-center py-4 text-gray-500">
+                <div class="text-center py-4 text-white opacity-70">
                     <p>No meals</p>
                 </div>
             }
         </div>
 
         <!-- Snack -->
-        <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="bg-gray-700 rounded-lg shadow-md p-6">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-medium text-gray-900">🍎 Snack</h3>
+                <h3 class="text-lg font-medium text-white">🍎 Snack</h3>
                 <button @onclick="() => ShowAddFoodModal(MealType.Snack)" 
                         class="bg-green-500 text-white p-2 rounded-full hover:bg-green-600 transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -201,30 +290,36 @@
             {
                 @foreach (var entry in snackEntries)
                 {
-                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-md mb-2">
-                        <div>
-                            <h4 class="font-medium text-gray-900">@entry.Food.Name</h4>
-                            <p class="text-sm text-gray-500">@entry.Quantity g</p>
+                    <div class="flex justify-between items-center p-3 bg-gray-600 rounded-md mb-2">
+                        <div class="flex-1">
+                            <h4 class="font-medium text-white">@entry.Food.Name</h4>
+                            <p class="text-sm text-white opacity-80">@entry.Quantity g</p>
                         </div>
-                        <div class="text-right text-sm text-gray-600">
+                        <div class="text-right text-sm text-white mr-4">
                             <div>@entry.TotalCalories.ToString("F0") kcal</div>
                             <div>P: @entry.TotalProtein.ToString("F1")g C: @entry.TotalCarbohydrates.ToString("F1")g F: @entry.TotalFat.ToString("F1")g</div>
                         </div>
+                        <button @onclick="() => RemoveMealEntry(entry)" 
+                                class="bg-red-500 text-white p-2 rounded-md hover:bg-red-600 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
                     </div>
                 }
             }
             else
             {
-                <div class="text-center py-4 text-gray-500">
+                <div class="text-center py-4 text-white opacity-70">
                     <p>No meals</p>
                 </div>
             }
         </div>
 
         <!-- Dinner -->
-        <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="bg-gray-700 rounded-lg shadow-md p-6">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-medium text-gray-900">🌙 Dinner</h3>
+                <h3 class="text-lg font-medium text-white">🌙 Dinner</h3>
                 <button @onclick="() => ShowAddFoodModal(MealType.Dinner)" 
                         class="bg-green-500 text-white p-2 rounded-full hover:bg-green-600 transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -239,35 +334,41 @@
             {
                 @foreach (var entry in dinnerEntries)
                 {
-                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-md mb-2">
-                        <div>
-                            <h4 class="font-medium text-gray-900">@entry.Food.Name</h4>
-                            <p class="text-sm text-gray-500">@entry.Quantity g</p>
+                    <div class="flex justify-between items-center p-3 bg-gray-600 rounded-md mb-2">
+                        <div class="flex-1">
+                            <h4 class="font-medium text-white">@entry.Food.Name</h4>
+                            <p class="text-sm text-white opacity-80">@entry.Quantity g</p>
                         </div>
-                        <div class="text-right text-sm text-gray-600">
+                        <div class="text-right text-sm text-white mr-4">
                             <div>@entry.TotalCalories.ToString("F0") kcal</div>
                             <div>P: @entry.TotalProtein.ToString("F1")g C: @entry.TotalCarbohydrates.ToString("F1")g F: @entry.TotalFat.ToString("F1")g</div>
                         </div>
+                        <button @onclick="() => RemoveMealEntry(entry)" 
+                                class="bg-red-500 text-white p-2 rounded-md hover:bg-red-600 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
                     </div>
                 }
             }
             else
             {
-                <div class="text-center py-4 text-gray-500">
+                <div class="text-center py-4 text-white opacity-70">
                     <p>No meals</p>
                 </div>
             }
         </div>
 
         <!-- Water Intake -->
-        <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="bg-gray-700 rounded-lg shadow-md p-6">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-medium text-gray-900">💧 Water Intake</h3>
+                <h3 class="text-lg font-medium text-white">💧 Water Intake</h3>
                 @if (dailyWaterIntake != null)
                 {
-                    <div class="text-sm text-gray-600">
+                    <div class="text-sm text-white">
                         <span class="font-semibold">@dailyWaterIntake.TotalWaterMl.ToString("F0") ml</span>
-                        <span class="text-gray-500">(@dailyWaterIntake.GlassCount glasses)</span>
+                        <span class="opacity-80">(@dailyWaterIntake.GlassCount glasses)</span>
                     </div>
                 }
             </div>
@@ -319,44 +420,167 @@
             @if (dailyWaterIntake != null && dailyWaterIntake.TotalWaterMl > 0)
             {
                 var liters = (dailyWaterIntake.TotalWaterMl / 1000.0).ToString("F2");
-                <div class="text-center text-sm text-gray-600 mt-2">
+                <div class="text-center text-sm text-white opacity-80 mt-2">
                     @dailyWaterIntake.TotalWaterMl.ToString("F0") ml (@liters L)
                 </div>
             }
         </div>
     </div>
+        </MudTabPanel>
+        
+        <MudTabPanel Text="Workout">
+            <!-- Modern Calendar Component -->
+            <ModernCalendar SelectedDate="selectedDate" SelectedDateChanged="OnDateChanged" />
+
+            <!-- Workout Summary -->
+            @if (dailyWorkouts != null)
+            {
+                <div class="bg-gray-700 rounded-lg shadow-md p-6 mb-8">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold text-white">Workout Summary</h2>
+                        <Button OnClick="ShowAddWorkoutModal" AdditionalClass="text-sm">
+                            Add Workout
+                        </Button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div class="bg-gray-700 p-6 rounded-lg shadow-md border border-gray-500">
+                            <h3 class="text-lg font-semibold text-white mb-2">Total Workouts</h3>
+                            <p class="text-3xl font-bold text-white">@dailyWorkouts.Count</p>
+                        </div>
+                        <div class="bg-gray-700 p-6 rounded-lg shadow-md border border-gray-500">
+                            <h3 class="text-lg font-semibold text-white mb-2">Total Duration</h3>
+                            <p class="text-3xl font-bold text-white">@GetTotalDurationMinutes().ToString("F0")</p>
+                            <p class="text-sm text-white opacity-80">minutes</p>
+                        </div>
+                        <div class="bg-gray-700 p-6 rounded-lg shadow-md border border-gray-500">
+                            <h3 class="text-lg font-semibold text-white mb-2">Calories Burned</h3>
+                            <p class="text-3xl font-bold text-white">@GetTotalCaloriesBurned().ToString("F0")</p>
+                            <p class="text-sm text-white opacity-80">kcal</p>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Workout List -->
+            <div class="bg-gray-700 rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold text-white mb-4">Today's Workouts</h2>
+                @if (dailyWorkouts != null && dailyWorkouts.Any())
+                {
+                    @foreach (var workout in dailyWorkouts)
+                    {
+                        <div class="flex justify-between items-center p-3 bg-gray-600 rounded-md mb-2">
+                            <div class="flex-1">
+                                <h4 class="font-medium text-white">@workout.Name</h4>
+                                <p class="text-sm text-white opacity-80">@workout.DurationMinutes.ToString("F0") minutes</p>
+                            </div>
+                            <div class="text-right text-sm text-white mr-4">
+                                <div class="text-lg font-semibold">@workout.CaloriesBurned.ToString("F0") kcal</div>
+                            </div>
+                            <button @onclick="() => RemoveWorkout(workout)" 
+                                    class="bg-red-500 text-white p-2 rounded-md hover:bg-red-600 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-center py-4 text-white opacity-70">
+                        <p>No workouts added yet</p>
+                    </div>
+                }
+            </div>
+        </MudTabPanel>
+    </MudTabs>
 </div>
+
+<!-- Modal for editing daily requirements -->
+@if (showEditRequirementsModal)
+{
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" 
+         @onclick="CloseEditRequirementsModal"
+         @onkeydown="@(e => { if (e.Key == "Escape") CloseEditRequirementsModal(); })">
+        <div class="bg-gray-700 rounded-xl p-6 w-96 max-w-[90vw] shadow-2xl max-h-[90vh] overflow-y-auto" 
+             @onclick:stopPropagation="true">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-white">Edit Daily Requirements</h3>
+                <button @onclick="CloseEditRequirementsModal" 
+                        class="text-gray-400 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 rounded">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Calories (kcal):</label>
+                    <input type="number" @bind="editRequirements.CalorieGoal" @bind:after="OnCalorieGoalChanged" min="0" step="1" 
+                           class="w-full bg-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Protein (g):</label>
+                    <input type="number" @bind="editRequirements.ProteinGoal" @bind:after="OnMacroChanged" min="0" step="0.1" 
+                           class="w-full bg-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Carbohydrates (g):</label>
+                    <input type="number" @bind="editRequirements.CarbohydrateGoal" @bind:after="OnMacroChanged" min="0" step="0.1" 
+                           class="w-full bg-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Fat (g):</label>
+                    <input type="number" @bind="editRequirements.FatGoal" @bind:after="OnMacroChanged" min="0" step="0.1" 
+                           class="w-full bg-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div class="text-xs text-gray-400 mt-2">
+                    <p>Current total: @GetTotalCaloriesFromMacros().ToString("F0") kcal</p>
+                    <p>Target: @editRequirements.CalorieGoal.ToString("F0") kcal</p>
+                </div>
+                <div class="flex gap-2 mt-6">
+                    <Button OnClick="SaveRequirements" AdditionalClass="flex-1">Save</Button>
+                    <Button OnClick="CloseEditRequirementsModal" Variant="ButtonVariant.Secondary" AdditionalClass="flex-1">Cancel</Button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
 <!-- Modal for adding food -->
 @if (showModal)
 {
-    <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999;">
-        <div class="bg-white rounded-lg p-6 w-96 mx-4 shadow-xl">
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" 
+         @onclick="CloseModal"
+         @onkeydown="@(e => { if (e.Key == "Escape") CloseModal(); })">
+        <div class="bg-gray-700 rounded-xl p-6 w-96 max-w-[90vw] shadow-2xl" 
+             @onclick:stopPropagation="true">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold text-gray-900">Add to @GetMealTypeName(selectedMealType)</h3>
-                <button @onclick="CloseModal" class="text-gray-400 hover:text-gray-600 bg-transparent border-none cursor-pointer">
+                <h3 class="text-xl font-semibold text-white">Add to @GetMealTypeName(selectedMealType)</h3>
+                <button @onclick="CloseModal" 
+                        class="text-gray-400 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 rounded">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
                 </button>
             </div>
             <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Search product:</label>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Search product:</label>
                 <input type="text" @bind="SearchTermModal" placeholder="Enter product name..." 
-                       class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                       class="w-full bg-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             @if (modalSearchResults.Any())
             {
-                <div class="max-h-60 overflow-y-auto border border-gray-200 rounded-md mb-4">
+                <div class="max-h-60 overflow-y-auto bg-gray-600 rounded-lg mb-4 border border-gray-500">
                     @foreach (var food in modalSearchResults)
                     {
-                        <div class="px-3 py-2 border-b border-gray-100 cursor-pointer hover:bg-gray-50" @onclick="() => SelectFoodForModal(food)">
+                        <div class="px-3 py-2 border-b border-gray-500 cursor-pointer hover:bg-gray-500 transition-colors" @onclick="() => SelectFoodForModal(food)">
                             <div class="flex justify-between items-center">
                                 <div>
-                                    <h4 class="font-medium text-gray-900">@food.Name</h4>
-                                    <p class="text-xs text-gray-400">@food.Calories kcal / @food.Unit</p>
+                                    <h4 class="font-medium text-white">@food.Name</h4>
+                                    <p class="text-xs text-gray-300">@food.Calories kcal / @food.Unit</p>
                                 </div>
-                                <div class="text-right text-xs text-gray-500">
+                                <div class="text-right text-xs text-gray-300">
                                     <div>P: @food.Protein g</div>
                                     <div>C: @food.Carbohydrates g</div>
                                     <div>F: @food.Fat g</div>
@@ -368,23 +592,96 @@
             }
             @if (selectedFoodForModal != null)
             {
-                <div class="mb-4 p-4 bg-blue-50 rounded-md">
-                    <h4 class="font-medium text-gray-900 mb-2">Selected product: @selectedFoodForModal.Name</h4>
-                    <p class="text-xs text-gray-500">
+                <div class="mb-4 p-4 bg-blue-600 rounded-lg">
+                    <h4 class="font-medium text-white mb-2">Selected product: @selectedFoodForModal.Name</h4>
+                    <p class="text-xs text-gray-200">
                         Calories: @selectedFoodForModal.Calories kcal | Protein: @selectedFoodForModal.Protein g | 
                         Carbohydrates: @selectedFoodForModal.Carbohydrates g | Fat: @selectedFoodForModal.Fat g
                     </p>
                 </div>
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Quantity (g):</label>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Quantity (g):</label>
                     <input type="number" @bind="modalQuantity" min="1" step="1" 
-                           class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
+                           class="w-full bg-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
                 </div>
                 <div class="flex gap-2">
-                    <button @onclick="AddFoodToMeal" class="flex-1 bg-green-500 text-white px-4 py-2 rounded-md border-none cursor-pointer hover:bg-green-600 transition">Add to meal</button>
-                    <button @onclick="CloseModal" class="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-md border-none cursor-pointer hover:bg-gray-400 transition">Cancel</button>
+                    <Button OnClick="AddFoodToMeal" AdditionalClass="flex-1">Add to meal</Button>
+                    <Button OnClick="CloseModal" Variant="ButtonVariant.Secondary" AdditionalClass="flex-1">Cancel</Button>
                 </div>
             }
+        </div>
+    </div>
+}
+
+<!-- Modal for adding workout -->
+@if (showAddWorkoutModal)
+{
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" 
+         @onclick="CloseAddWorkoutModal"
+         @onkeydown="@(e => { if (e.Key == "Escape") CloseAddWorkoutModal(); })">
+        <div class="bg-gray-700 rounded-xl p-6 w-96 max-w-[90vw] shadow-2xl max-h-[90vh] overflow-y-auto" 
+             @onclick:stopPropagation="true">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-white">Add Workout</h3>
+                <button @onclick="CloseAddWorkoutModal" 
+                        class="text-gray-400 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 rounded">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Search Activity:</label>
+                    <input type="text" @bind="workoutSearchTerm" @bind:after="SearchWorkoutActivities" 
+                           placeholder="e.g., running, cycling, swimming..." 
+                           class="w-full bg-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                @if (workoutSearchResults.Any())
+                {
+                    <div class="max-h-40 overflow-y-auto bg-gray-600 rounded-lg mb-4 border border-gray-500">
+                        @foreach (var activity in workoutSearchResults)
+                        {
+                            <div class="px-3 py-2 border-b border-gray-500 cursor-pointer hover:bg-gray-500 transition-colors" @onclick="() => SelectWorkoutActivity(activity)">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <h4 class="font-medium text-white">@activity.Name</h4>
+                                        <p class="text-xs text-gray-300">@activity.CaloriesPerHour kcal/hour</p>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                @if (selectedWorkoutActivity != null)
+                {
+                    <div class="mb-4 p-4 bg-blue-600 rounded-lg">
+                        <h4 class="font-medium text-white mb-2">Selected: @selectedWorkoutActivity.Name</h4>
+                        <p class="text-xs text-gray-200">
+                            Calories per hour: @selectedWorkoutActivity.CaloriesPerHour kcal
+                        </p>
+                    </div>
+                }
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Weight (kg):</label>
+                    <input type="number" @bind="userWeight" @bind:after="CalculateWorkoutCalories" min="1" step="0.1" 
+                           class="w-full bg-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Duration (minutes):</label>
+                    <input type="number" @bind="newWorkoutDuration" @bind:after="CalculateWorkoutCalories" min="1" step="1" 
+                           class="w-full bg-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Calories Burned:</label>
+                    <input type="number" @bind="newWorkoutCalories" min="0" step="1" readonly
+                           class="w-full bg-gray-600 text-gray-400 rounded-lg px-3 py-2 text-sm" />
+                </div>
+                <div class="flex gap-2 mt-6">
+                    <Button OnClick="AddWorkout" AdditionalClass="flex-1">Add Workout</Button>
+                    <Button OnClick="CloseAddWorkoutModal" Variant="ButtonVariant.Secondary" AdditionalClass="flex-1">Cancel</Button>
+                </div>
+            </div>
         </div>
     </div>
 }
@@ -393,17 +690,31 @@
     private DateTime selectedDate = DateTime.Today;
     private DailyNutritionModel? dailyNutrition;
     private DailyWaterIntakeModel? dailyWaterIntake;
+    private DailyRequirementsModel? dailyRequirements;
+    private List<WorkoutModel>? dailyWorkouts;
     private int additionalWaterGlasses = 0; // Local state for additional empty glasses
     private string _searchTerm = "";
     private List<FoodModel> searchResults = new();
     
     // Modal state
     private bool showModal = false;
+    private bool showEditRequirementsModal = false;
+    private bool showAddWorkoutModal = false;
     private MealType selectedMealType = MealType.Breakfast;
     private string searchTerm = "";
     private List<FoodModel> modalSearchResults = new();
     private FoodModel? selectedFoodForModal;
     private double modalQuantity = 100;
+    private DailyRequirementsModel editRequirements = new();
+    
+    // Workout modal state
+    private string newWorkoutName = "";
+    private double newWorkoutDuration = 30;
+    private double newWorkoutCalories = 200;
+    private string workoutSearchTerm = "";
+    private List<WorkoutActivityModel> workoutSearchResults = new();
+    private WorkoutActivityModel? selectedWorkoutActivity;
+    private double userWeight = 70; // Default weight in kg
 
     private string SearchTerm
     {
@@ -435,6 +746,7 @@
     private MealType selectedMealTypeOld = MealType.Breakfast;
     private double quantity = 100;
     private string? userId;
+    private IJSObjectReference? jsModule;
 
     protected override async Task OnInitializedAsync()
     {
@@ -442,15 +754,33 @@
         var user = authState.User;
         userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
+        // Load JS module for localStorage
+        try
+        {
+            jsModule = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/localStorage.js");
+        }
+        catch
+        {
+            // If module doesn't exist, create inline functions
+        }
+
         searchResults = new List<FoodModel>();
         dailyNutrition = new DailyNutritionModel { Date = selectedDate };
+        dailyWorkouts = new List<WorkoutModel>();
         await LoadDailyNutrition();
         await LoadWaterIntake();
+        await LoadDailyRequirements();
+        await LoadWorkouts();
     }
 
     private async Task LoadDailyNutrition()
     {
-        if (string.IsNullOrEmpty(userId)) return;
+        if (string.IsNullOrEmpty(userId))
+        {
+            // Load from localStorage for anonymous users
+            await LoadDailyNutritionFromLocalStorage();
+            return;
+        }
         
         try
         {
@@ -464,9 +794,71 @@
         }
     }
 
+    private async Task LoadDailyNutritionFromLocalStorage()
+    {
+        try
+        {
+            var key = $"mealEntries_{selectedDate:yyyy-MM-dd}";
+            var json = await JSRuntime.InvokeAsync<string>("localStorage.getItem", key);
+            
+            if (!string.IsNullOrEmpty(json))
+            {
+                var entries = System.Text.Json.JsonSerializer.Deserialize<List<MealEntryModel>>(json);
+                if (entries != null)
+                {
+                    // Ensure all entries have MealEntryId
+                    for (int i = 0; i < entries.Count; i++)
+                    {
+                        if (entries[i].MealEntryId == 0)
+                        {
+                            entries[i].MealEntryId = i + 1;
+                        }
+                    }
+                }
+                dailyNutrition = new DailyNutritionModel
+                {
+                    Date = selectedDate,
+                    MealEntries = entries ?? new List<MealEntryModel>()
+                };
+                dailyNutrition.CalculateTotals();
+            }
+            else
+            {
+                dailyNutrition = new DailyNutritionModel { Date = selectedDate };
+            }
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading from localStorage: {ex.Message}");
+            dailyNutrition = new DailyNutritionModel { Date = selectedDate };
+        }
+    }
+
+    private async Task SaveDailyNutritionToLocalStorage()
+    {
+        try
+        {
+            if (dailyNutrition == null) return;
+            
+            var key = $"mealEntries_{selectedDate:yyyy-MM-dd}";
+            var json = System.Text.Json.JsonSerializer.Serialize(dailyNutrition.MealEntries);
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", key, json);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving to localStorage: {ex.Message}");
+        }
+    }
+
     private async Task LoadWaterIntake()
     {
-        if (string.IsNullOrEmpty(userId)) return;
+        if (string.IsNullOrEmpty(userId))
+        {
+            // Load from localStorage for anonymous users
+            await LoadWaterIntakeFromLocalStorage();
+            return;
+        }
         
         try
         {
@@ -481,13 +873,132 @@
         }
     }
 
+    private async Task LoadWaterIntakeFromLocalStorage()
+    {
+        try
+        {
+            var key = $"waterIntake_{selectedDate:yyyy-MM-dd}";
+            var json = await JSRuntime.InvokeAsync<string>("localStorage.getItem", key);
+            
+            if (!string.IsNullOrEmpty(json))
+            {
+                var waterGlasses = System.Text.Json.JsonSerializer.Deserialize<List<WaterIntakeModel>>(json);
+                if (waterGlasses != null)
+                {
+                    var totalWater = waterGlasses.Sum(w => w.Amount);
+                    dailyWaterIntake = new DailyWaterIntakeModel
+                    {
+                        Date = selectedDate,
+                        TotalWaterMl = totalWater,
+                        GlassCount = waterGlasses.Count,
+                        WaterGlasses = waterGlasses
+                    };
+                }
+            }
+            else
+            {
+                dailyWaterIntake = new DailyWaterIntakeModel { Date = selectedDate };
+            }
+            
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading water intake from localStorage: {ex.Message}");
+            dailyWaterIntake = new DailyWaterIntakeModel { Date = selectedDate };
+        }
+    }
+
+    private async Task SaveWaterIntakeToLocalStorage()
+    {
+        try
+        {
+            if (dailyWaterIntake == null) return;
+            
+            var key = $"waterIntake_{selectedDate:yyyy-MM-dd}";
+            var json = System.Text.Json.JsonSerializer.Serialize(dailyWaterIntake.WaterGlasses);
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", key, json);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving water intake to localStorage: {ex.Message}");
+        }
+    }
+
     private async Task ToggleWaterGlass(int glassNumber)
     {
         try
         {
-            var isDrunk = dailyWaterIntake?.WaterGlasses?.Any(w => w.GlassNumber == glassNumber) ?? false;
+            if (string.IsNullOrEmpty(userId))
+            {
+                // Handle localStorage for anonymous users
+                if (dailyWaterIntake == null)
+                {
+                    dailyWaterIntake = new DailyWaterIntakeModel { Date = selectedDate };
+                }
+                
+                var isDrunk = dailyWaterIntake.WaterGlasses?.Any(w => w.GlassNumber == glassNumber) ?? false;
+                
+                if (isDrunk)
+                {
+                    // Remove the last drunk glass (from the end)
+                    var drunkGlasses = dailyWaterIntake.WaterGlasses.OrderByDescending(w => w.GlassNumber).ToList();
+                    
+                    if (drunkGlasses.Any())
+                    {
+                        var lastDrunkGlassNumber = drunkGlasses.First().GlassNumber;
+                        dailyWaterIntake.WaterGlasses.RemoveAll(w => w.GlassNumber == lastDrunkGlassNumber);
+                        dailyWaterIntake.GlassCount = dailyWaterIntake.WaterGlasses.Count;
+                        dailyWaterIntake.TotalWaterMl = dailyWaterIntake.WaterGlasses.Sum(w => w.Amount);
+                        await SaveWaterIntakeToLocalStorage();
+                        await InvokeAsync(StateHasChanged);
+                    }
+                }
+                else
+                {
+                    // Add the first empty glass from the left
+                    var drunkGlassNumbers = dailyWaterIntake.WaterGlasses?.Select(w => w.GlassNumber).ToHashSet() ?? new HashSet<int>();
+                    
+                    var currentMaxGlassNumber = dailyWaterIntake.WaterGlasses?.Any() == true
+                        ? dailyWaterIntake.WaterGlasses.Max(w => w.GlassNumber)
+                        : 0;
+                    
+                    var baseDisplayNumber = Math.Max(DailyWaterIntakeModel.DefaultGlasses, currentMaxGlassNumber);
+                    var displayMaxNumber = baseDisplayNumber + additionalWaterGlasses;
+                    displayMaxNumber = Math.Min(displayMaxNumber, DailyWaterIntakeModel.MaxGlasses);
+                    
+                    // Find first empty glass from the left
+                    int firstEmptyGlassNumber = 1;
+                    for (int i = 1; i <= displayMaxNumber; i++)
+                    {
+                        if (!drunkGlassNumbers.Contains(i))
+                        {
+                            firstEmptyGlassNumber = i;
+                            break;
+                        }
+                    }
+                    
+                    var newWaterGlass = new WaterIntakeModel
+                    {
+                        WaterIntakeId = dailyWaterIntake.WaterGlasses.Any() ? dailyWaterIntake.WaterGlasses.Max(w => w.WaterIntakeId) + 1 : 1,
+                        Date = selectedDate,
+                        GlassNumber = firstEmptyGlassNumber,
+                        Amount = DailyWaterIntakeModel.GlassSize
+                    };
+                    
+                    dailyWaterIntake.WaterGlasses.Add(newWaterGlass);
+                    dailyWaterIntake.GlassCount = dailyWaterIntake.WaterGlasses.Count;
+                    dailyWaterIntake.TotalWaterMl = dailyWaterIntake.WaterGlasses.Sum(w => w.Amount);
+                    await SaveWaterIntakeToLocalStorage();
+                    await InvokeAsync(StateHasChanged);
+                }
+                return;
+            }
             
-            if (isDrunk)
+            // Handle logged-in users
+            var isDrunkLoggedIn = dailyWaterIntake?.WaterGlasses?.Any(w => w.GlassNumber == glassNumber) ?? false;
+            
+            if (isDrunkLoggedIn)
             {
                 // If clicked glass is drunk, remove the last drunk glass (from the end) instead
                 var drunkGlasses = dailyWaterIntake?.WaterGlasses?.OrderByDescending(w => w.GlassNumber).ToList() ?? new List<WaterIntakeModel>();
@@ -496,8 +1007,7 @@
                 {
                     var lastDrunkGlassNumber = drunkGlasses.First().GlassNumber;
                     Console.WriteLine($"Removing last water glass {lastDrunkGlassNumber} (from the end) for date: {selectedDate:yyyy-MM-dd}");
-                    if (!string.IsNullOrEmpty(userId))
-                        await RemoveWaterGlassUseCase.ExecuteAsync(selectedDate, lastDrunkGlassNumber, userId);
+                    await RemoveWaterGlassUseCase.ExecuteAsync(selectedDate, lastDrunkGlassNumber, userId);
                 }
             }
             else
@@ -526,8 +1036,7 @@
                 }
                 
                 Console.WriteLine($"Adding water glass {firstEmptyGlassNumber} (first empty from left) for date: {selectedDate:yyyy-MM-dd}");
-                if (!string.IsNullOrEmpty(userId))
-                    await AddWaterGlassUseCase.ExecuteAsync(selectedDate, firstEmptyGlassNumber, userId);
+                await AddWaterGlassUseCase.ExecuteAsync(selectedDate, firstEmptyGlassNumber, userId);
             }
             
             await LoadWaterIntake();
@@ -556,8 +1065,9 @@
         }
     }
     
-    private async Task OnDateChanged()
+    private async Task OnDateChanged(DateTime newDate)
     {
+        selectedDate = newDate;
         // Reset additional glasses when date changes
         additionalWaterGlasses = 0;
         await LoadData();
@@ -652,14 +1162,40 @@
 
     private async Task AddFoodToMeal()
     {
-        if (selectedFoodForModal != null && modalQuantity > 0 && !string.IsNullOrEmpty(userId))
+        if (selectedFoodForModal != null && modalQuantity > 0)
         {
             try
             {
-                Console.WriteLine($"Adding food to meal: {selectedFoodForModal.Name}, {modalQuantity}g, {selectedMealType}, {selectedDate:yyyy-MM-dd}");
-                await AddMealEntryUseCase.ExecuteAsync(selectedFoodForModal, modalQuantity, selectedMealType, selectedDate, userId);
-                Console.WriteLine("Food added successfully, reloading nutrition...");
-                await LoadDailyNutrition();
+                if (string.IsNullOrEmpty(userId))
+                {
+                    // Add to localStorage for anonymous users
+                    if (dailyNutrition == null)
+                    {
+                        dailyNutrition = new DailyNutritionModel { Date = selectedDate };
+                    }
+                    
+                    var mealEntry = new MealEntryModel
+                    {
+                        MealEntryId = dailyNutrition.MealEntries.Any() ? dailyNutrition.MealEntries.Max(me => me.MealEntryId) + 1 : 1,
+                        FoodId = selectedFoodForModal.FoodId,
+                        Food = selectedFoodForModal,
+                        Quantity = modalQuantity,
+                        Date = selectedDate,
+                        MealType = selectedMealType
+                    };
+                    
+                    dailyNutrition.MealEntries.Add(mealEntry);
+                    dailyNutrition.CalculateTotals();
+                    await SaveDailyNutritionToLocalStorage();
+                    await InvokeAsync(StateHasChanged);
+                }
+                else
+                {
+                    Console.WriteLine($"Adding food to meal: {selectedFoodForModal.Name}, {modalQuantity}g, {selectedMealType}, {selectedDate:yyyy-MM-dd}");
+                    await AddMealEntryUseCase.ExecuteAsync(selectedFoodForModal, modalQuantity, selectedMealType, selectedDate, userId);
+                    Console.WriteLine("Food added successfully, reloading nutrition...");
+                    await LoadDailyNutrition();
+                }
                 
                 CloseModal();
                 Console.WriteLine("Modal closed, UI updated");
@@ -671,10 +1207,295 @@
         }
     }
 
+    private async Task RemoveMealEntry(MealEntryModel entry)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(userId))
+            {
+                // Remove from localStorage for anonymous users
+                if (dailyNutrition != null && dailyNutrition.MealEntries != null)
+                {
+                    dailyNutrition.MealEntries.RemoveAll(me => me.MealEntryId == entry.MealEntryId);
+                    dailyNutrition.CalculateTotals();
+                    await SaveDailyNutritionToLocalStorage();
+                    await InvokeAsync(StateHasChanged);
+                }
+            }
+            else
+            {
+                await RemoveMealEntryUseCase.ExecuteAsync(entry.MealEntryId);
+                await LoadDailyNutrition();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error removing meal entry: {ex.Message}");
+        }
+    }
+
     private async Task LoadData()
     {
         await LoadDailyNutrition();
         await LoadWaterIntake();
+        await LoadWorkouts();
+    }
+    
+    private async Task LoadWorkouts()
+    {
+        if (string.IsNullOrEmpty(userId))
+        {
+            // Load from localStorage for anonymous users
+            await LoadWorkoutsFromLocalStorage();
+            return;
+        }
+        
+        try
+        {
+            dailyWorkouts = await GetDailyWorkoutsUseCase.ExecuteAsync(selectedDate, userId);
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading workouts: {ex.Message}");
+            dailyWorkouts = new List<WorkoutModel>();
+        }
+    }
+
+    private async Task LoadWorkoutsFromLocalStorage()
+    {
+        try
+        {
+            var key = $"workouts_{selectedDate:yyyy-MM-dd}";
+            var json = await JSRuntime.InvokeAsync<string>("localStorage.getItem", key);
+            
+            if (!string.IsNullOrEmpty(json))
+            {
+                var workouts = System.Text.Json.JsonSerializer.Deserialize<List<WorkoutModel>>(json);
+                dailyWorkouts = workouts ?? new List<WorkoutModel>();
+            }
+            else
+            {
+                dailyWorkouts = new List<WorkoutModel>();
+            }
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading workouts from localStorage: {ex.Message}");
+            dailyWorkouts = new List<WorkoutModel>();
+        }
+    }
+
+    private async Task SaveWorkoutsToLocalStorage()
+    {
+        try
+        {
+            if (dailyWorkouts == null) return;
+            
+            var key = $"workouts_{selectedDate:yyyy-MM-dd}";
+            var json = System.Text.Json.JsonSerializer.Serialize(dailyWorkouts);
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", key, json);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving workouts to localStorage: {ex.Message}");
+        }
+    }
+
+    private void ShowAddWorkoutModal()
+    {
+        newWorkoutName = "";
+        newWorkoutDuration = 30;
+        newWorkoutCalories = 200;
+        workoutSearchTerm = "";
+        workoutSearchResults = new();
+        selectedWorkoutActivity = null;
+        userWeight = 70; // Default weight
+        showAddWorkoutModal = true;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task SearchWorkoutActivities()
+    {
+        if (string.IsNullOrWhiteSpace(workoutSearchTerm))
+        {
+            workoutSearchResults = new();
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        try
+        {
+            workoutSearchResults = await ApiNinjasCaloriesService.SearchActivitiesAsync(workoutSearchTerm);
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error searching activities: {ex.Message}");
+            workoutSearchResults = new();
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task SelectWorkoutActivity(WorkoutActivityModel activity)
+    {
+        selectedWorkoutActivity = activity;
+        newWorkoutName = activity.Name;
+        await CalculateWorkoutCalories();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task CalculateWorkoutCalories()
+    {
+        if (selectedWorkoutActivity == null || newWorkoutDuration <= 0)
+        {
+            newWorkoutCalories = 0;
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        // If we have user weight, try to get more accurate calculation from API
+        // Otherwise, use the calories per hour from the selected activity
+        if (userWeight > 0)
+        {
+            try
+            {
+                var result = await ApiNinjasCaloriesService.GetCaloriesBurnedAsync(
+                    selectedWorkoutActivity.Name,
+                    userWeight,
+                    (int)newWorkoutDuration);
+
+                if (result != null && result.TotalCalories > 0)
+                {
+                    // Use API result if available
+                    newWorkoutCalories = result.TotalCalories;
+                    newWorkoutName = result.Name;
+                    // Update the selected activity with API data
+                    selectedWorkoutActivity.CaloriesPerHour = result.CaloriesPerHour;
+                }
+                else
+                {
+                    // Fallback: use calories per hour from selected activity
+                    newWorkoutCalories = (int)(selectedWorkoutActivity.CaloriesPerHour * newWorkoutDuration / 60.0);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error calculating calories: {ex.Message}");
+                // Fallback: use calories per hour from selected activity
+                newWorkoutCalories = (int)(selectedWorkoutActivity.CaloriesPerHour * newWorkoutDuration / 60.0);
+            }
+        }
+        else
+        {
+            // No weight provided, use calories per hour from selected activity
+            newWorkoutCalories = (int)(selectedWorkoutActivity.CaloriesPerHour * newWorkoutDuration / 60.0);
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void CloseAddWorkoutModal()
+    {
+        showAddWorkoutModal = false;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task AddWorkout()
+    {
+        if (selectedWorkoutActivity == null)
+        {
+            Snackbar.Add("Please select an activity", MudBlazor.Severity.Warning);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(newWorkoutName) || newWorkoutDuration <= 0 || newWorkoutCalories < 0)
+        {
+            Snackbar.Add("Please fill in all fields correctly", MudBlazor.Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            if (string.IsNullOrEmpty(userId))
+            {
+                // Add to localStorage for anonymous users
+                if (dailyWorkouts == null)
+                {
+                    dailyWorkouts = new List<WorkoutModel>();
+                }
+                
+                var workout = new WorkoutModel
+                {
+                    WorkoutId = dailyWorkouts.Any() ? dailyWorkouts.Max(w => w.WorkoutId) + 1 : 1,
+                    Name = newWorkoutName,
+                    DurationMinutes = newWorkoutDuration,
+                    CaloriesBurned = newWorkoutCalories,
+                    Date = selectedDate
+                };
+                
+                dailyWorkouts.Add(workout);
+                await SaveWorkoutsToLocalStorage();
+                await InvokeAsync(StateHasChanged);
+            }
+            else
+            {
+                await AddWorkoutUseCase.ExecuteAsync(newWorkoutName, newWorkoutDuration, newWorkoutCalories, selectedDate, userId);
+                await LoadWorkouts();
+            }
+            
+            CloseAddWorkoutModal();
+            Snackbar.Add("Workout added successfully", MudBlazor.Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error adding workout: {ex.Message}");
+            Snackbar.Add("Error adding workout", MudBlazor.Severity.Error);
+        }
+    }
+
+    private async Task RemoveWorkout(WorkoutModel workout)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(userId))
+            {
+                // Remove from localStorage for anonymous users
+                if (dailyWorkouts != null)
+                {
+                    dailyWorkouts.RemoveAll(w => w.WorkoutId == workout.WorkoutId);
+                    await SaveWorkoutsToLocalStorage();
+                    await InvokeAsync(StateHasChanged);
+                }
+            }
+            else
+            {
+                await RemoveWorkoutUseCase.ExecuteAsync(workout.WorkoutId, userId);
+                await LoadWorkouts();
+            }
+            
+            Snackbar.Add("Workout removed successfully", MudBlazor.Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error removing workout: {ex.Message}");
+            Snackbar.Add("Error removing workout", MudBlazor.Severity.Error);
+        }
+    }
+
+    private double GetTotalCaloriesBurned()
+    {
+        if (dailyWorkouts == null || !dailyWorkouts.Any())
+            return 0;
+        return dailyWorkouts.Sum(w => w.CaloriesBurned);
+    }
+
+    private double GetTotalDurationMinutes()
+    {
+        if (dailyWorkouts == null || !dailyWorkouts.Any())
+            return 0;
+        return dailyWorkouts.Sum(w => w.DurationMinutes);
     }
 
     private string GetMealTypeName(MealType mealType)
@@ -688,5 +1509,264 @@
             MealType.Dinner => "Dinner",
             _ => mealType.ToString()
         };
+    }
+
+    private async Task LoadDailyRequirements()
+    {
+        if (string.IsNullOrEmpty(userId))
+        {
+            // Try to load from localStorage first, then use defaults
+            try
+            {
+                var key = "dailyRequirements";
+                var json = await JSRuntime.InvokeAsync<string>("localStorage.getItem", key);
+                
+                if (!string.IsNullOrEmpty(json))
+                {
+                    dailyRequirements = System.Text.Json.JsonSerializer.Deserialize<DailyRequirementsModel>(json);
+                }
+            }
+            catch
+            {
+                // Ignore errors
+            }
+            
+            // Set default values if not loaded from localStorage
+            if (dailyRequirements == null)
+            {
+                dailyRequirements = new DailyRequirementsModel
+                {
+                    CalorieGoal = 2000,
+                    ProteinGoal = 150,
+                    CarbohydrateGoal = 250,
+                    FatGoal = 65
+                };
+            }
+            
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+        
+        try
+        {
+            dailyRequirements = await GetDailyRequirementsUseCase.ExecuteAsync(userId);
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading daily requirements: {ex.Message}");
+            // Fallback to defaults
+            dailyRequirements = new DailyRequirementsModel
+            {
+                CalorieGoal = 2000,
+                ProteinGoal = 150,
+                CarbohydrateGoal = 250,
+                FatGoal = 65
+            };
+        }
+    }
+
+    private void ShowEditRequirementsModal()
+    {
+        if (dailyRequirements != null)
+        {
+            editRequirements = new DailyRequirementsModel
+            {
+                CalorieGoal = dailyRequirements.CalorieGoal,
+                ProteinGoal = dailyRequirements.ProteinGoal,
+                CarbohydrateGoal = dailyRequirements.CarbohydrateGoal,
+                FatGoal = dailyRequirements.FatGoal
+            };
+        }
+        else
+        {
+            editRequirements = new DailyRequirementsModel
+            {
+                CalorieGoal = 2000,
+                ProteinGoal = 150,
+                CarbohydrateGoal = 250,
+                FatGoal = 65
+            };
+        }
+        showEditRequirementsModal = true;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnCalorieGoalChanged()
+    {
+        // Automatically calculate macros based on calories
+        // Using standard distribution: 30% protein, 40% carbs, 30% fat
+        var totalCalories = editRequirements.CalorieGoal;
+        
+        if (totalCalories > 0)
+        {
+            // Calculate macros maintaining standard proportions
+            // Protein: 30% of calories = 0.3 * calories / 4 kcal per gram
+            editRequirements.ProteinGoal = Math.Round((totalCalories * 0.30) / 4, 1);
+            
+            // Carbohydrates: 40% of calories = 0.4 * calories / 4 kcal per gram
+            editRequirements.CarbohydrateGoal = Math.Round((totalCalories * 0.40) / 4, 1);
+            
+            // Fat: 30% of calories = 0.3 * calories / 9 kcal per gram
+            editRequirements.FatGoal = Math.Round((totalCalories * 0.30) / 9, 1);
+        }
+        
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnMacroChanged()
+    {
+        // Recalculate calories based on macros
+        // Protein and carbs: 4 kcal per gram, Fat: 9 kcal per gram
+        var proteinCalories = editRequirements.ProteinGoal * 4;
+        var carbCalories = editRequirements.CarbohydrateGoal * 4;
+        var fatCalories = editRequirements.FatGoal * 9;
+        
+        editRequirements.CalorieGoal = Math.Round(proteinCalories + carbCalories + fatCalories, 0);
+        
+        InvokeAsync(StateHasChanged);
+    }
+
+    private double GetTotalCaloriesFromMacros()
+    {
+        var proteinCalories = editRequirements.ProteinGoal * 4;
+        var carbCalories = editRequirements.CarbohydrateGoal * 4;
+        var fatCalories = editRequirements.FatGoal * 9;
+        return proteinCalories + carbCalories + fatCalories;
+    }
+
+    private void CloseEditRequirementsModal()
+    {
+        showEditRequirementsModal = false;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task SaveRequirements()
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(userId))
+            {
+                // Save to localStorage for anonymous users
+                dailyRequirements = new DailyRequirementsModel
+                {
+                    CalorieGoal = editRequirements.CalorieGoal,
+                    ProteinGoal = editRequirements.ProteinGoal,
+                    CarbohydrateGoal = editRequirements.CarbohydrateGoal,
+                    FatGoal = editRequirements.FatGoal
+                };
+                
+                var key = "dailyRequirements";
+                var json = System.Text.Json.JsonSerializer.Serialize(dailyRequirements);
+                await JSRuntime.InvokeVoidAsync("localStorage.setItem", key, json);
+                
+                Snackbar.Add("Requirements updated successfully", MudBlazor.Severity.Success);
+            }
+            else
+            {
+                await UpdateDailyRequirementsUseCase.ExecuteAsync(userId, editRequirements);
+                await LoadDailyRequirements();
+                Snackbar.Add("Requirements updated successfully", MudBlazor.Severity.Success);
+            }
+            
+            CloseEditRequirementsModal();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving requirements: {ex.Message}");
+            Snackbar.Add("Error saving requirements", MudBlazor.Severity.Error);
+        }
+    }
+
+    private double GetCaloriePercentage()
+    {
+        if (dailyNutrition == null || dailyRequirements == null || dailyRequirements.CalorieGoal <= 0)
+            return 0;
+        
+        // Calculate net calories (consumed - burned)
+        var netCalories = dailyNutrition.TotalCalories - GetTotalCaloriesBurned();
+        var percentage = (netCalories / dailyRequirements.CalorieGoal) * 100;
+        return Math.Max(0, percentage);
+    }
+    
+    private double GetNetCalories()
+    {
+        if (dailyNutrition == null)
+            return 0;
+        return dailyNutrition.TotalCalories - GetTotalCaloriesBurned();
+    }
+
+    private double GetProteinPercentage()
+    {
+        if (dailyNutrition == null || dailyRequirements == null || dailyRequirements.ProteinGoal <= 0)
+            return 0;
+        var percentage = (dailyNutrition.TotalProtein / dailyRequirements.ProteinGoal) * 100;
+        return Math.Max(0, percentage);
+    }
+
+    private double GetCarbohydratePercentage()
+    {
+        if (dailyNutrition == null || dailyRequirements == null || dailyRequirements.CarbohydrateGoal <= 0)
+            return 0;
+        var percentage = (dailyNutrition.TotalCarbohydrates / dailyRequirements.CarbohydrateGoal) * 100;
+        return Math.Max(0, percentage);
+    }
+
+    private double GetFatPercentage()
+    {
+        if (dailyNutrition == null || dailyRequirements == null || dailyRequirements.FatGoal <= 0)
+            return 0;
+        var percentage = (dailyNutrition.TotalFat / dailyRequirements.FatGoal) * 100;
+        return Math.Max(0, percentage);
+    }
+
+    private bool IsProteinExceeded()
+    {
+        if (dailyNutrition == null || dailyRequirements == null || dailyRequirements.ProteinGoal <= 0)
+            return false;
+        return dailyNutrition.TotalProtein > dailyRequirements.ProteinGoal;
+    }
+
+    private bool IsCarbohydrateExceeded()
+    {
+        if (dailyNutrition == null || dailyRequirements == null || dailyRequirements.CarbohydrateGoal <= 0)
+            return false;
+        return dailyNutrition.TotalCarbohydrates > dailyRequirements.CarbohydrateGoal;
+    }
+
+    private bool IsFatExceeded()
+    {
+        if (dailyNutrition == null || dailyRequirements == null || dailyRequirements.FatGoal <= 0)
+            return false;
+        return dailyNutrition.TotalFat > dailyRequirements.FatGoal;
+    }
+
+    private double GetProteinExcess()
+    {
+        if (dailyNutrition == null || dailyRequirements == null || dailyRequirements.ProteinGoal <= 0)
+            return 0;
+        return Math.Max(0, dailyNutrition.TotalProtein - dailyRequirements.ProteinGoal);
+    }
+
+    private double GetCarbohydrateExcess()
+    {
+        if (dailyNutrition == null || dailyRequirements == null || dailyRequirements.CarbohydrateGoal <= 0)
+            return 0;
+        return Math.Max(0, dailyNutrition.TotalCarbohydrates - dailyRequirements.CarbohydrateGoal);
+    }
+
+    private double GetFatExcess()
+    {
+        if (dailyNutrition == null || dailyRequirements == null || dailyRequirements.FatGoal <= 0)
+            return 0;
+        return Math.Max(0, dailyNutrition.TotalFat - dailyRequirements.FatGoal);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (jsModule != null)
+        {
+            await jsModule.DisposeAsync();
+        }
     }
 } 
