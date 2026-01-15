@@ -41,6 +41,7 @@
                                            @bind="Input.Email" 
                                            @bind:event="oninput"
                                            id="Input.Email" 
+                                           name="Input.Email"
                                            class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-200 placeholder:text-slate-400" 
                                            autocomplete="username" 
                                            aria-required="true" 
@@ -54,6 +55,7 @@
                                            @bind="Input.Password" 
                                            @bind:event="oninput"
                                            id="Input.Password" 
+                                           name="Input.Password"
                                            class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-200 placeholder:text-slate-400" 
                                            autocomplete="current-password" 
                                            aria-required="true" 
@@ -65,6 +67,7 @@
                                     <input type="checkbox" 
                                            @bind="Input.RememberMe" 
                                            id="Input.RememberMe" 
+                                           name="Input.RememberMe"
                                            class="w-4 h-4 bg-slate-50 border-slate-300 rounded text-emerald-600 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-0" />
                                     <label for="Input.RememberMe" class="ml-2 text-sm text-slate-600 font-medium">Remember me</label>
                                 </div>
@@ -111,9 +114,10 @@
 
     [CascadingParameter]
     private HttpContext HttpContext { get; set; } = default!;
-
+    
+    // Use SupplyParameterFromForm so Identity endpoints can bind form values on POST
     [SupplyParameterFromForm]
-    private InputModel? Input { get; set; }
+    private InputModel Input { get; set; } = new();
 
     [SupplyParameterFromQuery]
     private string? ReturnUrl { get; set; }
@@ -125,21 +129,10 @@
             // Clear the existing external cookie to ensure a clean login process
             await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
         }
-        // Initialize Input
-        Input ??= new InputModel();
-    }
-
-    protected override void OnParametersSet()
-    {
-        // Upewnij się, że Input jest zainicjalizowany przed renderowaniem
-        Input ??= new InputModel();
-        base.OnParametersSet();
     }
 
     public async Task LoginUser()
     {
-        if (Input == null) return;
-        
         // This doesn't count login failures towards account lockout
         // To enable password failures to trigger account lockout, set lockoutOnFailure: true
         var result = await SignInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);

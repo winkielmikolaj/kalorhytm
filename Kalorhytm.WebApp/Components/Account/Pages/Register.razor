@@ -45,6 +45,7 @@
                                            @bind="Input.Email" 
                                            @bind:event="oninput"
                                            id="Input.Email" 
+                                           name="Input.Email"
                                            class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-200 placeholder:text-slate-400" 
                                            autocomplete="username" 
                                            aria-required="true" 
@@ -58,6 +59,7 @@
                                            @bind="Input.Password" 
                                            @bind:event="oninput"
                                            id="Input.Password" 
+                                           name="Input.Password"
                                            class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-200 placeholder:text-slate-400" 
                                            autocomplete="new-password" 
                                            aria-required="true" 
@@ -71,6 +73,7 @@
                                            @bind="Input.ConfirmPassword" 
                                            @bind:event="oninput"
                                            id="Input.ConfirmPassword" 
+                                           name="Input.ConfirmPassword"
                                            class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-200 placeholder:text-slate-400" 
                                            autocomplete="new-password" 
                                            aria-required="true" 
@@ -119,8 +122,9 @@
 @code {
     private IEnumerable<IdentityError>? identityErrors;
 
+    // Use SupplyParameterFromForm so Identity endpoints can bind form values on POST
     [SupplyParameterFromForm]
-    private InputModel? Input { get; set; }
+    private InputModel Input { get; set; } = new();
 
     [SupplyParameterFromQuery]
     private string? ReturnUrl { get; set; }
@@ -129,22 +133,11 @@
 
     protected override Task OnInitializedAsync()
     {
-        // Zawsze inicjalizuj Input, jeśli jest null
-        Input ??= new InputModel();
         return Task.CompletedTask;
-    }
-
-    protected override void OnParametersSet()
-    {
-        // Upewnij się, że Input jest zainicjalizowany przed renderowaniem
-        Input ??= new InputModel();
-        base.OnParametersSet();
     }
 
     public async Task RegisterUser()
     {
-        if (Input == null) return;
-        
         var user = CreateUser();
 
         await UserStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
