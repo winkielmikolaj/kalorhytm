@@ -49,7 +49,9 @@ namespace Kalorhytm.Logic.Services
                 SpoonacularIngredientSearchResponse? searchResponse;
                 try
                 {
-                    searchResponse = await _client.SearchIngredientsAsync(searchTerm, 10, _apiKey);
+                    // Only search for ingredients; detailed nutrition will be loaded lazily when needed
+                    const int maxApiIngredients = 5;
+                    searchResponse = await _client.SearchIngredientsAsync(searchTerm, maxApiIngredients, _apiKey);
                 }
                 catch (ApiException apiEx)
                 {
@@ -79,52 +81,29 @@ namespace Kalorhytm.Logic.Services
                 }
 
                 Console.WriteLine($"Spoonacular API returned {searchResponse.Results.Count} ingredients");
-                var foods = new List<FoodModel>();
 
-                foreach (var ingredient in searchResponse.Results.Take(10))
-                {
-                    try
+                // Build lightweight FoodModel list from search results.
+                // Detailed nutrition will be fetched via GetFoodByIdAsync when the user actually selects a food.
+                var foods = searchResponse.Results
+                    .Select(r => new FoodModel
                     {
-                        // Get detailed information for each ingredient
-                        SpoonacularIngredientInformation? ingredientInfo;
-                        try
-                        {
-                            ingredientInfo = await _client.GetIngredientInformationAsync(
-                                ingredient.Id, 
-                                100, 
-                                "gram", 
-                                _apiKey);
-                        }
-                        catch (ApiException apiEx)
-                        {
-                            // Skip this ingredient if API returns payment required or other errors
-                            if (apiEx.StatusCode == System.Net.HttpStatusCode.PaymentRequired ||
-                                apiEx.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
-                            {
-                                Console.WriteLine($"Skipping ingredient {ingredient.Id} due to API limits");
-                                continue;
-                            }
-                            throw; // Re-throw other exceptions
-                        }
-
-                        if (ingredientInfo?.Nutrition != null)
-                        {
-                            var food = ConvertSpoonacularIngredientToFood(ingredientInfo);
-                            if (food != null)
-                            {
-                                foods.Add(food);
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"Error getting ingredient info for {ingredient.Id}: {ex.Message}");
-                    }
-                }
+                        FoodId = r.Id,
+                        Name = r.Name,
+                        Calories = 0,
+                        Protein = 0,
+                        Carbohydrates = 0,
+                        Fat = 0,
+                        Fiber = 0,
+                        Sugar = 0,
+                        Sodium = 0,
+                        Unit = "100g",
+                        ServingSize = 100
+                    })
+                    .ToList();
 
                 if (!foods.Any())
                 {
-                    Console.WriteLine("No foods converted, falling back to demo foods");
+                    Console.WriteLine("No foods created from search results, falling back to demo foods");
                     return GetDemoFoods(searchTerm);
                 }
 
