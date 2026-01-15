@@ -90,8 +90,19 @@ namespace Kalorhytm.Logic.UseCases
             if (quantity <= 0)
                 throw new ArgumentException("Quantity must be greater than 0", nameof(quantity));
 
-            // Always load full food details from Spoonacular if possible (lazy loading of nutrition)
-            var fullFood = await _spoonacularFoodService.GetFoodByIdAsync(food.FoodId) ?? food;
+            // Only call Spoonacular for full details if the model has no nutrition yet
+            var needsEnrichment =
+                food.Calories <= 0 &&
+                food.Protein <= 0 &&
+                food.Carbohydrates <= 0 &&
+                food.Fat <= 0 &&
+                food.Fiber <= 0 &&
+                food.Sugar <= 0 &&
+                food.Sodium <= 0;
+
+            var fullFood = needsEnrichment
+                ? await _spoonacularFoodService.GetFoodByIdAsync(food.FoodId) ?? food
+                : food;
 
             // Sprawdź czy FoodEntity już istnieje w bazie
             var existingFood = await _foodRepository.GetByIdAsync(fullFood.FoodId);
