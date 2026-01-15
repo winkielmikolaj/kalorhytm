@@ -1,23 +1,25 @@
+@using Kalorhytm.WebApp.Components.Shared
+
 <StatusMessage Message="@StatusMessage" />
-<h3>Recovery codes</h3>
-<div class="alert alert-warning" role="alert">
-    <p>
-        <strong>Put these codes in a safe place.</strong>
-    </p>
-    <p>
-        If you lose your device and don't have the recovery codes you will lose access to your account.
-    </p>
-</div>
-<div class="row">
-    <div class="col-md-12">
+<Card>
+    <h3 class="text-2xl font-bold text-slate-900 mb-4 tracking-tight">Recovery codes</h3>
+    <div class="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-xl" role="alert">
+        <p class="text-yellow-800 font-semibold mb-2">
+            Put these codes in a safe place.
+        </p>
+        <p class="text-yellow-700 text-sm">
+            If you lose your device and don't have the recovery codes you will lose access to your account.
+        </p>
+    </div>
+    <div class="space-y-2">
         @foreach (var recoveryCode in RecoveryCodes)
         {
-            <div>
-                <code class="recovery-code">@recoveryCode</code>
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
+                <code class="text-slate-900 font-mono text-sm">@recoveryCode</code>
             </div>
         }
     </div>
-</div>
+</Card>
 
 @code {
     [Parameter]

@@ -1,4 +1,6 @@
-﻿@page "/Account/Manage/DeletePersonalData"
+﻿@using Kalorhytm.WebApp.Components.Shared
+
+@page "/Account/Manage/DeletePersonalData"
 
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Identity
@@ -12,31 +14,51 @@
 
 <PageTitle>Delete Personal Data</PageTitle>
 
-<StatusMessage Message="@message" />
-
-<h3>Delete Personal Data</h3>
-
-<div class="alert alert-warning" role="alert">
-    <p>
-        <strong>Deleting this data will permanently remove your account, and this cannot be recovered.</strong>
-    </p>
-</div>
-
-<div>
+<Card>
+    <h3 class="text-2xl font-bold text-slate-900 mb-4 tracking-tight">Delete Personal Data</h3>
+    
+    <StatusMessage Message="@message" />
+    
+    <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl" role="alert">
+        <div class="flex items-start gap-3">
+            <svg class="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+            <p class="text-red-800 font-semibold">
+                Deleting this data will permanently remove your account, and this cannot be recovered.
+            </p>
+        </div>
+    </div>
+    
     <EditForm Model="Input" FormName="delete-user" OnValidSubmit="OnValidSubmitAsync" method="post">
         <DataAnnotationsValidator />
-        <ValidationSummary class="text-danger" role="alert" />
-        @if (requirePassword)
-        {
-            <div class="form-floating mb-3">
-                <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="Please enter your password." />
-                <label for="Input.Password" class="form-label">Password</label>
-                <ValidationMessage For="() => Input.Password" class="text-danger" />
+        <ValidationSummary class="text-red-500 text-sm mb-4 p-4 bg-red-50 rounded-xl border border-red-200" role="alert" />
+        
+        <div class="space-y-5">
+            @if (requirePassword)
+            {
+                <div>
+                    <label for="Input.Password" class="block text-sm font-semibold text-slate-700 mb-1.5 ml-1">Password</label>
+                    <input type="password" 
+                           @bind="Input.Password" 
+                           @bind:event="oninput"
+                           id="Input.Password" 
+                           class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-200 placeholder:text-slate-400" 
+                           autocomplete="current-password" 
+                           aria-required="true" 
+                           placeholder="Please enter your password." />
+                    <ValidationMessage For="() => Input.Password" class="text-red-500 text-sm mt-1 flex items-center gap-1" />
+                </div>
+            }
+            
+            <div class="pt-2">
+                <Button ButtonType="ButtonType.Submit" Variant="ButtonVariant.Danger" AdditionalClass="w-full">
+                    Delete data and close my account
+                </Button>
             </div>
-        }
-        <button class="w-100 btn btn-lg btn-danger" type="submit">Delete data and close my account</button>
+        </div>
     </EditForm>
-</div>
+</Card>
 
 @code {
     private string? message;

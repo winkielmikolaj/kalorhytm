@@ -8,7 +8,6 @@
 @using Kalorhytm.Logic.Interfaces.IBodyMeasurementGoalUseCases
 @using Kalorhytm.Logic.UseCases.BodyMeasurementUseCases
 @using Microsoft.AspNetCore.Authorization
-@using Microsoft.CodeAnalysis.Elfie.Model
 @using Kalorhytm.WebApp.Components.Shared
 
 @inject AuthenticationStateProvider _AuthenticationStateProvider
@@ -25,18 +24,18 @@
 
 <PageTitle>Body Measurements</PageTitle>
 
-<div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold text-white mb-8 transition-all duration-300">Body Measurements</h1>
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <h1 class="text-3xl font-bold text-slate-900 mb-8 transition-all duration-300 tracking-tight">Body Measurements</h1>
 
     @if(isProcessing)
     {
         <Card AdditionalClass="text-center">
             <div class="flex items-center justify-center">
-                <svg class="animate-spin h-8 w-8 text-green-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <svg class="animate-spin h-8 w-8 text-emerald-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                <span class="ml-3 text-white">Loading...</span>
+                <span class="ml-3 text-slate-600">Loading...</span>
             </div>
         </Card>
     }
@@ -46,9 +45,9 @@
         <Card Title="Filters">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-2">Measurement Type:</label>
-                    <select @bind="selectedType" @bind:after="OnTypeChanged"
-                            class="w-full bg-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                    <label class="block text-sm font-semibold text-slate-700 mb-1.5 ml-1">Measurement Type:</label>
+                    <select value="@selectedType" @onchange="OnTypeChanged"
+                            class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-200">
                         @foreach (var type in Enum.GetValues<BodyMeasurementType>())
                         {
                             <option value="@type">@type</option>
@@ -57,9 +56,9 @@
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-2">Date Range:</label>
-                    <select @bind="selectedRange" @bind:after="OnRangeChanged"
-                            class="w-full bg-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                    <label class="block text-sm font-semibold text-slate-700 mb-1.5 ml-1">Date Range:</label>
+                    <select value="@selectedRange" @onchange="OnRangeChanged"
+                            class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-200">
                         @foreach (var option in preselectedDateRanges)
                         {
                             <option value="@option.Key">@option.Key</option>
@@ -68,7 +67,7 @@
                 </div>
             </div>
             
-            @if (selectedRange == "Własna Data")
+            @if (selectedRange == "Custom Date")
             {
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <Input Label="Start Date" 
@@ -100,7 +99,7 @@
             
             @if (!CanShowChart && BodyMeasurements != null && BodyMeasurements.Any())
             {
-                <p class="text-sm text-gray-300 mt-4">
+                <p class="text-sm text-slate-500 mt-4 bg-slate-50 p-3 rounded-xl border border-slate-100">
                     You currently have @BodyMeasurements.Count measurements. Add @(5 - BodyMeasurements.Count) or change date range to be able to display the chart.
                 </p>
             }
@@ -109,7 +108,7 @@
         @if (showChart && Series.Count > 0)
         {
             <Card Title="Trend Chart" AdditionalClass="mt-6">
-                <h4 class="text-lg font-bold text-white mb-4">Trend for: @selectedType</h4>
+                <h4 class="text-lg font-bold text-slate-900 mb-4">Trend for: @selectedType</h4>
                 <MudChart ChartType="ChartType.Line" 
                           ChartSeries="@Series" 
                           XAxisLabels="@XAxisLabels" 
@@ -119,98 +118,38 @@
                           Class="hide-measurement-line" />
             </Card>
         }
-    @if(isProcessing)
-    {
-        <Card AdditionalClass="text-center">
-            <div class="flex items-center justify-center">
-                <svg class="animate-spin h-8 w-8 text-green-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span class="ml-3 text-white">Loading...</span>
-            </div>
-        </Card>
-    }
-    else
-    {
-
-        <Card Title="Filters">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-2">Measurement Type:</label>
-                    <select @bind="selectedType" 
-                            class="w-full bg-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
-                        @foreach (var type in Enum.GetValues<BodyMeasurementType>())
-                        {
-                            <option value="@type">@type</option>
-                        }
-                    </select>
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-2">Date Range:</label>
-                    <select @bind="selectedRange" 
-                            class="w-full bg-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
-                        @foreach (var option in preselectedDateRanges)
-                        {
-                            <option value="@option.Key">@option.Key</option>
-                        }
-                    </select>
-                </div>
-            </div>
-            
-            @if (selectedRange == "Własna Data")
-            {
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <Input Label="Start Date" 
-                           InputType="date" 
-                           @bind-Value="@customStartDateString" />
-                    
-                    @if (customStartDate != default)
-                    {
-                        <Input Label="End Date" 
-                               InputType="date" 
-                               @bind-Value="@customEndDateString" />
-                    }
-                </div>
-            }
-            
-            <div class="flex flex-wrap gap-3">
-                <Button OnClick="LoadBodyMeasurements">Show Data in Table</Button>
-                <Button OnClick="@(() => ShowModal(ModalType.AddMeasurement))">Add Measurement</Button>
-                <Button OnClick="@(() => ShowModal(ModalType.AddGoal))">Add Goal</Button>
-            </div>
-        </Card>
 
         @if (showModal)
         {
-            <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" 
+            <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in" 
                  @onclick="CloseModal"
                  @onkeydown="@(e => { if (e.Key == "Escape") CloseModal(); })">
-                <div class="bg-gray-700 rounded-xl p-6 w-96 max-w-[90vw] shadow-2xl" 
+                <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden relative border border-slate-100" 
                      @onclick:stopPropagation="true">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-xl font-semibold text-white">
+                    <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                        <h3 class="text-xl font-bold text-slate-800">
                             @(currentModal == ModalType.AddMeasurement ? "Add Measurement" :
                               currentModal == ModalType.AddGoal ? "Add Goal" :
                               currentModal == ModalType.EditMeasurement ? "Edit Measurement" :
                               "Edit Goal")
                         </h3>
                         <button @onclick="CloseModal" 
-                                class="text-gray-400 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 rounded">
+                                class="text-slate-400 hover:text-slate-600 bg-white p-2 rounded-full shadow-sm hover:shadow transition">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                             </svg>
                         </button>
                     </div>
+                    
+                    <div class="p-6">
 
                     @if (currentModal == ModalType.AddMeasurement)
                     {
                         <div class="space-y-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">Measurement Type</label>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1.5 ml-1">Measurement Type</label>
                                 <select @bind="newMeasurement.Type"
-                                        class="w-full bg-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                                        class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-200">
                                     @foreach (var type in Enum.GetValues<BodyMeasurementType>())
                                     {
                                         <option value="@type">@type</option>
@@ -226,8 +165,8 @@
                                    InputType="date" 
                                    @bind-Value="@newMeasurementDateString" />
 
-                            <div class="flex gap-2 mt-6">
-                                <Button OnClick="AddMeasurement" AdditionalClass="flex-1">Save Measurement</Button>
+                            <div class="flex gap-3 mt-6 pt-4 border-t border-slate-100">
+                                <Button OnClick="AddMeasurement" Variant="ButtonVariant.Primary" AdditionalClass="flex-1">Save Measurement</Button>
                                 <Button OnClick="CloseModal" Variant="ButtonVariant.Secondary" AdditionalClass="flex-1">Cancel</Button>
                             </div>
                         </div>
@@ -236,9 +175,9 @@
                     {
                         <div class="space-y-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">Goal Type</label>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1.5 ml-1">Goal Type</label>
                                 <select @bind="newMeasurementGoal.Type"
-                                        class="w-full bg-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                                        class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-200">
                                     @foreach (var type in Enum.GetValues<BodyMeasurementType>())
                                     {
                                         <option value="@type">@type</option>
@@ -259,8 +198,8 @@
                                    InputType="date" 
                                    @bind-Value="@newGoalEffectiveToString" />
 
-                            <div class="flex gap-2 mt-6">
-                                <Button OnClick="AddGoal" AdditionalClass="flex-1">Save Goal</Button>
+                            <div class="flex gap-3 mt-6 pt-4 border-t border-slate-100">
+                                <Button OnClick="AddGoal" Variant="ButtonVariant.Primary" AdditionalClass="flex-1">Save Goal</Button>
                                 <Button OnClick="CloseModal" Variant="ButtonVariant.Secondary" AdditionalClass="flex-1">Cancel</Button>
                             </div>
                         </div>
@@ -280,8 +219,8 @@
                                    InputType="date" 
                                    @bind-Value="@editMeasurementDateString" />
 
-                            <div class="flex gap-2 mt-6">
-                                <Button OnClick="SaveEditedMeasurement" AdditionalClass="flex-1">Save Changes</Button>
+                            <div class="flex gap-3 mt-6 pt-4 border-t border-slate-100">
+                                <Button OnClick="SaveEditedMeasurement" Variant="ButtonVariant.Primary" AdditionalClass="flex-1">Save Changes</Button>
                                 <Button OnClick="DeleteMeasurement" Variant="ButtonVariant.Danger" AdditionalClass="flex-1">Delete</Button>
                             </div>
                         </div>
@@ -305,12 +244,13 @@
                                    InputType="date" 
                                    @bind-Value="@editGoalEffectiveToString" />
 
-                            <div class="flex gap-2 mt-6">
-                                <Button OnClick="SaveEditedGoal" AdditionalClass="flex-1">Save Changes</Button>
+                            <div class="flex gap-3 mt-6 pt-4 border-t border-slate-100">
+                                <Button OnClick="SaveEditedGoal" Variant="ButtonVariant.Primary" AdditionalClass="flex-1">Save Changes</Button>
                                 <Button OnClick="DeleteGoal" Variant="ButtonVariant.Danger" AdditionalClass="flex-1">Delete</Button>
                             </div>
                         </div>
                     }
+                    </div>
                 </div>
             </div>
         }
@@ -322,13 +262,13 @@
                 <div class="overflow-x-auto">
                     <table class="w-full border-collapse">
                         <thead>
-                            <tr class="border-b border-gray-600">
-                                <th class="px-4 py-3 text-left text-sm font-semibold text-white">Type</th>
-                                <th class="px-4 py-3 text-left text-sm font-semibold text-white">Value</th>
-                                <th class="px-4 py-3 text-left text-sm font-semibold text-white">Date</th>
-                                <th class="px-4 py-3 text-left text-sm font-semibold text-white">Goal</th>
-                                <th class="px-4 py-3 text-left text-sm font-semibold text-white">From</th>
-                                <th class="px-4 py-3 text-left text-sm font-semibold text-white">To</th>
+                            <tr class="border-b border-slate-200">
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-slate-700">Type</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-slate-700">Value</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-slate-700">Date</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-slate-700">Goal</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-slate-700">From</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-slate-700">To</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -340,16 +280,16 @@
                                         g.EffectiveFrom <= m.MeasurementDate &&
                                         (g.EffectiveTo == null || g.EffectiveTo >= m.MeasurementDate));
 
-                                <tr class="border-b border-gray-600 hover:bg-gray-600 transition-colors duration-200 cursor-pointer"
+                                <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors duration-200 cursor-pointer"
                                     @onclick="() => EditMeasurement(m)">
-                                    <td class="px-4 py-3 text-white">@m.Type</td>
-                                    <td class="px-4 py-3 text-white">@m.Value</td>
-                                    <td class="px-4 py-3 text-white">@m.MeasurementDate.ToString("yyyy-MM-dd")</td>
-                                    <td class="px-4 py-3 text-white">@((goal != null) ? goal.TargetValue.ToString() : "-")</td>
-                                    <td class="px-4 py-3 text-white" @onclick:stopPropagation="true" @onclick="@(() => EditGoal(goal))">
+                                    <td class="px-4 py-3 text-slate-700 font-medium">@m.Type</td>
+                                    <td class="px-4 py-3 text-slate-900 font-semibold">@m.Value</td>
+                                    <td class="px-4 py-3 text-slate-600">@m.MeasurementDate.ToString("yyyy-MM-dd")</td>
+                                    <td class="px-4 py-3 text-slate-600">@((goal != null) ? goal.TargetValue.ToString() : "-")</td>
+                                    <td class="px-4 py-3 text-slate-600" @onclick:stopPropagation="true" @onclick="@(() => EditGoal(goal))">
                                         @((goal != null) ? goal.EffectiveFrom.ToString("yyyy-MM-dd") : "-")
                                     </td>
-                                    <td class="px-4 py-3 text-white" @onclick:stopPropagation="true" @onclick="@(() => EditGoal(goal))">
+                                    <td class="px-4 py-3 text-slate-600" @onclick:stopPropagation="true" @onclick="@(() => EditGoal(goal))">
                                         @((goal?.EffectiveTo != null) ? goal.EffectiveTo?.ToString("yyyy-MM-dd") : "-")
                                     </td>
                                 </tr>
@@ -362,7 +302,7 @@
         else
         {
             <Card AdditionalClass="mt-6 text-center">
-                <p class="text-gray-300">No measurement data for the selected range.</p>
+                <p class="text-slate-500">No measurement data for the selected range.</p>
             </Card>
         }
     }

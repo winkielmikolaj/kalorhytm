@@ -8,6 +8,7 @@
 @using Kalorhytm.Logic.UseCases
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.JSInterop
 @using Kalorhytm.WebApp.Components.Shared
 @inject IGetDailyNutritionUseCase GetDailyNutritionUseCase
 @inject ISearchFoodsUseCase SearchFoodsUseCase
@@ -30,106 +31,76 @@
 
 
 <div class="container mx-auto px-4 py-8 min-h-full">
-    <h1 class="text-3xl font-bold text-white mb-8 transition-all duration-300">Dashboard</h1>
+    <h1 class="text-3xl font-bold text-gray-900 mb-8 transition-all duration-300 tracking-tight">Dashboard</h1>
     
-    <MudTabs Elevation="2" Rounded="true" Variant="@Variant.Filled" Color="@Color.Success" PanelClass="pa-4">
-        <MudTabPanel Text="Meal Plan">
-            <!-- Modern Calendar Component -->
+    <div>
+        <div class="flex gap-6 border-b border-slate-200 mb-6 px-2">
+            <button @onclick="() => activeTab = 0" 
+                    class="pb-3 text-lg font-bold transition-all border-b-2 px-2 @(activeTab == 0 ? "text-emerald-600 border-emerald-500" : "text-slate-400 border-transparent hover:text-slate-600")">
+                🍽️ Meals
+            </button>
+            <button @onclick="() => activeTab = 1" 
+                    class="pb-3 text-lg font-bold transition-all border-b-2 px-2 @(activeTab == 1 ? "text-emerald-600 border-emerald-500" : "text-slate-400 border-transparent hover:text-slate-600")">
+                💪 Workouts
+            </button>
+        </div>
+
+        <div class="animate-fade-in">
+            @if (activeTab == 0)
+            {
+            <!-- Simple Date Picker -->
             <div class="w-full">
-                <ModernCalendar SelectedDate="selectedDate" SelectedDateChanged="OnDateChanged" />
+                <SimpleDatePicker SelectedDate="selectedDate" SelectedDateChanged="OnDateChanged" />
             </div>
             
             <!-- Daily Nutrition Summary -->
     @if (dailyNutrition != null && dailyRequirements != null)
     {
-        <div class="bg-gray-700 rounded-lg shadow-md p-6 mb-8">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-semibold text-white">Daily Summary</h2>
-                <Button OnClick="ShowEditRequirementsModal" AdditionalClass="text-sm">
-                    Edit Requirements
-                </Button>
+        <div class="bg-white rounded-3xl p-6 shadow-soft mb-6 relative overflow-hidden border border-gray-100">
+            <div class="flex justify-between items-end mb-4">
+                <div>
+                    <span class="text-gray-400 text-sm font-medium uppercase tracking-wider">Consumed</span>
+                    <div class="text-4xl font-extrabold text-gray-900 mt-1">
+                        @dailyNutrition.TotalCalories.ToString("F0") <span class="text-lg text-gray-400 font-normal">kcal</span>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <span class="text-gray-400 text-sm font-medium">Goal</span>
+                    <div class="text-xl font-bold text-emerald-500">
+                        @dailyRequirements.CalorieGoal.ToString("F0")
+                    </div>
+                    <Button OnClick="async () => await ShowEditRequirementsModal()" AdditionalClass="text-xs mt-2">
+                        Edit
+                    </Button>
+                </div>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div class="bg-gray-700 p-6 rounded-lg shadow-md border border-gray-500">
-                    <h3 class="text-lg font-semibold text-white mb-2">Calories</h3>
-                    <p class="text-3xl font-bold text-white">@GetNetCalories().ToString("F0")</p>
-                    <p class="text-sm text-white opacity-80">
-                        @dailyNutrition.TotalCalories.ToString("F0") consumed - @GetTotalCaloriesBurned().ToString("F0") burned
-                        <br />of @dailyRequirements.CalorieGoal.ToString("F0") kcal
-                    </p>
-                    <div class="mt-2 w-full bg-gray-500 rounded-full h-2 relative overflow-hidden">
-                        @if (GetCaloriePercentage() > 100)
-                        {
-                            var calorieTotalPercentage = GetCaloriePercentage();
-                            var calorieNormalWidth = (100 / calorieTotalPercentage) * 100;
-                            var calorieRedWidth = 100 - calorieNormalWidth;
-                            <div class="bg-pink-300 h-2 rounded-full absolute top-0 left-0" style="width: 100%"></div>
-                            <div class="bg-red-600 h-2 rounded-full absolute top-0" style="left: @calorieNormalWidth.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)%; width: @calorieRedWidth.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)%"></div>
-                        }
-                        else
-                        {
-                            <div class="bg-pink-300 h-2 rounded-full" style="width: @GetCaloriePercentage().ToString("F2", System.Globalization.CultureInfo.InvariantCulture)%"></div>
-                        }
+
+            <div class="h-4 w-full bg-gray-100 rounded-full overflow-hidden mb-6">
+                <div class="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full transition-all duration-500"
+                     style="width: @(Math.Min(100, GetCaloriePercentage()).ToString("F0"))%">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-4 text-center">
+                <div class="bg-blue-50 rounded-2xl p-3">
+                    <div class="text-blue-600 font-bold text-lg">@dailyNutrition.TotalProtein.ToString("F0")g</div>
+                    <div class="text-blue-400 text-xs font-medium">Protein</div>
+                    <div class="w-full bg-blue-200 h-1.5 rounded-full mt-2">
+                        <div class="bg-blue-500 h-1.5 rounded-full" style="width: @GetProteinPercentage().ToString("F0")%"></div>
                     </div>
                 </div>
-                
-                <div class="bg-gray-700 p-6 rounded-lg shadow-md border border-gray-500">
-                    <h3 class="text-lg font-semibold text-white mb-2">Protein</h3>
-                    <p class="text-3xl font-bold text-white">@dailyNutrition.TotalProtein.ToString("F1")</p>
-                    <p class="text-sm text-white opacity-80">of @dailyRequirements.ProteinGoal.ToString("F1") g</p>
-                    <div class="mt-2 w-full bg-gray-500 rounded-full h-2 relative overflow-hidden">
-                        @if (IsProteinExceeded())
-                        {
-                            var proteinTotalPercentage = GetProteinPercentage();
-                            var proteinNormalWidth = (100 / proteinTotalPercentage) * 100;
-                            var proteinRedWidth = 100 - proteinNormalWidth;
-                            <div class="bg-sky-300 h-2 rounded-full absolute top-0 left-0" style="width: 100%"></div>
-                            <div class="bg-red-600 h-2 rounded-full absolute top-0" style="left: @proteinNormalWidth.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)%; width: @proteinRedWidth.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)%"></div>
-                        }
-                        else
-                        {
-                            <div class="bg-sky-300 h-2 rounded-full" style="width: @GetProteinPercentage().ToString("F2", System.Globalization.CultureInfo.InvariantCulture)%"></div>
-                        }
+                <div class="bg-orange-50 rounded-2xl p-3">
+                    <div class="text-orange-600 font-bold text-lg">@dailyNutrition.TotalCarbohydrates.ToString("F0")g</div>
+                    <div class="text-orange-400 text-xs font-medium">Carbs</div>
+                    <div class="w-full bg-orange-200 h-1.5 rounded-full mt-2">
+                        <div class="bg-orange-500 h-1.5 rounded-full" style="width: @GetCarbohydratePercentage().ToString("F0")%"></div>
                     </div>
                 </div>
-                
-                <div class="bg-gray-700 p-6 rounded-lg shadow-md border border-gray-500">
-                    <h3 class="text-lg font-semibold text-white mb-2">Carbohydrates</h3>
-                    <p class="text-3xl font-bold text-white">@dailyNutrition.TotalCarbohydrates.ToString("F1")</p>
-                    <p class="text-sm text-white opacity-80">of @dailyRequirements.CarbohydrateGoal.ToString("F1") g</p>
-                    <div class="mt-2 w-full bg-gray-500 rounded-full h-2 relative overflow-hidden">
-                        @if (IsCarbohydrateExceeded())
-                        {
-                            var carbTotalPercentage = GetCarbohydratePercentage();
-                            var carbNormalWidth = (100 / carbTotalPercentage) * 100;
-                            var carbRedWidth = 100 - carbNormalWidth;
-                            <div class="bg-green-300 h-2 rounded-full absolute top-0 left-0" style="width: 100%"></div>
-                            <div class="bg-red-600 h-2 rounded-full absolute top-0" style="left: @carbNormalWidth.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)%; width: @carbRedWidth.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)%"></div>
-                        }
-                        else
-                        {
-                            <div class="bg-green-300 h-2 rounded-full" style="width: @GetCarbohydratePercentage().ToString("F2", System.Globalization.CultureInfo.InvariantCulture)%"></div>
-                        }
-                    </div>
-                </div>
-                
-                <div class="bg-gray-700 p-6 rounded-lg shadow-md border border-gray-500">
-                    <h3 class="text-lg font-semibold text-white mb-2">Fat</h3>
-                    <p class="text-3xl font-bold text-white">@dailyNutrition.TotalFat.ToString("F1")</p>
-                    <p class="text-sm text-white opacity-80">of @dailyRequirements.FatGoal.ToString("F1") g</p>
-                    <div class="mt-2 w-full bg-gray-500 rounded-full h-2 relative overflow-hidden">
-                        @if (IsFatExceeded())
-                        {
-                            var fatTotalPercentage = GetFatPercentage();
-                            var fatNormalWidth = (100 / fatTotalPercentage) * 100;
-                            var fatRedWidth = 100 - fatNormalWidth;
-                            <div class="bg-amber-200 h-2 rounded-full absolute top-0 left-0" style="width: 100%"></div>
-                            <div class="bg-red-600 h-2 rounded-full absolute top-0" style="left: @fatNormalWidth.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)%; width: @fatRedWidth.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)%"></div>
-                        }
-                        else
-                        {
-                            <div class="bg-amber-200 h-2 rounded-full" style="width: @GetFatPercentage().ToString("F2", System.Globalization.CultureInfo.InvariantCulture)%"></div>
-                        }
+                <div class="bg-yellow-50 rounded-2xl p-3">
+                    <div class="text-yellow-600 font-bold text-lg">@dailyNutrition.TotalFat.ToString("F0")g</div>
+                    <div class="text-yellow-400 text-xs font-medium">Fat</div>
+                    <div class="w-full bg-yellow-200 h-1.5 rounded-full mt-2">
+                        <div class="bg-yellow-500 h-1.5 rounded-full" style="width: @GetFatPercentage().ToString("F0")%"></div>
                     </div>
                 </div>
             </div>
@@ -138,17 +109,17 @@
 
     <!-- Meal Entries - Always Visible -->
     <div class="space-y-6">
-        <h2 class="text-xl font-semibold text-white mb-4">Today's Meals</h2>
+        <h2 class="text-xl font-semibold text-gray-900 mb-4 tracking-tight">Today's Meals</h2>
         
         <!-- Breakfast -->
-        <div class="bg-gray-700 rounded-lg shadow-md p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-medium text-white">🍳 Breakfast</h3>
-                <button @onclick="() => ShowAddFoodModal(MealType.Breakfast)" 
-                        class="bg-green-500 text-white p-2 rounded-full hover:bg-green-600 transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                    </svg>
+        <div class="bg-white rounded-3xl shadow-soft p-5 mb-4 border border-gray-100">
+            <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-2">
+                <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                    <span class="bg-orange-100 p-1.5 rounded-lg text-lg">🍳</span> Breakfast
+                </h3>
+                <button @onclick="async () => await ShowAddFoodModal(MealType.Breakfast)" 
+                        class="text-emerald-500 hover:bg-emerald-50 p-2 rounded-full transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                 </button>
             </div>
             @{
@@ -156,43 +127,38 @@
             }
             @if (breakfastEntries.Any())
             {
-                @foreach (var entry in breakfastEntries)
-                {
-                    <div class="flex justify-between items-center p-3 bg-gray-600 rounded-md mb-2">
-                        <div class="flex-1">
-                            <h4 class="font-medium text-white">@entry.Food.Name</h4>
-                            <p class="text-sm text-white opacity-80">@entry.Quantity g</p>
+                <div class="space-y-3">
+                    @foreach (var entry in breakfastEntries)
+                    {
+                        <div class="flex justify-between items-center group">
+                            <div class="flex-1">
+                                <div class="font-semibold text-gray-900">@entry.Food.Name</div>
+                                <div class="text-xs text-gray-400">@entry.Quantity g • @entry.TotalCalories.ToString("F0") kcal</div>
+                            </div>
+                            <button class="text-gray-300 hover:text-red-500 transition p-2" @onclick="() => RemoveMealEntry(entry)">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                            </button>
                         </div>
-                        <div class="text-right text-sm text-white mr-4">
-                            <div>@entry.TotalCalories.ToString("F0") kcal</div>
-                            <div>P: @entry.TotalProtein.ToString("F1")g C: @entry.TotalCarbohydrates.ToString("F1")g F: @entry.TotalFat.ToString("F1")g</div>
-                        </div>
-                        <button @onclick="() => RemoveMealEntry(entry)" 
-                                class="bg-red-500 text-white p-2 rounded-md hover:bg-red-600 transition-colors">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                            </svg>
-                        </button>
-                    </div>
-                }
+                    }
+                </div>
             }
             else
             {
-                <div class="text-center py-4 text-white opacity-70">
-                    <p>No meals</p>
+                <div class="text-center py-6 text-gray-400 text-sm bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                    Add first product
                 </div>
             }
         </div>
 
         <!-- Second Breakfast -->
-        <div class="bg-gray-700 rounded-lg shadow-md p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-medium text-white">🥐 Second Breakfast</h3>
-                <button @onclick="() => ShowAddFoodModal(MealType.SecondBreakfast)" 
-                        class="bg-green-500 text-white p-2 rounded-full hover:bg-green-600 transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                    </svg>
+        <div class="bg-white rounded-3xl shadow-soft p-5 mb-4 border border-gray-100">
+            <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-2">
+                <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                    <span class="bg-yellow-100 p-1.5 rounded-lg text-lg">🥐</span> Second Breakfast
+                </h3>
+                <button @onclick="async () => await ShowAddFoodModal(MealType.SecondBreakfast)" 
+                        class="text-emerald-500 hover:bg-emerald-50 p-2 rounded-full transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                 </button>
             </div>
             @{
@@ -200,43 +166,38 @@
             }
             @if (secondBreakfastEntries.Any())
             {
-                @foreach (var entry in secondBreakfastEntries)
-                {
-                    <div class="flex justify-between items-center p-3 bg-gray-600 rounded-md mb-2">
-                        <div class="flex-1">
-                            <h4 class="font-medium text-white">@entry.Food.Name</h4>
-                            <p class="text-sm text-white opacity-80">@entry.Quantity g</p>
+                <div class="space-y-3">
+                    @foreach (var entry in secondBreakfastEntries)
+                    {
+                        <div class="flex justify-between items-center group">
+                            <div class="flex-1">
+                                <div class="font-semibold text-gray-900">@entry.Food.Name</div>
+                                <div class="text-xs text-gray-400">@entry.Quantity g • @entry.TotalCalories.ToString("F0") kcal</div>
+                            </div>
+                            <button class="text-gray-300 hover:text-red-500 transition p-2" @onclick="() => RemoveMealEntry(entry)">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                            </button>
                         </div>
-                        <div class="text-right text-sm text-white mr-4">
-                            <div>@entry.TotalCalories.ToString("F0") kcal</div>
-                            <div>P: @entry.TotalProtein.ToString("F1")g C: @entry.TotalCarbohydrates.ToString("F1")g F: @entry.TotalFat.ToString("F1")g</div>
-                        </div>
-                        <button @onclick="() => RemoveMealEntry(entry)" 
-                                class="bg-red-500 text-white p-2 rounded-md hover:bg-red-600 transition-colors">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                            </svg>
-                        </button>
-                    </div>
-                }
+                    }
+                </div>
             }
             else
             {
-                <div class="text-center py-4 text-white opacity-70">
-                    <p>No meals</p>
+                <div class="text-center py-6 text-gray-400 text-sm bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                    Add first product
                 </div>
             }
         </div>
 
         <!-- Lunch -->
-        <div class="bg-gray-700 rounded-lg shadow-md p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-medium text-white">🍽️ Lunch</h3>
-                <button @onclick="() => ShowAddFoodModal(MealType.Lunch)" 
-                        class="bg-green-500 text-white p-2 rounded-full hover:bg-green-600 transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                    </svg>
+        <div class="bg-white rounded-3xl shadow-soft p-5 mb-4 border border-gray-100">
+            <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-2">
+                <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                    <span class="bg-red-100 p-1.5 rounded-lg text-lg">🍽️</span> Lunch
+                </h3>
+                <button @onclick="async () => await ShowAddFoodModal(MealType.Lunch)" 
+                        class="text-emerald-500 hover:bg-emerald-50 p-2 rounded-full transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                 </button>
             </div>
             @{
@@ -244,43 +205,38 @@
             }
             @if (lunchEntries.Any())
             {
-                @foreach (var entry in lunchEntries)
-                {
-                    <div class="flex justify-between items-center p-3 bg-gray-600 rounded-md mb-2">
-                        <div class="flex-1">
-                            <h4 class="font-medium text-white">@entry.Food.Name</h4>
-                            <p class="text-sm text-white opacity-80">@entry.Quantity g</p>
+                <div class="space-y-3">
+                    @foreach (var entry in lunchEntries)
+                    {
+                        <div class="flex justify-between items-center group">
+                            <div class="flex-1">
+                                <div class="font-semibold text-gray-900">@entry.Food.Name</div>
+                                <div class="text-xs text-gray-400">@entry.Quantity g • @entry.TotalCalories.ToString("F0") kcal</div>
+                            </div>
+                            <button class="text-gray-300 hover:text-red-500 transition p-2" @onclick="() => RemoveMealEntry(entry)">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                            </button>
                         </div>
-                        <div class="text-right text-sm text-white mr-4">
-                            <div>@entry.TotalCalories.ToString("F0") kcal</div>
-                            <div>P: @entry.TotalProtein.ToString("F1")g C: @entry.TotalCarbohydrates.ToString("F1")g F: @entry.TotalFat.ToString("F1")g</div>
-                        </div>
-                        <button @onclick="() => RemoveMealEntry(entry)" 
-                                class="bg-red-500 text-white p-2 rounded-md hover:bg-red-600 transition-colors">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                            </svg>
-                        </button>
-                    </div>
-                }
+                    }
+                </div>
             }
             else
             {
-                <div class="text-center py-4 text-white opacity-70">
-                    <p>No meals</p>
+                <div class="text-center py-6 text-gray-400 text-sm bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                    Add first product
                 </div>
             }
         </div>
 
         <!-- Snack -->
-        <div class="bg-gray-700 rounded-lg shadow-md p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-medium text-white">🍎 Snack</h3>
-                <button @onclick="() => ShowAddFoodModal(MealType.Snack)" 
-                        class="bg-green-500 text-white p-2 rounded-full hover:bg-green-600 transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                    </svg>
+        <div class="bg-white rounded-3xl shadow-soft p-5 mb-4 border border-gray-100">
+            <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-2">
+                <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                    <span class="bg-green-100 p-1.5 rounded-lg text-lg">🍎</span> Snack
+                </h3>
+                <button @onclick="async () => await ShowAddFoodModal(MealType.Snack)" 
+                        class="text-emerald-500 hover:bg-emerald-50 p-2 rounded-full transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                 </button>
             </div>
             @{
@@ -288,43 +244,38 @@
             }
             @if (snackEntries.Any())
             {
-                @foreach (var entry in snackEntries)
-                {
-                    <div class="flex justify-between items-center p-3 bg-gray-600 rounded-md mb-2">
-                        <div class="flex-1">
-                            <h4 class="font-medium text-white">@entry.Food.Name</h4>
-                            <p class="text-sm text-white opacity-80">@entry.Quantity g</p>
+                <div class="space-y-3">
+                    @foreach (var entry in snackEntries)
+                    {
+                        <div class="flex justify-between items-center group">
+                            <div class="flex-1">
+                                <div class="font-semibold text-gray-900">@entry.Food.Name</div>
+                                <div class="text-xs text-gray-400">@entry.Quantity g • @entry.TotalCalories.ToString("F0") kcal</div>
+                            </div>
+                            <button class="text-gray-300 hover:text-red-500 transition p-2" @onclick="() => RemoveMealEntry(entry)">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                            </button>
                         </div>
-                        <div class="text-right text-sm text-white mr-4">
-                            <div>@entry.TotalCalories.ToString("F0") kcal</div>
-                            <div>P: @entry.TotalProtein.ToString("F1")g C: @entry.TotalCarbohydrates.ToString("F1")g F: @entry.TotalFat.ToString("F1")g</div>
-                        </div>
-                        <button @onclick="() => RemoveMealEntry(entry)" 
-                                class="bg-red-500 text-white p-2 rounded-md hover:bg-red-600 transition-colors">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                            </svg>
-                        </button>
-                    </div>
-                }
+                    }
+                </div>
             }
             else
             {
-                <div class="text-center py-4 text-white opacity-70">
-                    <p>No meals</p>
+                <div class="text-center py-6 text-gray-400 text-sm bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                    Add first product
                 </div>
             }
         </div>
 
         <!-- Dinner -->
-        <div class="bg-gray-700 rounded-lg shadow-md p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-medium text-white">🌙 Dinner</h3>
-                <button @onclick="() => ShowAddFoodModal(MealType.Dinner)" 
-                        class="bg-green-500 text-white p-2 rounded-full hover:bg-green-600 transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                    </svg>
+        <div class="bg-white rounded-3xl shadow-soft p-5 mb-4 border border-gray-100">
+            <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-2">
+                <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                    <span class="bg-purple-100 p-1.5 rounded-lg text-lg">🌙</span> Dinner
+                </h3>
+                <button @onclick="async () => await ShowAddFoodModal(MealType.Dinner)" 
+                        class="text-emerald-500 hover:bg-emerald-50 p-2 rounded-full transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                 </button>
             </div>
             @{
@@ -332,47 +283,42 @@
             }
             @if (dinnerEntries.Any())
             {
-                @foreach (var entry in dinnerEntries)
-                {
-                    <div class="flex justify-between items-center p-3 bg-gray-600 rounded-md mb-2">
-                        <div class="flex-1">
-                            <h4 class="font-medium text-white">@entry.Food.Name</h4>
-                            <p class="text-sm text-white opacity-80">@entry.Quantity g</p>
+                <div class="space-y-3">
+                    @foreach (var entry in dinnerEntries)
+                    {
+                        <div class="flex justify-between items-center group">
+                            <div class="flex-1">
+                                <div class="font-semibold text-gray-900">@entry.Food.Name</div>
+                                <div class="text-xs text-gray-400">@entry.Quantity g • @entry.TotalCalories.ToString("F0") kcal</div>
+                            </div>
+                            <button class="text-gray-300 hover:text-red-500 transition p-2" @onclick="() => RemoveMealEntry(entry)">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                            </button>
                         </div>
-                        <div class="text-right text-sm text-white mr-4">
-                            <div>@entry.TotalCalories.ToString("F0") kcal</div>
-                            <div>P: @entry.TotalProtein.ToString("F1")g C: @entry.TotalCarbohydrates.ToString("F1")g F: @entry.TotalFat.ToString("F1")g</div>
-                        </div>
-                        <button @onclick="() => RemoveMealEntry(entry)" 
-                                class="bg-red-500 text-white p-2 rounded-md hover:bg-red-600 transition-colors">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                            </svg>
-                        </button>
-                    </div>
-                }
+                    }
+                </div>
             }
             else
             {
-                <div class="text-center py-4 text-white opacity-70">
-                    <p>No meals</p>
+                <div class="text-center py-6 text-gray-400 text-sm bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                    Add first product
                 </div>
             }
         </div>
 
         <!-- Water Intake -->
-        <div class="bg-gray-700 rounded-lg shadow-md p-6">
+        <div class="bg-white rounded-3xl shadow-soft p-6 border border-gray-100">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-medium text-white">💧 Water Intake</h3>
+                <h3 class="text-lg font-bold text-gray-800">💧 Water Intake</h3>
                 @if (dailyWaterIntake != null)
                 {
-                    <div class="text-sm text-white">
+                    <div class="text-sm text-gray-600">
                         <span class="font-semibold">@dailyWaterIntake.TotalWaterMl.ToString("F0") ml</span>
-                        <span class="opacity-80">(@dailyWaterIntake.GlassCount glasses)</span>
+                        <span class="text-gray-400">(@dailyWaterIntake.GlassCount glasses)</span>
                     </div>
                 }
             </div>
-            <div class="flex flex-wrap gap-3 mb-4">
+            <div class="flex flex-wrap gap-3 justify-center mb-4">
                 @{
                     // Calculate how many glasses to show
                     var currentMaxGlassNumber = dailyWaterIntake?.WaterGlasses?.Any() == true
@@ -397,19 +343,22 @@
                         var glassNumber = i;
                         var isDrunk = dailyWaterIntake?.WaterGlasses?.Any(w => w.GlassNumber == glassNumber) ?? false;
                         <button @onclick="() => ToggleWaterGlass(glassNumber)" 
-                                class="@(isDrunk ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-600 hover:bg-gray-300") 
-                                       w-16 h-16 rounded-full flex items-center justify-center font-semibold text-lg transition-colors
-                                       border-2 @(isDrunk ? "border-blue-600" : "border-gray-300")">
-                            💧
+                                class="relative w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 
+                                       @(isDrunk 
+                                           ? "bg-blue-500 shadow-lg shadow-blue-500/40 scale-110" 
+                                           : "bg-blue-50 text-blue-200 hover:bg-blue-100")">
+                            <svg class="w-6 h-6 @(isDrunk ? "text-white" : "text-blue-300")" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2.6L12 2.6C12 2.6 5 10.4 5 15.6C5 19.3 8.1 22.4 12 22.4C15.9 22.4 19 19.3 19 15.6C19 10.4 12 2.6 12 2.6Z"/>
+                            </svg>
                         </button>
                     }
                     
                     @if (canAddMore)
                     {
                         <button @onclick="AddNewWaterGlass" 
-                                class="bg-green-500 text-white hover:bg-green-600 
-                                       w-16 h-16 rounded-full flex items-center justify-center font-semibold text-lg transition-colors
-                                       border-2 border-green-600">
+                                class="bg-emerald-500 text-white hover:bg-emerald-600 
+                                       w-12 h-12 rounded-full flex items-center justify-center font-semibold text-lg transition-all duration-300
+                                       shadow-md hover:shadow-lg">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                             </svg>
@@ -420,128 +369,139 @@
             @if (dailyWaterIntake != null && dailyWaterIntake.TotalWaterMl > 0)
             {
                 var liters = (dailyWaterIntake.TotalWaterMl / 1000.0).ToString("F2");
-                <div class="text-center text-sm text-white opacity-80 mt-2">
+                <div class="text-center text-sm text-gray-600 mt-2">
                     @dailyWaterIntake.TotalWaterMl.ToString("F0") ml (@liters L)
                 </div>
             }
         </div>
     </div>
-        </MudTabPanel>
-        
-        <MudTabPanel Text="Workout">
-            <!-- Modern Calendar Component -->
-            <ModernCalendar SelectedDate="selectedDate" SelectedDateChanged="OnDateChanged" />
+            }
+            else
+            {
+            <!-- Simple Date Picker -->
+            <SimpleDatePicker SelectedDate="selectedDate" SelectedDateChanged="OnDateChanged" />
 
             <!-- Workout Summary -->
             @if (dailyWorkouts != null)
             {
-                <div class="bg-gray-700 rounded-lg shadow-md p-6 mb-8">
+                <div class="bg-white rounded-3xl shadow-soft p-6 mb-6 border border-gray-100">
                     <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-xl font-semibold text-white">Workout Summary</h2>
-                        <Button OnClick="ShowAddWorkoutModal" AdditionalClass="text-sm">
+                        <h2 class="text-xl font-bold text-gray-900 tracking-tight">Workout Summary</h2>
+                        <Button OnClick="async () => await ShowAddWorkoutModal()" AdditionalClass="text-sm">
                             Add Workout
                         </Button>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                        <div class="bg-gray-700 p-6 rounded-lg shadow-md border border-gray-500">
-                            <h3 class="text-lg font-semibold text-white mb-2">Total Workouts</h3>
-                            <p class="text-3xl font-bold text-white">@dailyWorkouts.Count</p>
+                        <div class="bg-gray-50 p-6 rounded-2xl border border-gray-100">
+                            <h3 class="text-sm font-medium text-gray-500 mb-2 uppercase tracking-wider">Total Workouts</h3>
+                            <p class="text-3xl font-extrabold text-gray-900">@dailyWorkouts.Count</p>
                         </div>
-                        <div class="bg-gray-700 p-6 rounded-lg shadow-md border border-gray-500">
-                            <h3 class="text-lg font-semibold text-white mb-2">Total Duration</h3>
-                            <p class="text-3xl font-bold text-white">@GetTotalDurationMinutes().ToString("F0")</p>
-                            <p class="text-sm text-white opacity-80">minutes</p>
+                        <div class="bg-gray-50 p-6 rounded-2xl border border-gray-100">
+                            <h3 class="text-sm font-medium text-gray-500 mb-2 uppercase tracking-wider">Total Duration</h3>
+                            <p class="text-3xl font-extrabold text-gray-900">@GetTotalDurationMinutes().ToString("F0")</p>
+                            <p class="text-sm text-gray-400 mt-1">minutes</p>
                         </div>
-                        <div class="bg-gray-700 p-6 rounded-lg shadow-md border border-gray-500">
-                            <h3 class="text-lg font-semibold text-white mb-2">Calories Burned</h3>
-                            <p class="text-3xl font-bold text-white">@GetTotalCaloriesBurned().ToString("F0")</p>
-                            <p class="text-sm text-white opacity-80">kcal</p>
+                        <div class="bg-gray-50 p-6 rounded-2xl border border-gray-100">
+                            <h3 class="text-sm font-medium text-gray-500 mb-2 uppercase tracking-wider">Calories Burned</h3>
+                            <p class="text-3xl font-extrabold text-emerald-500">@GetTotalCaloriesBurned().ToString("F0")</p>
+                            <p class="text-sm text-gray-400 mt-1">kcal</p>
                         </div>
                     </div>
                 </div>
             }
 
             <!-- Workout List -->
-            <div class="bg-gray-700 rounded-lg shadow-md p-6">
-                <h2 class="text-xl font-semibold text-white mb-4">Today's Workouts</h2>
+            <div class="bg-white rounded-3xl shadow-soft p-6 border border-gray-100">
+                <h2 class="text-xl font-bold text-gray-900 mb-4 tracking-tight">Today's Workouts</h2>
                 @if (dailyWorkouts != null && dailyWorkouts.Any())
                 {
-                    @foreach (var workout in dailyWorkouts)
-                    {
-                        <div class="flex justify-between items-center p-3 bg-gray-600 rounded-md mb-2">
-                            <div class="flex-1">
-                                <h4 class="font-medium text-white">@workout.Name</h4>
-                                <p class="text-sm text-white opacity-80">@workout.DurationMinutes.ToString("F0") minutes</p>
+                    <div class="space-y-3">
+                        @foreach (var workout in dailyWorkouts)
+                        {
+                            <div class="flex justify-between items-center group p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition">
+                                <div class="flex-1">
+                                    <h4 class="font-semibold text-gray-900">@workout.Name</h4>
+                                    <p class="text-xs text-gray-400">@workout.DurationMinutes.ToString("F0") minutes</p>
+                                </div>
+                                <div class="text-right text-sm text-gray-600 mr-4">
+                                    <div class="text-lg font-bold text-emerald-500">@workout.CaloriesBurned.ToString("F0") kcal</div>
+                                </div>
+                                <button @onclick="() => RemoveWorkout(workout)" 
+                                        class="text-gray-300 hover:text-red-500 transition p-2">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                    </svg>
+                                </button>
                             </div>
-                            <div class="text-right text-sm text-white mr-4">
-                                <div class="text-lg font-semibold">@workout.CaloriesBurned.ToString("F0") kcal</div>
-                            </div>
-                            <button @onclick="() => RemoveWorkout(workout)" 
-                                    class="bg-red-500 text-white p-2 rounded-md hover:bg-red-600 transition-colors">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                </svg>
-                            </button>
-                        </div>
-                    }
+                        }
+                    </div>
                 }
                 else
                 {
-                    <div class="text-center py-4 text-white opacity-70">
-                        <p>No workouts added yet</p>
+                    <div class="text-center py-6 text-gray-400 text-sm bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                        No workouts added yet
                     </div>
                 }
             </div>
-        </MudTabPanel>
-    </MudTabs>
+            }
+        </div>
+    </div>
 </div>
 
 <!-- Modal for editing daily requirements -->
 @if (showEditRequirementsModal)
 {
-    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" 
-         @onclick="CloseEditRequirementsModal"
-         @onkeydown="@(e => { if (e.Key == "Escape") CloseEditRequirementsModal(); })">
-        <div class="bg-gray-700 rounded-xl p-6 w-96 max-w-[90vw] shadow-2xl max-h-[90vh] overflow-y-auto" 
-             @onclick:stopPropagation="true">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-semibold text-white">Edit Daily Requirements</h3>
-                <button @onclick="CloseEditRequirementsModal" 
-                        class="text-gray-400 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 rounded">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
+    <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden relative border border-slate-100">
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <h3 class="text-xl font-bold text-slate-800">Your Goals</h3>
+                <button @onclick="CloseEditRequirementsModal" class="text-slate-400 hover:text-slate-600 bg-white p-2 rounded-full shadow-sm hover:shadow transition">✕</button>
             </div>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-2">Calories (kcal):</label>
-                    <input type="number" @bind="editRequirements.CalorieGoal" @bind:after="OnCalorieGoalChanged" min="0" step="1" 
-                           class="w-full bg-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            
+            <div class="p-6 space-y-4">
+                <div class="mb-4 w-full">
+                    <label class="block text-sm font-semibold text-slate-700 mb-1.5 ml-1">Calorie Goal</label>
+                    <input type="number" 
+                           @bind="editRequirements.CalorieGoal" 
+                           @bind:event="oninput"
+                           @bind:after="OnCalorieGoalChanged"
+                           class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-200" />
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-2">Protein (g):</label>
-                    <input type="number" @bind="editRequirements.ProteinGoal" @bind:after="OnMacroChanged" min="0" step="0.1" 
-                           class="w-full bg-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="mb-4 w-full">
+                        <label class="block text-sm font-semibold text-slate-700 mb-1.5 ml-1">Protein (g)</label>
+                        <input type="number" 
+                               @bind="editRequirements.ProteinGoal" 
+                               @bind:event="oninput"
+                               @bind:after="OnMacroChanged"
+                               class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-200" />
+                    </div>
+                    <div class="mb-4 w-full">
+                        <label class="block text-sm font-semibold text-slate-700 mb-1.5 ml-1">Carbs (g)</label>
+                        <input type="number" 
+                               @bind="editRequirements.CarbohydrateGoal" 
+                               @bind:event="oninput"
+                               @bind:after="OnMacroChanged"
+                               class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-200" />
+                    </div>
+                    <div class="mb-4 w-full">
+                        <label class="block text-sm font-semibold text-slate-700 mb-1.5 ml-1">Fat (g)</label>
+                        <input type="number" 
+                               @bind="editRequirements.FatGoal" 
+                               @bind:event="oninput"
+                               @bind:after="OnMacroChanged"
+                               class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-200" />
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-2">Carbohydrates (g):</label>
-                    <input type="number" @bind="editRequirements.CarbohydrateGoal" @bind:after="OnMacroChanged" min="0" step="0.1" 
-                           class="w-full bg-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <div class="text-xs text-slate-500 mt-2 bg-slate-50 p-3 rounded-xl">
+                    <p>Current total: <span class="font-semibold">@GetTotalCaloriesFromMacros().ToString("F0") kcal</span></p>
+                    <p>Target: <span class="font-semibold">@editRequirements.CalorieGoal.ToString("F0") kcal</span></p>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-2">Fat (g):</label>
-                    <input type="number" @bind="editRequirements.FatGoal" @bind:after="OnMacroChanged" min="0" step="0.1" 
-                           class="w-full bg-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                </div>
-                <div class="text-xs text-gray-400 mt-2">
-                    <p>Current total: @GetTotalCaloriesFromMacros().ToString("F0") kcal</p>
-                    <p>Target: @editRequirements.CalorieGoal.ToString("F0") kcal</p>
-                </div>
-                <div class="flex gap-2 mt-6">
-                    <Button OnClick="SaveRequirements" AdditionalClass="flex-1">Save</Button>
-                    <Button OnClick="CloseEditRequirementsModal" Variant="ButtonVariant.Secondary" AdditionalClass="flex-1">Cancel</Button>
-                </div>
+            </div>
+
+            <div class="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+                <Button Variant="ButtonVariant.Secondary" OnClick="CloseEditRequirementsModal">Cancel</Button>
+                <Button Variant="ButtonVariant.Primary" OnClick="SaveRequirements">Save</Button>
             </div>
         </div>
     </div>
@@ -550,65 +510,74 @@
 <!-- Modal for adding food -->
 @if (showModal)
 {
-    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" 
-         @onclick="CloseModal"
-         @onkeydown="@(e => { if (e.Key == "Escape") CloseModal(); })">
-        <div class="bg-gray-700 rounded-xl p-6 w-96 max-w-[90vw] shadow-2xl" 
-             @onclick:stopPropagation="true">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-semibold text-white">Add to @GetMealTypeName(selectedMealType)</h3>
-                <button @onclick="CloseModal" 
-                        class="text-gray-400 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 rounded">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
+    <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden relative flex flex-col max-h-[85vh]">
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <div>
+                    <h3 class="text-xl font-bold text-slate-800">Add to: @GetMealTypeName(selectedMealType)</h3>
+                    <p class="text-xs text-slate-500">Search for a product and add it to your journal.</p>
+                </div>
+                <button @onclick="CloseModal" class="text-slate-400 hover:text-slate-600 bg-white p-2 rounded-full shadow-sm hover:shadow transition">✕</button>
             </div>
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-300 mb-2">Search product:</label>
-                <input type="text" @bind="SearchTermModal" placeholder="Enter product name..." 
-                       class="w-full bg-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            </div>
-            @if (modalSearchResults.Any())
-            {
-                <div class="max-h-60 overflow-y-auto bg-gray-600 rounded-lg mb-4 border border-gray-500">
-                    @foreach (var food in modalSearchResults)
-                    {
-                        <div class="px-3 py-2 border-b border-gray-500 cursor-pointer hover:bg-gray-500 transition-colors" @onclick="() => SelectFoodForModal(food)">
-                            <div class="flex justify-between items-center">
+
+            <div class="p-6 flex-1 overflow-y-auto space-y-6">
+                <div class="relative">
+                    <input type="text" @bind="SearchTermModal" @bind:event="oninput" @onkeyup="HandleSearchKeyUp"
+                           placeholder="Enter product name..." 
+                           class="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all outline-none" />
+                    <svg class="w-5 h-5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </div>
+
+                @if (isSearching)
+                {
+                    <div class="flex justify-center py-8"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div></div>
+                }
+                else if (modalSearchResults != null && modalSearchResults.Any())
+                {
+                    <div class="space-y-2">
+                        @foreach (var food in modalSearchResults)
+                        {
+                            <div @onclick="() => SelectFoodForModal(food)" 
+                                 class="p-4 rounded-2xl border transition-all cursor-pointer flex justify-between items-center group @(selectedFoodForModal == food ? "bg-emerald-50 border-emerald-500" : "bg-white border-slate-100 hover:border-emerald-300 hover:bg-slate-50")">
                                 <div>
-                                    <h4 class="font-medium text-white">@food.Name</h4>
-                                    <p class="text-xs text-gray-300">@food.Calories kcal / @food.Unit</p>
+                                    <div class="font-bold text-slate-800">@food.Name</div>
+                                    <div class="text-xs text-slate-500 mt-1 flex gap-2">
+                                        <span class="bg-slate-100 px-1.5 py-0.5 rounded">@food.Calories kcal</span>
+                                        <span>P: @food.Protein g</span>
+                                        <span>C: @food.Carbohydrates g</span>
+                                        <span>F: @food.Fat g</span>
+                                    </div>
                                 </div>
-                                <div class="text-right text-xs text-gray-300">
-                                    <div>P: @food.Protein g</div>
-                                    <div>C: @food.Carbohydrates g</div>
-                                    <div>F: @food.Fat g</div>
+                                <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center @(selectedFoodForModal == food ? "border-emerald-500 bg-emerald-500 text-white" : "border-slate-300 text-transparent")">
+                                    ✓
                                 </div>
                             </div>
+                        }
+                    </div>
+                }
+                
+                @if (selectedFoodForModal != null)
+                {
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 mt-4 animate-fade-in">
+                        <label class="block text-sm font-bold text-slate-700 mb-2">Quantity (grams)</label>
+                        <div class="flex gap-4 items-center">
+                            <input type="number" @bind="modalQuantity" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 focus:border-emerald-500 focus:ring-emerald-500 outline-none" min="1" />
+                            <div class="text-right whitespace-nowrap">
+                                <span class="block text-xl font-bold text-emerald-600">
+                                    @((selectedFoodForModal.Calories * modalQuantity / 100.0).ToString("F0")) kcal
+                                </span>
+                            </div>
                         </div>
-                    }
-                </div>
-            }
-            @if (selectedFoodForModal != null)
-            {
-                <div class="mb-4 p-4 bg-blue-600 rounded-lg">
-                    <h4 class="font-medium text-white mb-2">Selected product: @selectedFoodForModal.Name</h4>
-                    <p class="text-xs text-gray-200">
-                        Calories: @selectedFoodForModal.Calories kcal | Protein: @selectedFoodForModal.Protein g | 
-                        Carbohydrates: @selectedFoodForModal.Carbohydrates g | Fat: @selectedFoodForModal.Fat g
-                    </p>
-                </div>
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-300 mb-2">Quantity (g):</label>
-                    <input type="number" @bind="modalQuantity" min="1" step="1" 
-                           class="w-full bg-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                </div>
-                <div class="flex gap-2">
-                    <Button OnClick="AddFoodToMeal" AdditionalClass="flex-1">Add to meal</Button>
-                    <Button OnClick="CloseModal" Variant="ButtonVariant.Secondary" AdditionalClass="flex-1">Cancel</Button>
-                </div>
-            }
+                    </div>
+                }
+            </div>
+
+            <div class="p-6 bg-white border-t border-slate-100 flex justify-end gap-3 z-20">
+                <Button Variant="ButtonVariant.Secondary" OnClick="CloseModal">Cancel</Button>
+                <Button Variant="ButtonVariant.Primary" OnClick="AddFoodToMeal" IsDisabled="@(selectedFoodForModal == null || modalQuantity <= 0)">
+                    Add product
+                </Button>
+            </div>
         </div>
     </div>
 }
@@ -616,71 +585,50 @@
 <!-- Modal for adding workout -->
 @if (showAddWorkoutModal)
 {
-    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" 
-         @onclick="CloseAddWorkoutModal"
-         @onkeydown="@(e => { if (e.Key == "Escape") CloseAddWorkoutModal(); })">
-        <div class="bg-gray-700 rounded-xl p-6 w-96 max-w-[90vw] shadow-2xl max-h-[90vh] overflow-y-auto" 
-             @onclick:stopPropagation="true">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-semibold text-white">Add Workout</h3>
-                <button @onclick="CloseAddWorkoutModal" 
-                        class="text-gray-400 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 rounded">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
+    <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden relative">
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <h3 class="text-xl font-bold text-slate-800">Add Workout</h3>
+                <button @onclick="CloseAddWorkoutModal" class="text-slate-400 hover:text-slate-600 bg-white p-2 rounded-full shadow-sm hover:shadow transition">✕</button>
             </div>
-            <div class="space-y-4">
+
+            <div class="p-6 space-y-5">
                 <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-2">Search Activity:</label>
-                    <input type="text" @bind="workoutSearchTerm" @bind:after="SearchWorkoutActivities" 
-                           placeholder="e.g., running, cycling, swimming..." 
-                           class="w-full bg-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <label class="block text-sm font-bold text-slate-700 mb-2">Activity (in English)</label>
+                    <div class="flex gap-2">
+                        <input type="text" @bind="workoutSearchTerm" placeholder="e.g., running, cycling" class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-emerald-500 outline-none" />
+                        <Button OnClick="SearchWorkoutActivities" IsLoading="@isSearchingWorkouts">Search</Button>
+                    </div>
                 </div>
-                @if (workoutSearchResults.Any())
+
+                @if (workoutSearchResults != null && workoutSearchResults.Any())
                 {
-                    <div class="max-h-40 overflow-y-auto bg-gray-600 rounded-lg mb-4 border border-gray-500">
-                        @foreach (var activity in workoutSearchResults)
+                    <div class="max-h-40 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                        @foreach (var w in workoutSearchResults)
                         {
-                            <div class="px-3 py-2 border-b border-gray-500 cursor-pointer hover:bg-gray-500 transition-colors" @onclick="() => SelectWorkoutActivity(activity)">
-                                <div class="flex justify-between items-center">
-                                    <div>
-                                        <h4 class="font-medium text-white">@activity.Name</h4>
-                                        <p class="text-xs text-gray-300">@activity.CaloriesPerHour kcal/hour</p>
-                                    </div>
-                                </div>
+                            <div @onclick="() => SelectWorkoutActivity(w)" 
+                                 class="p-3 rounded-xl border cursor-pointer transition flex justify-between items-center @(selectedWorkoutActivity == w ? "bg-emerald-50 border-emerald-500" : "bg-white border-slate-100 hover:bg-slate-50")">
+                                <span class="font-medium text-slate-700 text-sm">@w.Name</span>
+                                @if (selectedWorkoutActivity == w) { <span class="text-emerald-600 font-bold">✓</span> }
                             </div>
                         }
                     </div>
                 }
+
                 @if (selectedWorkoutActivity != null)
                 {
-                    <div class="mb-4 p-4 bg-blue-600 rounded-lg">
-                        <h4 class="font-medium text-white mb-2">Selected: @selectedWorkoutActivity.Name</h4>
-                        <p class="text-xs text-gray-200">
-                            Calories per hour: @selectedWorkoutActivity.CaloriesPerHour kcal
-                        </p>
+                    <div class="bg-emerald-50/50 p-4 rounded-xl border border-emerald-100">
+                        <Input InputType="number" Label="Duration (minutes)" Value="@newWorkoutDuration.ToString()" ValueChanged="@((val) => { if (double.TryParse(val, out var v)) { newWorkoutDuration = v; _ = Task.Run(async () => await CalculateWorkoutCalories()); } })" />
+                        <div class="mt-2 text-right text-sm text-emerald-700">
+                            Estimated calories burned: <b>@((selectedWorkoutActivity.CaloriesPerHour * newWorkoutDuration / 60.0).ToString("F0")) kcal</b>
+                        </div>
                     </div>
                 }
-                <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-2">Weight (kg):</label>
-                    <input type="number" @bind="userWeight" @bind:after="CalculateWorkoutCalories" min="1" step="0.1" 
-                           class="w-full bg-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-2">Duration (minutes):</label>
-                    <input type="number" @bind="newWorkoutDuration" @bind:after="CalculateWorkoutCalories" min="1" step="1" 
-                           class="w-full bg-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-2">Calories Burned:</label>
-                    <input type="number" @bind="newWorkoutCalories" min="0" step="1" readonly
-                           class="w-full bg-gray-600 text-gray-400 rounded-lg px-3 py-2 text-sm" />
-                </div>
-                <div class="flex gap-2 mt-6">
-                    <Button OnClick="AddWorkout" AdditionalClass="flex-1">Add Workout</Button>
-                    <Button OnClick="CloseAddWorkoutModal" Variant="ButtonVariant.Secondary" AdditionalClass="flex-1">Cancel</Button>
-                </div>
+            </div>
+
+            <div class="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+                <Button Variant="ButtonVariant.Secondary" OnClick="CloseAddWorkoutModal">Cancel</Button>
+                <Button Variant="ButtonVariant.Primary" OnClick="AddWorkout" IsDisabled="@(selectedWorkoutActivity == null)">Add</Button>
             </div>
         </div>
     </div>
@@ -693,6 +641,7 @@
     private DailyRequirementsModel? dailyRequirements;
     private List<WorkoutModel>? dailyWorkouts;
     private int additionalWaterGlasses = 0; // Local state for additional empty glasses
+    private int activeTab = 0; // 0 = Meal Plan, 1 = Workouts
     private string _searchTerm = "";
     private List<FoodModel> searchResults = new();
     
@@ -706,6 +655,8 @@
     private FoodModel? selectedFoodForModal;
     private double modalQuantity = 100;
     private DailyRequirementsModel editRequirements = new();
+    private bool isUpdatingMacros = false; // Flag to prevent circular updates
+    private bool isSearching = false;
     
     // Workout modal state
     private string newWorkoutName = "";
@@ -715,6 +666,7 @@
     private List<WorkoutActivityModel> workoutSearchResults = new();
     private WorkoutActivityModel? selectedWorkoutActivity;
     private double userWeight = 70; // Default weight in kg
+    private bool isSearchingWorkouts = false;
 
     private string SearchTerm
     {
@@ -758,6 +710,10 @@
         try
         {
             jsModule = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/localStorage.js");
+        }
+        catch (JSDisconnectedException)
+        {
+            // Circuit disconnected, ignore
         }
         catch
         {
@@ -828,6 +784,11 @@
             }
             await InvokeAsync(StateHasChanged);
         }
+        catch (JSDisconnectedException)
+        {
+            // Circuit disconnected, ignore
+            dailyNutrition = new DailyNutritionModel { Date = selectedDate };
+        }
         catch (Exception ex)
         {
             Console.WriteLine($"Error loading from localStorage: {ex.Message}");
@@ -844,6 +805,10 @@
             var key = $"mealEntries_{selectedDate:yyyy-MM-dd}";
             var json = System.Text.Json.JsonSerializer.Serialize(dailyNutrition.MealEntries);
             await JSRuntime.InvokeVoidAsync("localStorage.setItem", key, json);
+        }
+        catch (JSDisconnectedException)
+        {
+            // Circuit disconnected, ignore
         }
         catch (Exception ex)
         {
@@ -902,6 +867,10 @@
             
             await InvokeAsync(StateHasChanged);
         }
+        catch (JSDisconnectedException)
+        {
+            // Circuit disconnected, ignore
+        }
         catch (Exception ex)
         {
             Console.WriteLine($"Error loading water intake from localStorage: {ex.Message}");
@@ -918,6 +887,10 @@
             var key = $"waterIntake_{selectedDate:yyyy-MM-dd}";
             var json = System.Text.Json.JsonSerializer.Serialize(dailyWaterIntake.WaterGlasses);
             await JSRuntime.InvokeVoidAsync("localStorage.setItem", key, json);
+        }
+        catch (JSDisconnectedException)
+        {
+            // Circuit disconnected, ignore
         }
         catch (Exception ex)
         {
@@ -1047,7 +1020,7 @@
         }
     }
 
-    private void AddNewWaterGlass()
+    private async Task AddNewWaterGlass()
     {
         // Simply increase the number of displayed empty glasses (local state)
         var currentMaxGlassNumber = dailyWaterIntake?.WaterGlasses?.Any() == true
@@ -1061,7 +1034,7 @@
         if (currentTotal < DailyWaterIntakeModel.MaxGlasses)
         {
             additionalWaterGlasses++;
-            InvokeAsync(StateHasChanged);
+            await InvokeAsync(StateHasChanged);
         }
     }
     
@@ -1088,10 +1061,10 @@
         }
     }
 
-    private void SelectFood(FoodModel foodModel)
+    private async Task SelectFood(FoodModel foodModel)
     {
         selectedFood = foodModel;
-        InvokeAsync(StateHasChanged);
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task AddMealEntry()
@@ -1120,7 +1093,7 @@
         }
     }
 
-    private void ShowAddFoodModal(MealType mealType)
+    private async Task ShowAddFoodModal(MealType mealType)
     {
         Console.WriteLine($"Opening modal for meal type: {mealType}");
         selectedMealType = mealType;
@@ -1130,34 +1103,53 @@
         selectedFoodForModal = null;
         modalQuantity = 100;
         Console.WriteLine($"Modal state: showModal = {showModal}");
-        InvokeAsync(StateHasChanged);
+        await InvokeAsync(StateHasChanged);
     }
 
-    private void CloseModal()
+    private async Task CloseModal()
     {
         showModal = false;
-        InvokeAsync(StateHasChanged);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task HandleSearchKeyUp(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(searchTerm))
+        {
+            await SearchFoodsForModal();
+        }
     }
 
     private async Task SearchFoodsForModal()
     {
+        if (string.IsNullOrWhiteSpace(searchTerm))
+        {
+            modalSearchResults.Clear();
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        isSearching = true;
         try
         {
             modalSearchResults = await SearchFoodsUseCase.ExecuteAsync(searchTerm);
-            await InvokeAsync(StateHasChanged);
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error searching foods for modal: {ex.Message}");
             modalSearchResults.Clear();
+        }
+        finally
+        {
+            isSearching = false;
             await InvokeAsync(StateHasChanged);
         }
     }
 
-    private void SelectFoodForModal(FoodModel food)
+    private async Task SelectFoodForModal(FoodModel food)
     {
         selectedFoodForModal = food;
-        InvokeAsync(StateHasChanged);
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task AddFoodToMeal()
@@ -1191,7 +1183,13 @@
                 }
                 else
                 {
-                    Console.WriteLine($"Adding food to meal: {selectedFoodForModal.Name}, {modalQuantity}g, {selectedMealType}, {selectedDate:yyyy-MM-dd}");
+                    if (string.IsNullOrEmpty(userId))
+                    {
+                        Snackbar.Add("User ID is missing. Please log in again.", MudBlazor.Severity.Error);
+                        return;
+                    }
+                    
+                    Console.WriteLine($"Adding food to meal: {selectedFoodForModal.Name}, {modalQuantity}g, {selectedMealType}, {selectedDate:yyyy-MM-dd}, userId: {userId}");
                     await AddMealEntryUseCase.ExecuteAsync(selectedFoodForModal, modalQuantity, selectedMealType, selectedDate, userId);
                     Console.WriteLine("Food added successfully, reloading nutrition...");
                     await LoadDailyNutrition();
@@ -1280,6 +1278,10 @@
             }
             await InvokeAsync(StateHasChanged);
         }
+        catch (JSDisconnectedException)
+        {
+            // Circuit disconnected, ignore
+        }
         catch (Exception ex)
         {
             Console.WriteLine($"Error loading workouts from localStorage: {ex.Message}");
@@ -1297,13 +1299,17 @@
             var json = System.Text.Json.JsonSerializer.Serialize(dailyWorkouts);
             await JSRuntime.InvokeVoidAsync("localStorage.setItem", key, json);
         }
+        catch (JSDisconnectedException)
+        {
+            // Circuit disconnected, ignore
+        }
         catch (Exception ex)
         {
             Console.WriteLine($"Error saving workouts to localStorage: {ex.Message}");
         }
     }
 
-    private void ShowAddWorkoutModal()
+    private async Task ShowAddWorkoutModal()
     {
         newWorkoutName = "";
         newWorkoutDuration = 30;
@@ -1313,7 +1319,7 @@
         selectedWorkoutActivity = null;
         userWeight = 70; // Default weight
         showAddWorkoutModal = true;
-        InvokeAsync(StateHasChanged);
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task SearchWorkoutActivities()
@@ -1325,15 +1331,19 @@
             return;
         }
 
+        isSearchingWorkouts = true;
         try
         {
             workoutSearchResults = await ApiNinjasCaloriesService.SearchActivitiesAsync(workoutSearchTerm);
-            await InvokeAsync(StateHasChanged);
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error searching activities: {ex.Message}");
             workoutSearchResults = new();
+        }
+        finally
+        {
+            isSearchingWorkouts = false;
             await InvokeAsync(StateHasChanged);
         }
     }
@@ -1396,21 +1406,21 @@
         await InvokeAsync(StateHasChanged);
     }
 
-    private void CloseAddWorkoutModal()
+    private async Task CloseAddWorkoutModal()
     {
         showAddWorkoutModal = false;
-        InvokeAsync(StateHasChanged);
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task AddWorkout()
     {
-        if (selectedWorkoutActivity == null)
+        if (string.IsNullOrWhiteSpace(newWorkoutName))
         {
-            Snackbar.Add("Please select an activity", MudBlazor.Severity.Warning);
+            Snackbar.Add("Please enter a workout name", MudBlazor.Severity.Warning);
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(newWorkoutName) || newWorkoutDuration <= 0 || newWorkoutCalories < 0)
+        if (newWorkoutDuration <= 0 || newWorkoutCalories < 0)
         {
             Snackbar.Add("Please fill in all fields correctly", MudBlazor.Severity.Warning);
             return;
@@ -1441,17 +1451,28 @@
             }
             else
             {
+                if (string.IsNullOrEmpty(userId))
+                {
+                    Snackbar.Add("User ID is missing. Please log in again.", MudBlazor.Severity.Error);
+                    return;
+                }
+                
+                Console.WriteLine($"Adding workout: {newWorkoutName}, {newWorkoutDuration}min, {newWorkoutCalories}kcal, {selectedDate:yyyy-MM-dd}, userId: {userId}");
                 await AddWorkoutUseCase.ExecuteAsync(newWorkoutName, newWorkoutDuration, newWorkoutCalories, selectedDate, userId);
                 await LoadWorkouts();
             }
             
-            CloseAddWorkoutModal();
-            Snackbar.Add("Workout added successfully", MudBlazor.Severity.Success);
+            await CloseAddWorkoutModal();
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error adding workout: {ex.Message}");
-            Snackbar.Add("Error adding workout", MudBlazor.Severity.Error);
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
+            }
+            Snackbar.Add($"Error adding workout: {ex.Message}", MudBlazor.Severity.Error);
         }
     }
 
@@ -1526,9 +1547,13 @@
                     dailyRequirements = System.Text.Json.JsonSerializer.Deserialize<DailyRequirementsModel>(json);
                 }
             }
+            catch (JSDisconnectedException)
+            {
+                // Circuit disconnected, ignore
+            }
             catch
             {
-                // Ignore errors
+                // Ignore other errors
             }
             
             // Set default values if not loaded from localStorage
@@ -1566,7 +1591,7 @@
         }
     }
 
-    private void ShowEditRequirementsModal()
+    private async Task ShowEditRequirementsModal()
     {
         if (dailyRequirements != null)
         {
@@ -1589,33 +1614,51 @@
             };
         }
         showEditRequirementsModal = true;
-        InvokeAsync(StateHasChanged);
+        await InvokeAsync(StateHasChanged);
     }
 
-    private void OnCalorieGoalChanged()
+    private async Task OnCalorieGoalChanged()
     {
-        // Automatically calculate macros based on calories
-        // Using standard distribution: 30% protein, 40% carbs, 30% fat
-        var totalCalories = editRequirements.CalorieGoal;
+        if (isUpdatingMacros) return; // Prevent circular updates
         
-        if (totalCalories > 0)
+        isUpdatingMacros = true;
+        try
         {
-            // Calculate macros maintaining standard proportions
-            // Protein: 30% of calories = 0.3 * calories / 4 kcal per gram
-            editRequirements.ProteinGoal = Math.Round((totalCalories * 0.30) / 4, 1);
+            // Automatically calculate macros based on calories
+            // Using standard distribution: 30% protein, 40% carbs, 30% fat
+            var totalCalories = editRequirements.CalorieGoal;
             
-            // Carbohydrates: 40% of calories = 0.4 * calories / 4 kcal per gram
-            editRequirements.CarbohydrateGoal = Math.Round((totalCalories * 0.40) / 4, 1);
+            if (totalCalories > 0)
+            {
+                // Calculate macros maintaining standard proportions
+                // Protein: 30% of calories = 0.3 * calories / 4 kcal per gram
+                var newProtein = Math.Round((totalCalories * 0.30) / 4, 1);
+                
+                // Carbohydrates: 40% of calories = 0.4 * calories / 4 kcal per gram
+                var newCarbs = Math.Round((totalCalories * 0.40) / 4, 1);
+                
+                // Fat: 30% of calories = 0.3 * calories / 9 kcal per gram
+                var newFat = Math.Round((totalCalories * 0.30) / 9, 1);
+                
+                // Update all values at once to ensure UI refresh
+                editRequirements.ProteinGoal = newProtein;
+                editRequirements.CarbohydrateGoal = newCarbs;
+                editRequirements.FatGoal = newFat;
+            }
             
-            // Fat: 30% of calories = 0.3 * calories / 9 kcal per gram
-            editRequirements.FatGoal = Math.Round((totalCalories * 0.30) / 9, 1);
+            // Force UI update
+            await InvokeAsync(StateHasChanged);
         }
-        
-        InvokeAsync(StateHasChanged);
+        finally
+        {
+            isUpdatingMacros = false;
+        }
     }
 
-    private void OnMacroChanged()
+    private async Task OnMacroChanged()
     {
+        if (isUpdatingMacros) return; // Prevent circular updates
+        
         // Recalculate calories based on macros
         // Protein and carbs: 4 kcal per gram, Fat: 9 kcal per gram
         var proteinCalories = editRequirements.ProteinGoal * 4;
@@ -1624,7 +1667,7 @@
         
         editRequirements.CalorieGoal = Math.Round(proteinCalories + carbCalories + fatCalories, 0);
         
-        InvokeAsync(StateHasChanged);
+        await InvokeAsync(StateHasChanged);
     }
 
     private double GetTotalCaloriesFromMacros()
@@ -1635,10 +1678,10 @@
         return proteinCalories + carbCalories + fatCalories;
     }
 
-    private void CloseEditRequirementsModal()
+    private async Task CloseEditRequirementsModal()
     {
         showEditRequirementsModal = false;
-        InvokeAsync(StateHasChanged);
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task SaveRequirements()
@@ -1658,7 +1701,14 @@
                 
                 var key = "dailyRequirements";
                 var json = System.Text.Json.JsonSerializer.Serialize(dailyRequirements);
-                await JSRuntime.InvokeVoidAsync("localStorage.setItem", key, json);
+                try
+                {
+                    await JSRuntime.InvokeVoidAsync("localStorage.setItem", key, json);
+                }
+                catch (JSDisconnectedException)
+                {
+                    // Circuit disconnected, ignore
+                }
                 
                 Snackbar.Add("Requirements updated successfully", MudBlazor.Severity.Success);
             }
@@ -1766,7 +1816,14 @@
     {
         if (jsModule != null)
         {
-            await jsModule.DisposeAsync();
+            try
+            {
+                await jsModule.DisposeAsync();
+            }
+            catch (JSDisconnectedException)
+            {
+                // Circuit disconnected, ignore
+            }
         }
     }
 } 

@@ -6,9 +6,9 @@ namespace Kalorhytm.Infrastructure.Repositories
 {
     public class WorkoutRepository : IWorkoutRepository
     {
-        private readonly InMemoryDbContext _context;
+        private readonly ApplicationDbContext _context;
 
-        public WorkoutRepository(InMemoryDbContext context)
+        public WorkoutRepository(ApplicationDbContext context)
         {
             _context = context;
         }

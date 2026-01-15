@@ -150,16 +150,46 @@ builder.Services.AddScoped<IGetRecipeLikesUseCase, GetRecipeLikesUseCase>();
 
 var app = builder.Build();
 
-// Seeding
+// Apply migrations and seed database
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
+    var logger = services.GetRequiredService<ILogger<Program>>();
 
-    var context = services.GetRequiredService<ApplicationDbContext>();
-    var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
-    var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+    try
+    {
+        var context = services.GetRequiredService<ApplicationDbContext>();
+        
+        // Ensure database is created
+        var canConnect = await context.Database.CanConnectAsync();
+        if (!canConnect)
+        {
+            logger.LogInformation("Database does not exist. Creating database...");
+            await context.Database.EnsureCreatedAsync();
+        }
+        
+        // Apply pending migrations to update database schema
+        var pendingMigrations = await context.Database.GetPendingMigrationsAsync();
+        if (pendingMigrations.Any())
+        {
+            logger.LogInformation("Applying {Count} pending migrations...", pendingMigrations.Count());
+            await context.Database.MigrateAsync();
+        }
+        else
+        {
+            logger.LogInformation("Database is up to date.");
+        }
 
-    await AppSeeder.SeedAsync(context, userManager, roleManager);
+        var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+
+        await AppSeeder.SeedAsync(context, userManager, roleManager);
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "An error occurred while setting up the database.");
+        throw;
+    }
 }
 
 // Configure the HTTP request pipeline.

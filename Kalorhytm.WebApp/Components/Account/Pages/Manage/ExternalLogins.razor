@@ -10,58 +10,79 @@
 @inject IUserStore<ApplicationUser> UserStore
 @inject IdentityRedirectManager RedirectManager
 
+@using Kalorhytm.WebApp.Components.Shared
+
 <PageTitle>Manage your external logins</PageTitle>
 
-<StatusMessage />
-@if (currentLogins?.Count > 0)
-{
-    <h3>Registered Logins</h3>
-    <table class="table">
-        <tbody>
-            @foreach (var login in currentLogins)
-            {
-                <tr>
-                    <td>@login.ProviderDisplayName</td>
-                    <td>
+<Card>
+    <h3 class="text-2xl font-bold text-slate-900 mb-6 tracking-tight">External logins</h3>
+    
+    @if (currentLogins?.Count > 0)
+    {
+        <div class="mb-8">
+            <h4 class="text-lg font-semibold text-slate-800 mb-4">Registered Logins</h4>
+            <div class="space-y-3">
+                @foreach (var login in currentLogins)
+                {
+                    <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+                                <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+                                </svg>
+                            </div>
+                            <span class="font-medium text-slate-900">@login.ProviderDisplayName</span>
+                        </div>
                         @if (showRemoveButton)
                         {
                             <form @formname="@($"remove-login-{login.LoginProvider}")" @onsubmit="OnSubmitAsync" method="post">
                                 <AntiforgeryToken />
-                                <div>
-                                    <input type="hidden" name="@nameof(LoginProvider)" value="@login.LoginProvider" />
-                                    <input type="hidden" name="@nameof(ProviderKey)" value="@login.ProviderKey" />
-                                    <button type="submit" class="btn btn-primary" title="Remove this @login.ProviderDisplayName login from your account">Remove</button>
-                                </div>
+                                <input type="hidden" name="@nameof(LoginProvider)" value="@login.LoginProvider" />
+                                <input type="hidden" name="@nameof(ProviderKey)" value="@login.ProviderKey" />
+                                <Button ButtonType="ButtonType.Submit" Variant="ButtonVariant.Danger" AdditionalClass="!py-2 !px-4 text-xs">
+                                    Remove
+                                </Button>
                             </form>
                         }
-                        else
-                        {
-                            @: &nbsp;
-                        }
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
-@if (otherLogins?.Count > 0)
-{
-    <h4>Add another service to log in.</h4>
-    <hr />
-    <form class="form-horizontal" action="Account/Manage/LinkExternalLogin" method="post">
-        <AntiforgeryToken />
-        <div>
-            <p>
-                @foreach (var provider in otherLogins)
-                {
-                    <button type="submit" class="btn btn-primary" name="Provider" value="@provider.Name" title="Log in using your @provider.DisplayName account">
-                        @provider.DisplayName
-                    </button>
+                    </div>
                 }
-            </p>
+            </div>
         </div>
-    </form>
-}
+    }
+    
+    @if (otherLogins?.Count > 0)
+    {
+        <div class="pt-6 border-t border-slate-100">
+            <h4 class="text-lg font-semibold text-slate-800 mb-4">Add another service to log in</h4>
+            <form action="Account/Manage/LinkExternalLogin" method="post">
+                <AntiforgeryToken />
+                <div class="flex flex-wrap gap-3">
+                    @foreach (var provider in otherLogins)
+                    {
+                        <button type="submit" 
+                                name="Provider" 
+                                value="@provider.Name" 
+                                title="@($"Log in using your {provider.DisplayName} account")"
+                                class="px-5 py-2.5 rounded-2xl font-semibold text-sm transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-offset-1 border-2 border-emerald-500 text-emerald-600 bg-transparent hover:bg-emerald-50 focus:ring-emerald-500/20">
+                            @provider.DisplayName
+                        </button>
+                    }
+                </div>
+            </form>
+        </div>
+    }
+    else if (currentLogins?.Count == 0)
+    {
+        <div class="text-center py-12 bg-slate-50 rounded-xl border border-slate-200">
+            <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+                </svg>
+            </div>
+            <p class="text-slate-500">No external logins configured</p>
+        </div>
+    }
+</Card>
 
 @code {
     public const string LinkLoginCallbackAction = "LinkLoginCallback";

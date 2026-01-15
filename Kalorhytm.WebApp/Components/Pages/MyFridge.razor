@@ -55,89 +55,22 @@
     @* Fridge Items List *@
     @if (buttonForOpenningFridge && myFridgeItems.Any())
     {
-<<<<<<< HEAD
-        <div class="text-danger mt-1">@validationMessageForAddingToFridge</div>
+        <Card Title="My Ingredients" AdditionalClass="mt-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                @foreach (var ingredient in myFridgeItems)
+                {
+                    <div class="flex items-center justify-between bg-gray-600 rounded-lg px-4 py-3">
+                        <span class="text-white">@ingredient.Name</span>
+                        <Button OnClick="@(() => DeleteIngredientFromFridge(ingredient.Id))" 
+                                Variant="ButtonVariant.Danger"
+                                AdditionalClass="text-sm">
+                            Delete
+                        </Button>
+                    </div>
+                }
+            </div>
+        </Card>
     }
-</div>
-<div class="mb-3">
-    <button class="btn btn-success" @onclick="AddIngredientsToFridge">Add to Fridge</button>
-</div>
-
-<button class="btn btn-success" @onclick="OpenFridge">Open Fridge</button>
-<button class="btn btn-danger" @onclick="CloseFridge">Close Fridge</button>
-
-
-@if (buttonForOpenningFridge == true)
-{
-    <ul class="list-group mt-3">
-        @foreach (var ingredient in myFridgeItems)
-        {
-            <li class="list-group-item">@ingredient.Name
-                <button class="btn btn-danger" @onclick="() => DeleteIngredientFromFridge(ingredient.Id)">Delete
-                </button>
-            </li>
-        }
-    </ul>
-}
-
-
-
-<h3 class="mb-3">Search Recipes by Ingredients</h3>
-
-
-<div class="mb-3">
-    <button class="btn btn-primary" @onclick="SearchRecipes">Search</button>
-</div>
-@if (!string.IsNullOrEmpty(validateMessageForSearching))
-{
-    <div class="text-danger mt-1">@validateMessageForSearching</div>
-}
-@if (recipes == null)
-{
-    <p>Enter ingredients to search for recipes.</p>
-}
-else if (recipes.Count == 0)
-{
-    <p>No recipes found.</p>
-}
-else
-{
-    <div class="row">
-        @foreach (var recipe in recipes)
-        {
-            <div class="col-md-4 mb-3">
-                <div class="card">
-                    <img class="card-img-top" src="@recipe.ImageUrl" alt="@recipe.Title"/>
-                    <div class="card-body">
-                        <h5 class="card-title">@recipe.Title</h5>
-
-                        <div class="d-flex align-items-center mb-2">
-                            <button class="btn btn-link p-0 me-2" 
-                                    style="text-decoration: none; box-shadow: none;" 
-                                    @onclick="() => ToggleLike(recipe)">
-            
-                                @* Sprawdzamy w mapie, czy przepis jest polubiony *@
-                                @if (_likedRecipesMap.ContainsKey(recipe.RecipeId))
-                                {
-                                    <span style="font-size: 1.5rem; color: red;">❤️</span> 
-                                }
-                                else
-                                {
-                                    <span style="font-size: 1.5rem;">🤍</span>
-                                }
-                            </button>
-                            <span>@recipe.Likes Likes</span>
-                        </div>
-                        <p>
-                            <b>Used:</b> @string.Join(", ", recipe.UsedIngredients)<br/>
-                            <b>Missing:</b> @string.Join(", ", recipe.MissedIngredients)
-                        </p>
-
-                        <button class="btn btn-primary mt-2" @onclick="() => ShowAddRecipeModal(recipe)">Add to Meal</button>
-                        
-                        <button class="btn btn-info text-white mt-2" @onclick="() => GoToRecipeDetails(recipe.RecipeId)">
-                            View Details
-                        </button>
 
     @* Search Recipes by Ingredients *@
     <Card Title="Search Recipes by Ingredients" AdditionalClass="mt-6">
@@ -176,9 +109,16 @@ else
                                  alt="@recipe.Title"/>
                             <h5 class="text-white font-semibold text-lg mb-2">@recipe.Title</h5>
                             <div class="flex items-center gap-2 mb-3">
-                                <button @onclick="() => LikingSystem(recipe.RecipeId)" 
+                                <button @onclick="() => ToggleLike(recipe)" 
                                         class="text-2xl hover:scale-110 transition-transform duration-200">
-                                    🤍
+                                    @if (_likedRecipesMap.ContainsKey(recipe.RecipeId))
+                                    {
+                                        <span style="color: red;">❤️</span>
+                                    }
+                                    else
+                                    {
+                                        <span>🤍</span>
+                                    }
                                 </button>
                                 <span class="text-gray-300">@recipe.Likes likes</span>
                             </div>
@@ -350,20 +290,6 @@ else
         StateHasChanged();
     }
     
-    private void LikingSystem(int id)
-    {
-        var recipe = recipes.FirstOrDefault(r => r.RecipeId == id);
-
-        if (recipe != null)
-        {
-            recipe.Likes++;
-
-            Console.WriteLine("You liked a recipe");
-        }
-        
-        StateHasChanged();
-    }
-
     //saving favourite recipe
     private async Task SaveToFavourites(RecipeModel recipe)
     {
@@ -444,6 +370,24 @@ else
         catch (Exception ex)
         {
             validationMessageForAddingToFridge = ex.Message;
+        }
+    }
+
+    private void OpenFridge()
+    {
+        buttonForOpenningFridge = !buttonForOpenningFridge;
+    }
+
+    private async Task DeleteIngredientFromFridge(int id)
+    {
+        try
+        {
+            await DeleteIngredientUseCase.ExecuteAsync(id, userId);
+            await LoadFridgeItems();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error deleting ingredient: {ex.Message}");
         }
     }
 

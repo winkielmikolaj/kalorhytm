@@ -1,10 +1,4 @@
-@* Reusable Button Component
-   Features:
-   - Consistent styling
-   - Multiple variants (Primary, Secondary, Danger, Success)
-   - Hover and focus states
-   - Loading state support
-*@
+@using Kalorhytm.WebApp.Components.Shared
 
 <button type="@ButtonType" 
         @onclick="OnClick"
@@ -12,7 +6,7 @@
         class="@GetButtonClasses()">
     @if (IsLoading)
     {
-        <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-current inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
         </svg>
@@ -24,26 +18,36 @@
     [Parameter] public RenderFragment? ChildContent { get; set; }
     [Parameter] public EventCallback<MouseEventArgs> OnClick { get; set; }
     [Parameter] public ButtonVariant Variant { get; set; } = ButtonVariant.Primary;
-    [Parameter] public ButtonType ButtonType { get; set; } = ButtonType.Button;
+    [Parameter] public string ButtonType { get; set; } = "button";
     [Parameter] public bool IsDisabled { get; set; }
     [Parameter] public bool IsLoading { get; set; }
     [Parameter] public string AdditionalClass { get; set; } = "";
 
     private string GetButtonClasses()
     {
-        var baseClasses = "px-4 py-2 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
+        // Bazowe style: zaokrąglone rogi, font semibold, animacje
+        var baseClasses = "px-5 py-3 rounded-2xl font-semibold text-sm transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 flex items-center justify-center";
         
         var variantClasses = Variant switch
         {
-            ButtonVariant.Primary => "bg-green-500 text-white hover:bg-green-600 focus:ring-green-500 shadow-sm hover:shadow-md",
-            ButtonVariant.Secondary => "bg-gray-600 text-white hover:bg-gray-500 focus:ring-gray-500 shadow-sm hover:shadow-md",
-            ButtonVariant.Danger => "bg-red-500 text-white hover:bg-red-600 focus:ring-red-500 shadow-sm hover:shadow-md",
-            ButtonVariant.Success => "bg-green-500 text-white hover:bg-green-600 focus:ring-green-500 shadow-sm hover:shadow-md",
-            ButtonVariant.Outline => "border-2 border-green-500 text-green-500 hover:bg-green-500 hover:text-white focus:ring-green-500",
-            _ => "bg-green-500 text-white hover:bg-green-600 focus:ring-green-500 shadow-sm hover:shadow-md"
+            // Primary: Emerald z cieniem
+            ButtonVariant.Primary => "bg-emerald-500 text-white hover:bg-emerald-600 focus:ring-emerald-500/30 shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/40",
+            
+            // Secondary: Biały z obrysem
+            ButtonVariant.Secondary => "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 focus:ring-slate-200 hover:border-slate-300 shadow-sm",
+            
+            // Danger: Czerwony
+            ButtonVariant.Danger => "bg-red-500 text-white hover:bg-red-600 focus:ring-red-500/30 shadow-lg shadow-red-500/30",
+            
+            // Success: Zielony (podobny do Primary, ale może być jaśniejszy)
+            ButtonVariant.Success => "bg-teal-500 text-white hover:bg-teal-600 focus:ring-teal-500/30 shadow-lg shadow-teal-500/30",
+            
+            // Outline: Przezroczysty z zielonym tekstem
+            ButtonVariant.Outline => "border-2 border-emerald-500 text-emerald-600 bg-transparent hover:bg-emerald-50 focus:ring-emerald-500/20",
+            
+            _ => "bg-emerald-500 text-white"
         };
-        
+
         return $"{baseClasses} {variantClasses} {AdditionalClass}";
     }
 }
-

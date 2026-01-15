@@ -11,9 +11,27 @@ namespace Kalorhytm.Infrastructure.Persistence.Configurations
             builder.ToTable("MealEntry");
             builder.HasKey(e => e.MealEntryId);
             builder.Property(e => e.MealEntryId).ValueGeneratedOnAdd();
+            
+            builder.Property(e => e.FoodId)
+                .IsRequired();
+            
+            builder.Property(e => e.Quantity)
+                .IsRequired();
+            
+            builder.Property(e => e.Date)
+                .IsRequired();
+            
+            builder.Property(e => e.MealType)
+                .IsRequired();
+            
+            builder.Property(e => e.UserId)
+                .IsRequired()
+                .HasMaxLength(450);
+            
             builder.HasOne(e => e.Food)
                 .WithMany()
-                .HasForeignKey(e => e.FoodId);
+                .HasForeignKey(e => e.FoodId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

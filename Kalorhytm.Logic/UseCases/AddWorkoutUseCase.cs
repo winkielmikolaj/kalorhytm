@@ -16,9 +16,21 @@ namespace Kalorhytm.Logic.UseCases
 
         public async Task<WorkoutModel> ExecuteAsync(string name, double durationMinutes, double caloriesBurned, DateTime date, string userId)
         {
+            if (string.IsNullOrWhiteSpace(name))
+                throw new ArgumentException("Workout name cannot be null or empty", nameof(name));
+            
+            if (string.IsNullOrWhiteSpace(userId))
+                throw new ArgumentException("UserId cannot be null or empty", nameof(userId));
+            
+            if (durationMinutes <= 0)
+                throw new ArgumentException("Duration must be greater than 0", nameof(durationMinutes));
+            
+            if (caloriesBurned < 0)
+                throw new ArgumentException("Calories burned cannot be negative", nameof(caloriesBurned));
+
             var workout = new WorkoutEntity
             {
-                Name = name,
+                Name = name.Trim(),
                 DurationMinutes = durationMinutes,
                 CaloriesBurned = caloriesBurned,
                 Date = date,

@@ -1,14 +1,8 @@
-@* Reusable Input Component
-   Features:
-   - Consistent styling
-   - Label and error message support
-   - Focus states
-*@
-
-<div class="mb-4">
+@* Reusable Input Component *@
+<div class="mb-4 w-full">
     @if (!string.IsNullOrEmpty(Label))
     {
-        <label class="block text-sm font-medium text-gray-300 mb-2">@Label</label>
+        <label class="block text-sm font-semibold text-slate-700 mb-1.5 ml-1">@Label</label>
     }
     <input type="@InputType" 
            value="@Value"
@@ -19,7 +13,10 @@
            disabled="@IsDisabled" />
     @if (!string.IsNullOrEmpty(ErrorMessage))
     {
-        <p class="mt-1 text-sm text-red-400">@ErrorMessage</p>
+        <p class="mt-1 text-sm text-red-500 ml-1 flex items-center gap-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            @ErrorMessage
+        </p>
     }
 </div>
 
@@ -34,19 +31,18 @@
     [Parameter] public string? ErrorMessage { get; set; }
     [Parameter] public string AdditionalClass { get; set; } = "";
 
-    private string GetInputClasses()
-    {
-        var baseClasses = "w-full bg-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed";
-        return $"{baseClasses} {AdditionalClass}";
-    }
-
     private async Task HandleChange(ChangeEventArgs e)
     {
-        Value = e.Value?.ToString() ?? string.Empty;
         if (ValueChanged.HasDelegate)
         {
-            await ValueChanged.InvokeAsync(Value);
+            await ValueChanged.InvokeAsync(e.Value?.ToString());
         }
     }
-}
 
+    private string GetInputClasses()
+    {
+        // Jasne tło (Slate-50), ciemny tekst, emeraldowy focus ring
+        var baseClasses = "w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed placeholder:text-slate-400";
+        return $"{baseClasses} {AdditionalClass}";
+    }
+}

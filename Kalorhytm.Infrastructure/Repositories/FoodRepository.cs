@@ -35,7 +35,18 @@ namespace Kalorhytm.Infrastructure.Repositories
 
         public async Task AddAsync(FoodEntity food)
         {
-            await _context.FoodEntities.AddAsync(food);
+            // Check if food with this FoodId already exists
+            var existing = await _context.FoodEntities.FindAsync(food.FoodId);
+            if (existing == null)
+            {
+                // Food doesn't exist, add it
+                await _context.FoodEntities.AddAsync(food);
+            }
+            else
+            {
+                // Food already exists, update it with new values
+                _context.Entry(existing).CurrentValues.SetValues(food);
+            }
             await _context.SaveChangesAsync();
         }
 

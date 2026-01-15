@@ -2,6 +2,7 @@
 
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Components.Forms
 @using Kalorhytm.Infrastructure
 @using Microsoft.AspNetCore.Http
 @using System.IO 
@@ -11,90 +12,114 @@
 @inject IdentityUserAccessor UserAccessor
 @inject IdentityRedirectManager RedirectManager
 
-<PageTitle>Twój Profil</PageTitle>
+<PageTitle>Manage your account</PageTitle>
 
 @using Kalorhytm.WebApp.Components.Shared
 
 <Card>
-    <h3 class="text-2xl font-semibold text-white mb-6">Twój Profil</h3>
-    <StatusMessage Message="@message" />
-    
-    <EditForm Model="Input" FormName="profile" OnValidSubmit="OnValidSubmitAsync" enctype="multipart/form-data">
-        <DataAnnotationsValidator />
-        <ValidationSummary class="text-red-400 text-sm mb-4 p-3 bg-red-500/10 rounded-lg border border-red-500/30" role="alert" />
+        @if (!string.IsNullOrEmpty(message))
+        {
+            <div class="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 text-sm">
+                @message
+            </div>
+        }
         
-        <div class="space-y-4 max-w-md">
-            <div class="mb-4 text-center">
-                @if (Input.ProfilePicture != null && Input.ProfilePicture.Length > 0)
-                {
-                    <img src="data:image/png;base64,@Convert.ToBase64String(Input.ProfilePicture)"
-                         class="rounded-full mb-2 mx-auto"
-                         style="width: 150px; height: 150px; object-fit: cover; border: 3px solid rgb(34 197 94);" 
-                         alt="Zdjęcie profilowe" />
-                }
-                else
-                {
-                    <div class="rounded-full mb-2 bg-gray-600 text-white flex items-center justify-center mx-auto"
-                         style="width: 150px; height: 150px; font-size: 3rem;">
-                        👤
+        @if (Input != null)
+        {
+            <EditForm Model="@Input" FormName="profile" OnValidSubmit="OnValidSubmitAsync" method="post" enctype="multipart/form-data">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-red-500 text-sm mb-4 p-4 bg-red-50 rounded-xl border border-red-200" role="alert" />
+            
+            <div class="space-y-6 max-w-2xl">
+                <!-- Profile Picture Section -->
+                <div class="flex flex-col items-center md:flex-row md:items-start gap-6 pb-6 border-b border-slate-100">
+                    <div class="flex-shrink-0">
+                        @if (Input.ProfilePicture != null && Input.ProfilePicture.Length > 0)
+                        {
+                            <img src="data:image/png;base64,@Convert.ToBase64String(Input.ProfilePicture)"
+                                 class="rounded-full w-32 h-32 md:w-40 md:h-40 object-cover border-4 border-emerald-200 shadow-lg"
+                                 alt="Profile picture" />
+                        }
+                        else
+                        {
+                            <div class="rounded-full w-32 h-32 md:w-40 md:h-40 bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-5xl border-4 border-emerald-200 shadow-lg">
+                                👤
+                            </div>
+                        }
                     </div>
-                }
 
-                <div class="mt-3">
-                    <label for="imageUpload" class="block text-sm font-medium text-gray-300 mb-2">Wybierz nowe zdjęcie</label>
-                    <input type="file" id="imageUpload" name="Input.ImageFile" 
-                           class="w-full bg-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" 
-                           accept=".png,.jpg,.jpeg" />
-                    <ValidationMessage For="() => Input.ImageFile" class="text-red-400 text-sm mt-1" />
+                    <div class="flex-1 w-full">
+                        <label for="imageUpload" class="block text-sm font-semibold text-slate-700 mb-2">Profile Picture</label>
+                        <input type="file" 
+                               id="imageUpload" 
+                               name="Input.ImageFile" 
+                               class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 file:cursor-pointer" 
+                               accept=".png,.jpg,.jpeg" />
+                        <p class="mt-2 text-xs text-slate-500">Accepted formats: JPG, PNG. Max size: 5MB</p>
+                        <ValidationMessage For="() => Input.ImageFile" class="text-red-500 text-sm mt-1 flex items-center gap-1" />
+                    </div>
+                </div>
+
+                <!-- Username (Read-only) -->
+                <div>
+                    <label for="username" class="block text-sm font-semibold text-slate-700 mb-1.5 ml-1">Username</label>
+                    <input type="text" 
+                           value="@username" 
+                           id="username" 
+                           class="w-full bg-slate-100 border border-slate-200 text-slate-500 rounded-2xl px-4 py-3.5 text-sm cursor-not-allowed" 
+                           placeholder="Username" 
+                           disabled />
+                    <p class="mt-1 text-xs text-slate-400 ml-1">Username cannot be changed</p>
+                </div>
+
+                <!-- First Name -->
+                <div>
+                    <label for="Input.FirstName" class="block text-sm font-semibold text-slate-700 mb-1.5 ml-1">First Name</label>
+                    <InputText @bind-Value="Input.FirstName" 
+                               id="Input.FirstName" 
+                               class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-200 placeholder:text-slate-400" 
+                               placeholder="Enter your first name" />
+                    <ValidationMessage For="() => Input.FirstName" class="text-red-500 text-sm mt-1 flex items-center gap-1" />
+                </div>
+
+                <!-- Last Name -->
+                <div>
+                    <label for="Input.LastName" class="block text-sm font-semibold text-slate-700 mb-1.5 ml-1">Last Name</label>
+                    <InputText @bind-Value="Input.LastName" 
+                               id="Input.LastName" 
+                               class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-200 placeholder:text-slate-400" 
+                               placeholder="Enter your last name" />
+                    <ValidationMessage For="() => Input.LastName" class="text-red-500 text-sm mt-1 flex items-center gap-1" />
+                </div>
+
+                <!-- Phone Number -->
+                <div>
+                    <label for="Input.PhoneNumber" class="block text-sm font-semibold text-slate-700 mb-1.5 ml-1">Phone Number</label>
+                    <InputText type="tel" 
+                               @bind-Value="Input.PhoneNumber" 
+                               id="Input.PhoneNumber" 
+                               class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-200 placeholder:text-slate-400" 
+                               placeholder="Enter your phone number" />
+                    <ValidationMessage For="() => Input.PhoneNumber" class="text-red-500 text-sm mt-1 flex items-center gap-1" />
+                </div>
+                
+                <!-- Submit Button -->
+                <div class="pt-4 border-t border-slate-100">
+                    <Button ButtonType="ButtonType.Submit" Variant="ButtonVariant.Primary" AdditionalClass="w-full md:w-auto min-w-[200px]">
+                        Save changes
+                    </Button>
                 </div>
             </div>
-
-            <div>
-                <label for="username" class="block text-sm font-medium text-gray-300 mb-2">Nazwa użytkownika</label>
-                <input type="text" 
-                       value="@username" 
-                       id="username" 
-                       class="w-full bg-gray-600 text-gray-400 rounded-lg px-3 py-2 text-sm cursor-not-allowed" 
-                       placeholder="Nazwa użytkownika" 
-                       disabled />
+            </EditForm>
+        }
+        else
+        {
+            <div class="text-center py-12">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
+                <p class="mt-3 text-slate-500">Loading...</p>
             </div>
-
-            <div>
-                <label for="Input.FirstName" class="block text-sm font-medium text-gray-300 mb-2">Imię</label>
-                <input type="text" 
-                       @bind="Input.FirstName" 
-                       id="Input.FirstName" 
-                       class="w-full bg-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-700 transition-all duration-200" 
-                       placeholder="Imię" />
-                <ValidationMessage For="() => Input.FirstName" class="text-red-400 text-sm mt-1" />
-            </div>
-
-            <div>
-                <label for="Input.LastName" class="block text-sm font-medium text-gray-300 mb-2">Nazwisko</label>
-                <input type="text" 
-                       @bind="Input.LastName" 
-                       id="Input.LastName" 
-                       class="w-full bg-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-700 transition-all duration-200" 
-                       placeholder="Nazwisko" />
-                <ValidationMessage For="() => Input.LastName" class="text-red-400 text-sm mt-1" />
-            </div>
-
-            <div>
-                <label for="Input.PhoneNumber" class="block text-sm font-medium text-gray-300 mb-2">Numer telefonu</label>
-                <input type="tel" 
-                       @bind="Input.PhoneNumber" 
-                       id="Input.PhoneNumber" 
-                       class="w-full bg-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-700 transition-all duration-200" 
-                       placeholder="Numer telefonu" />
-                <ValidationMessage For="() => Input.PhoneNumber" class="text-red-400 text-sm mt-1" />
-            </div>
-            
-            <Button ButtonType="ButtonType.Submit" AdditionalClass="w-full">
-                Zapisz zmiany
-            </Button>
-        </div>
-    </EditForm>
-</Card>
+        }
+    </Card>
 
 @code {
     private ApplicationUser user = default!;
@@ -105,24 +130,58 @@
     private HttpContext HttpContext { get; set; } = default!;
 
     [SupplyParameterFromForm]
-    private InputModel Input { get; set; } = new();
+    private InputModel? Input { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
         user = await UserAccessor.GetRequiredUserAsync(HttpContext);
         username = await UserManager.GetUserNameAsync(user);
 
-        if (Input.FirstName == null && Input.LastName == null && Input.PhoneNumber == null)
+        // Inicjalizuj Input tylko jeśli jest null (np. przy pierwszym załadowaniu strony)
+        // Nie nadpisuj, jeśli już ma dane (np. z formularza POST)
+        if (Input == null)
         {
+            Input = new InputModel();
+            // Wypełnij dane z bazy
             Input.PhoneNumber = await UserManager.GetPhoneNumberAsync(user);
             Input.FirstName = user.FirstName;
             Input.LastName = user.LastName;
             Input.ProfilePicture = user.ProfilePicture;
         }
+        else
+        {
+            // Jeśli Input już istnieje (np. z POST), uzupełnij tylko puste pola z bazy
+            if (string.IsNullOrEmpty(Input.PhoneNumber))
+                Input.PhoneNumber = await UserManager.GetPhoneNumberAsync(user);
+            if (string.IsNullOrEmpty(Input.FirstName))
+                Input.FirstName = user.FirstName;
+            if (string.IsNullOrEmpty(Input.LastName))
+                Input.LastName = user.LastName;
+            if (Input.ProfilePicture == null)
+                Input.ProfilePicture = user.ProfilePicture;
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        // Upewnij się, że Input jest zainicjalizowany przed renderowaniem
+        // Ale nie nadpisuj, jeśli już ma dane (np. z formularza POST)
+        if (Input == null && user != null)
+        {
+            Input = new InputModel();
+            // Wypełnij dane tylko jeśli Input był null
+            Input.PhoneNumber = UserManager.GetPhoneNumberAsync(user).Result;
+            Input.FirstName = user.FirstName;
+            Input.LastName = user.LastName;
+            Input.ProfilePicture = user.ProfilePicture;
+        }
+        base.OnParametersSet();
     }
 
     private async Task OnValidSubmitAsync()
     {
+        if (Input == null) return;
+        
         bool hasChanges = false;
 
         // 1. OBSŁUGA ZDJĘCIA
@@ -182,27 +241,27 @@
 
     private sealed class InputModel
     {
-        // WALIDACJA NUMERU TELEFONU
-        [Required(ErrorMessage = "Numer telefonu jest wymagany.")]
-        // Regex: Tylko cyfry, spacje, plus i myślnik. Zakaz liter.
-        [RegularExpression(@"^[\d\s\-\+]+$", ErrorMessage = "Numer telefonu może zawierać tylko cyfry oraz znaki +, - lub spacje (bez liter).")]
-        [Display(Name = "Numer telefonu")]
+        // PHONE NUMBER VALIDATION
+        [Required(ErrorMessage = "Phone number is required.")]
+        // Regex: Only digits, spaces, plus and dash. No letters allowed.
+        [RegularExpression(@"^[\d\s\-\+]+$", ErrorMessage = "Phone number can only contain digits and +, - or spaces (no letters).")]
+        [Display(Name = "Phone Number")]
         public string? PhoneNumber { get; set; }
 
-        // WALIDACJA IMIENIA
-        [Required(ErrorMessage = "Imię jest wymagane.")]
-        [StringLength(50, MinimumLength = 2, ErrorMessage = "Imię musi mieć od 2 do 50 znaków.")]
-        // Regex: Litery (w tym polskie), spacje i myślniki. Zakaz cyfr i kropek.
-        [RegularExpression(@"^[a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ\s\-]+$", ErrorMessage = "Imię może zawierać tylko litery (bez cyfr i znaków specjalnych jak kropki).")]
-        [Display(Name = "Imię")]
+        // FIRST NAME VALIDATION
+        [Required(ErrorMessage = "First name is required.")]
+        [StringLength(50, MinimumLength = 2, ErrorMessage = "First name must be between 2 and 50 characters.")]
+        // Regex: Letters (including Polish), spaces and dashes. No digits or dots allowed.
+        [RegularExpression(@"^[a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ\s\-]+$", ErrorMessage = "First name can only contain letters (no digits or special characters like dots).")]
+        [Display(Name = "First Name")]
         public string? FirstName { get; set; }
 
-        // WALIDACJA NAZWISKA
-        [Required(ErrorMessage = "Nazwisko jest wymagane.")]
-        [StringLength(50, MinimumLength = 2, ErrorMessage = "Nazwisko musi mieć od 2 do 50 znaków.")]
-        // Regex: To samo co imię
-        [RegularExpression(@"^[a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ\s\-]+$", ErrorMessage = "Nazwisko może zawierać tylko litery (bez cyfr i znaków specjalnych jak kropki).")]
-        [Display(Name = "Nazwisko")]
+        // LAST NAME VALIDATION
+        [Required(ErrorMessage = "Last name is required.")]
+        [StringLength(50, MinimumLength = 2, ErrorMessage = "Last name must be between 2 and 50 characters.")]
+        // Regex: Same as first name
+        [RegularExpression(@"^[a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ\s\-]+$", ErrorMessage = "Last name can only contain letters (no digits or special characters like dots).")]
+        [Display(Name = "Last Name")]
         public string? LastName { get; set; }
 
         // To pole służy tylko do wyświetlania obecnego zdjęcia (z bazy)
@@ -263,4 +322,5 @@
             return ValidationResult.Success;
         }
     }
+}
 }

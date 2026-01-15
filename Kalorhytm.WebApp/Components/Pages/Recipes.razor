@@ -18,6 +18,7 @@
 @inject IDeleteFavouriteRecipeUseCase DeleteFavouriteRecipeUseCase
 @inject IGetFavouriteRecipeUseCase GetFavouriteRecipeUseCase
 @inject IGetRecipeLikesUseCase GetRecipeLikesUseCase
+@inject MudBlazor.ISnackbar Snackbar
 
 @attribute [Authorize]
 
@@ -248,30 +249,72 @@ else if (!string.IsNullOrWhiteSpace(filterModel.Query))
 
     private async Task OnSearchRecipes()
     {
-        var request = new SpoonacularComplexSearchRequest
+        try
         {
-            Query = filterModel.Query,
-            Cuisine = string.Join(",", filterModel.Cuisines.Select(c => c.ToString().ToLower())),
-            Diet = string.Join(",", filterModel.Diets.Select(d => d.ToString().ToLower())),
-            Intolerances = string.Join(",", filterModel.Intolerances.Select(i => i.ToString().ToLower())),
-            Type = string.Join(",", filterModel.Types.Select(t => t.ToString().ToLower())),
-            Number = 2,
-            Offset = 0,
-            AddRecipeInformation = true
-        };
+            var request = new SpoonacularComplexSearchRequest
+            {
+                Query = filterModel.Query,
+                Cuisine = string.Join(",", filterModel.Cuisines.Select(c => c.ToString().ToLower())),
+                Diet = string.Join(",", filterModel.Diets.Select(d => d.ToString().ToLower())),
+                Intolerances = string.Join(",", filterModel.Intolerances.Select(i => i.ToString().ToLower())),
+                Type = string.Join(",", filterModel.Types.Select(t => t.ToString().ToLower())),
+                Number = 2,
+                Offset = 0,
+                AddRecipeInformation = true
+            };
+            
+            recipes = await _RecipesService.SearchRecipesAsync(request);
+            
+            if (recipes == null || !recipes.Any())
+            {
+                Snackbar.Add("No recipes found for your search criteria.", MudBlazor.Severity.Info);
+            }
+            else
+            {
+                await UpdateRecipeLikeCounts();
+            }
+            
+            UpdateUrlWithFilters();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error searching recipes: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            
+            recipes = new List<RecipeSummaryModel>();
+            Snackbar.Add("Failed to search recipes. Please check your API key or try again later.", MudBlazor.Severity.Error);
+        }
         
-        recipes = await _RecipesService.SearchRecipesAsync(request);
-        
-        await UpdateRecipeLikeCounts();
-        
-        UpdateUrlWithFilters();
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task GetRandomRecipes()
     {
-        recipes = await _RecipesService.GetRandomRecipesAsync(3);
+        try
+        {
+            recipes = await _RecipesService.GetRandomRecipesAsync(3);
+            
+            if (recipes == null || !recipes.Any())
+            {
+                Snackbar.Add("No random recipes found. The API quota may have been exceeded or there was an error.", MudBlazor.Severity.Warning);
+                recipes = new List<RecipeSummaryModel>();
+                await InvokeAsync(StateHasChanged);
+                return;
+            }
+            
+            await UpdateRecipeLikeCounts();
+            Snackbar.Add($"Found {recipes.Count} random recipes!", MudBlazor.Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching random recipes: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            
+            recipes = new List<RecipeSummaryModel>();
+            Snackbar.Add("Failed to fetch random recipes. Please check your API key or try again later.", MudBlazor.Severity.Error);
+        }
         
-        await UpdateRecipeLikeCounts();
+        await InvokeAsync(StateHasChanged);
     }
     
     private async Task UpdateRecipeLikeCounts()

@@ -26,6 +26,12 @@ namespace Kalorhytm.Logic.UseCases
 
         public async Task<MealEntryModel> ExecuteAsync(int foodId, double quantity, MealType mealType, DateTime date, string userId)
         {
+            if (string.IsNullOrWhiteSpace(userId))
+                throw new ArgumentException("UserId cannot be null or empty", nameof(userId));
+            
+            if (quantity <= 0)
+                throw new ArgumentException("Quantity must be greater than 0", nameof(quantity));
+            
             var food = await _spoonacularFoodService.GetFoodByIdAsync(foodId);
             if (food == null)
                 throw new ArgumentException("Food not found");
@@ -77,6 +83,12 @@ namespace Kalorhytm.Logic.UseCases
         {
             if (food == null)
                 throw new ArgumentException("Food cannot be null");
+            
+            if (string.IsNullOrWhiteSpace(userId))
+                throw new ArgumentException("UserId cannot be null or empty", nameof(userId));
+            
+            if (quantity <= 0)
+                throw new ArgumentException("Quantity must be greater than 0", nameof(quantity));
 
             // Sprawdź czy FoodEntity już istnieje w bazie
             var existingFood = await _foodRepository.GetByIdAsync(food.FoodId);

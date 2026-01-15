@@ -1,3 +1,5 @@
+@using Kalorhytm.WebApp.Components.Shared
+
 @page "/Account/RegisterConfirmation"
 
 @using System.Text
@@ -12,33 +14,42 @@
 
 <PageTitle>Register confirmation</PageTitle>
 
-<div class="container mx-auto px-4 py-8 max-w-2xl">
-    <Card>
-        <div class="text-center mb-6">
-            <svg class="w-16 h-16 text-green-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-            </svg>
-            <h1 class="text-3xl font-bold text-white mb-2">Register confirmation</h1>
-        </div>
-
-        <StatusMessage Message="@statusMessage" />
-
-        @if (emailConfirmationLink is not null)
-        {
-            <div class="space-y-4 text-gray-300">
-                <p>
-                    This app does not currently have a real email sender registered, see <a href="https://aka.ms/aspaccountconf" class="text-green-400 hover:text-green-300 transition-colors duration-200">these docs</a> for how to configure a real email sender.
-                </p>
-                <p>
-                    Normally this would be emailed: <a href="@emailConfirmationLink" class="text-green-400 hover:text-green-300 transition-colors duration-200 underline">Click here to confirm your account</a>
-                </p>
+<div class="min-h-screen flex items-center justify-center px-4 py-12 bg-gradient-to-br from-slate-50 via-white to-emerald-50/30">
+    <div class="w-full max-w-md">
+        <Card>
+            <div class="text-center mb-6">
+                <div class="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <svg class="w-10 h-10 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                    </svg>
+                </div>
+                <h1 class="text-3xl font-bold text-slate-900 mb-2 tracking-tight">Check your email</h1>
             </div>
-        }
-        else
-        {
-            <p class="text-gray-300 text-center" role="alert">Please check your email to confirm your account.</p>
-        }
-    </Card>
+
+            <StatusMessage Message="@statusMessage" />
+
+            @if (emailConfirmationLink is not null)
+            {
+                <div class="space-y-4 text-slate-600">
+                    <p class="text-sm">
+                        This app does not currently have a real email sender registered, see <a href="https://aka.ms/aspaccountconf" class="text-emerald-600 hover:text-emerald-700 transition-colors duration-200 font-medium underline">these docs</a> for how to configure a real email sender.
+                    </p>
+                    <p class="text-sm">
+                        Normally this would be emailed: <a href="@emailConfirmationLink" class="text-emerald-600 hover:text-emerald-700 transition-colors duration-200 font-medium underline">Click here to confirm your account</a>
+                    </p>
+                </div>
+            }
+            else
+            {
+                <p class="text-slate-600 text-center mb-6" role="alert">Please check your email to confirm your account.</p>
+                <div class="text-center">
+                    <a href="Account/Login" class="inline-block text-emerald-600 hover:text-emerald-700 transition-colors duration-200 font-medium">
+                        Back to login
+                    </a>
+                </div>
+            }
+        </Card>
+    </div>
 </div>
 
 @code {

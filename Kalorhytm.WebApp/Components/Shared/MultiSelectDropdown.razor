@@ -1,25 +1,37 @@
 @typeparam TEnum
 
-<div class="relative inline-block text-left w-full">
+<div class="relative inline-block text-left w-full mb-4">
+    @if (!string.IsNullOrEmpty(Label))
+    {
+        <label class="block text-sm font-semibold text-slate-700 mb-1.5 ml-1">@Label</label>
+    }
+
     <button type="button"
-            class="border rounded-md px-3 py-2 bg-gray-200 shadow-sm w-full text-left flex justify-between items-center"
+            class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl px-4 py-3.5 text-sm flex justify-between items-center focus:outline-none focus:ring-4 focus:ring-emerald-500/10 hover:bg-white transition-all"
             @onclick="ToggleDropdown">
-        <span>@Label</span>
-        <span class="text-gray-600">▼</span>
+        <span class="@(SelectedValues.Any() ? "text-emerald-700 font-medium" : "text-slate-400")">
+            @(SelectedValues.Any() ? $"{SelectedValues.Count} selected" : "Select...")
+        </span>
+        <svg class="w-5 h-5 text-slate-400 transition-transform @(isOpen ? "rotate-180" : "")" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
     </button>
 
     @if (isOpen)
     {
-        <div class="static mt-2 w-full rounded-md bg-white shadow-lg border z-50 max-h-60 overflow-y-auto">
+        <div class="absolute mt-2 w-full rounded-2xl bg-white shadow-xl shadow-slate-200/50 border border-slate-100 z-50 max-h-60 overflow-y-auto animate-fade-in p-2">
             @foreach (var value in Enum.GetValues(typeof(TEnum)).Cast<TEnum>())
             {
                 var isChecked = SelectedValues.Contains(value);
-                <label class="flex items-center px-3 py-1 hover:bg-gray-100 cursor-pointer">
-                    <input type="checkbox"
-                           class="mr-2"
-                           @bind="isChecked"
-                           @bind:after="() => ToggleSelection(value, isChecked)" />
-                    @value.ToString()
+                <label class="flex items-center px-3 py-2.5 hover:bg-emerald-50 rounded-xl cursor-pointer transition-colors group">
+                    <div class="relative flex items-center">
+                        <input type="checkbox"
+                               class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-slate-300 transition-all checked:border-emerald-500 checked:bg-emerald-500"
+                               @bind="isChecked"
+                               @bind:after="() => ToggleSelection(value, isChecked)" />
+                         <svg class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none opacity-0 peer-checked:opacity-100 text-white" viewBox="0 0 14 14" fill="none">
+                            <path d="M3 8L6 11L11 3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </div>
+                    <span class="ml-3 text-sm text-slate-700 group-hover:text-emerald-700 font-medium">@value.ToString()</span>
                 </label>
             }
         </div>
@@ -32,21 +44,13 @@
     [Parameter] public EventCallback<List<TEnum>> SelectedValuesChanged { get; set; }
 
     private bool isOpen = false;
-
     private void ToggleDropdown() => isOpen = !isOpen;
 
     private async Task ToggleSelection(TEnum value, bool isChecked)
     {
-        if (isChecked)
-        {
-            if (!SelectedValues.Contains(value))
-                SelectedValues.Add(value);
-        }
-        else
-        {
-            SelectedValues.Remove(value);
-        }
-
+        if (isChecked && !SelectedValues.Contains(value)) SelectedValues.Add(value);
+        else if (!isChecked && SelectedValues.Contains(value)) SelectedValues.Remove(value);
+        
         await SelectedValuesChanged.InvokeAsync(SelectedValues);
     }
 }

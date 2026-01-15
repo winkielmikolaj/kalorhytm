@@ -8,7 +8,7 @@
 @if (externalLogins.Length == 0)
 {
     <div class="text-center">
-        <p class="text-gray-300 text-sm">
+        <p class="text-slate-500 text-sm">
             There are no external authentication services configured.
         </p>
     </div>
@@ -45,26 +45,29 @@ else
         gap: 12px;
         width: 100%;
         max-width: 300px;
-        padding: 12px 24px;
+        padding: 14px 24px;
         background-color: white;
-        border: 1px solid #dadce0;
-        border-radius: 8px;
-        color: #3c4043;
+        border: 1px solid rgb(226 232 240); /* border-slate-200 */
+        border-radius: 1rem; /* rounded-2xl */
+        color: rgb(51 65 85); /* text-slate-700 */
         font-size: 14px;
-        font-weight: 500;
+        font-weight: 600;
         cursor: pointer;
-        transition: all 0.2s ease-in-out;
-        box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
     }
 
     .google-signin-button:hover {
-        box-shadow: 0 1px 3px 0 rgba(60, 64, 67, 0.3), 0 4px 8px 3px rgba(60, 64, 67, 0.15);
-        background-color: #f8f9fa;
+        box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        background-color: rgb(248 250 252); /* bg-slate-50 */
+        border-color: rgb(203 213 225); /* border-slate-300 */
+        transform: translateY(-1px);
     }
 
     .google-signin-button:active {
-        box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
-        background-color: #f1f3f4;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+        background-color: rgb(241 245 249); /* bg-slate-100 */
+        transform: translateY(0);
     }
 
     .google-icon {

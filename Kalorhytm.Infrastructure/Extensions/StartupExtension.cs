@@ -13,7 +13,11 @@ namespace Kalorhytm.Infrastructure.Extensions
             var connectionString = configuration.GetConnectionString("DefaultConnection");
             
             serviceCollection.AddDbContext<ApplicationDbContext>(options => 
-                options.UseSqlServer(connectionString));
+                options.UseSqlServer(connectionString, sqlServerOptions => 
+                    sqlServerOptions.EnableRetryOnFailure(
+                        maxRetryCount: 5,
+                        maxRetryDelay: TimeSpan.FromSeconds(30),
+                        errorNumbersToAdd: null)));
             
             serviceCollection.AddScoped<IFoodRepository, FoodRepository>();
             serviceCollection.AddScoped<IMealEntryRepository, MealEntryRepository>();

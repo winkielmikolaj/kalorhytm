@@ -1,3 +1,5 @@
+@using Kalorhytm.WebApp.Components.Shared
+
 @page "/Account/ExternalLogin"
 
 @using System.ComponentModel.DataAnnotations
@@ -18,29 +20,47 @@
 
 <PageTitle>Register</PageTitle>
 
-<StatusMessage Message="@message" />
-<h1>Register</h1>
-<h2>Associate your @ProviderDisplayName account.</h2>
-<hr />
-
-<div  class="alert alert-info">
-    You've successfully authenticated with <strong>@ProviderDisplayName</strong>.
-    Please enter an email address for this site below and click the Register button to finish
-    logging in.
-</div>
-
-<div class="row">
-    <div class="col-md-4">
-        <EditForm Model="Input" OnValidSubmit="OnValidSubmitAsync" FormName="confirmation" method="post">
-            <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert" />
-            <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.Email" id="Input.Email" class="form-control" autocomplete="email" placeholder="Please enter your email." />
-                <label for="Input.Email" class="form-label">Email</label>
-                <ValidationMessage For="() => Input.Email" />
+<div class="min-h-screen flex items-center justify-center px-4 py-12 bg-gradient-to-br from-slate-50 via-white to-emerald-50/30">
+    <div class="w-full max-w-md">
+        <Card>
+            <h1 class="text-3xl font-bold text-slate-900 mb-2 tracking-tight">Register</h1>
+            <h2 class="text-lg text-slate-600 mb-6">Associate your @ProviderDisplayName account.</h2>
+            
+            <StatusMessage Message="@message" />
+            
+            <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                <p class="text-blue-800 text-sm">
+                    You've successfully authenticated with <strong>@ProviderDisplayName</strong>.
+                    Please enter an email address for this site below and click the Register button to finish
+                    logging in.
+                </p>
             </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
-        </EditForm>
+            
+            <EditForm Model="Input" OnValidSubmit="OnValidSubmitAsync" FormName="confirmation" method="post">
+                <DataAnnotationsValidator />
+                <ValidationSummary class="text-red-500 text-sm mb-4 p-4 bg-red-50 rounded-xl border border-red-200" role="alert" />
+                
+                <div class="space-y-5">
+                    <div>
+                        <label for="Input.Email" class="block text-sm font-semibold text-slate-700 mb-1.5 ml-1">Email</label>
+                        <input type="email" 
+                               @bind="Input.Email" 
+                               @bind:event="oninput"
+                               id="Input.Email" 
+                               class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-200 placeholder:text-slate-400" 
+                               autocomplete="email" 
+                               placeholder="Please enter your email." />
+                        <ValidationMessage For="() => Input.Email" class="text-red-500 text-sm mt-1 flex items-center gap-1" />
+                    </div>
+                    
+                    <div class="pt-2">
+                        <Button ButtonType="ButtonType.Submit" Variant="ButtonVariant.Primary" AdditionalClass="w-full">
+                            Register
+                        </Button>
+                    </div>
+                </div>
+            </EditForm>
+        </Card>
     </div>
 </div>
 

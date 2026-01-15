@@ -1,14 +1,10 @@
-@* Reusable Card Component
-   Features:
-   - Consistent styling across all pages
-   - Hover effects and animations
-   - Responsive design
-*@
-
-<div class="@($"bg-gray-700 rounded-xl shadow-md p-6 transition-all duration-300 hover:shadow-lg {AdditionalClass}")">
+@* Reusable Card Component *@
+<div class="@($"bg-white rounded-3xl p-6 shadow-lg shadow-slate-200/50 mb-6 border border-slate-100 transition-all duration-300 hover:shadow-xl hover:shadow-slate-200/60 {AdditionalClass}")">
     @if (!string.IsNullOrEmpty(Title))
     {
-        <h3 class="text-xl font-semibold text-white mb-4">@Title</h3>
+        <div class="mb-4 border-b border-slate-50 pb-3">
+            <h3 class="text-lg font-bold text-slate-900 tracking-tight">@Title</h3>
+        </div>
     }
     @ChildContent
 </div>
@@ -18,4 +14,3 @@
     [Parameter] public string? Title { get; set; }
     [Parameter] public string AdditionalClass { get; set; } = "";
 }
-

@@ -11,6 +11,23 @@ namespace Kalorhytm.Infrastructure.Persistence.Configurations
             builder.ToTable("Workout");
             builder.HasKey(e => e.WorkoutId);
             builder.Property(e => e.WorkoutId).ValueGeneratedOnAdd();
+            
+            builder.Property(e => e.Name)
+                .IsRequired()
+                .HasMaxLength(200);
+            
+            builder.Property(e => e.DurationMinutes)
+                .IsRequired();
+            
+            builder.Property(e => e.CaloriesBurned)
+                .IsRequired();
+            
+            builder.Property(e => e.Date)
+                .IsRequired();
+            
+            builder.Property(e => e.UserId)
+                .IsRequired()
+                .HasMaxLength(450);
         }
     }
 }

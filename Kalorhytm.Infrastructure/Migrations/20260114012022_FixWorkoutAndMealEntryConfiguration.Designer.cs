@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Kalorhytm.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260110101425_AddUserDataFields")]
-    partial class AddUserDataFields
+    [Migration("20260114012022_FixWorkoutAndMealEntryConfiguration")]
+    partial class FixWorkoutAndMealEntryConfiguration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -190,7 +190,8 @@ namespace Kalorhytm.Infrastructure.Migrations
 
                     b.Property<string>("UserId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("MealEntryId");
 
@@ -249,6 +250,38 @@ namespace Kalorhytm.Infrastructure.Migrations
                     b.ToTable("WaterIntake", (string)null);
                 });
 
+            modelBuilder.Entity("Kalorhytm.Domain.Entities.WorkoutEntity", b =>
+                {
+                    b.Property<int>("WorkoutId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("WorkoutId"));
+
+                    b.Property<double>("CaloriesBurned")
+                        .HasColumnType("float");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime2");
+
+                    b.Property<double>("DurationMinutes")
+                        .HasColumnType("float");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("WorkoutId");
+
+                    b.ToTable("Workout", (string)null);
+                });
+
             modelBuilder.Entity("Kalorhytm.Infrastructure.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
@@ -260,6 +293,18 @@ namespace Kalorhytm.Infrastructure.Migrations
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<double?>("DailyCalorieGoal")
+                        .HasColumnType("float");
+
+                    b.Property<double?>("DailyCarbohydrateGoal")
+                        .HasColumnType("float");
+
+                    b.Property<double?>("DailyFatGoal")
+                        .HasColumnType("float");
+
+                    b.Property<double?>("DailyProteinGoal")
+                        .HasColumnType("float");
 
                     b.Property<string>("Email")
                         .HasMaxLength(256)
@@ -461,7 +506,7 @@ namespace Kalorhytm.Infrastructure.Migrations
                     b.HasOne("Kalorhytm.Domain.Entities.FoodEntity", "Food")
                         .WithMany()
                         .HasForeignKey("FoodId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Food");

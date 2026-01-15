@@ -279,14 +279,42 @@ namespace Kalorhytm.Logic.Services
         public async Task<List<RecipeSummaryModel>> SearchRecipesAsync(SpoonacularComplexSearchRequest request)
         {
             if (string.IsNullOrWhiteSpace(_apiKey))
+            {
+                Console.WriteLine("Spoonacular API key is missing. Cannot search recipes.");
                 return new();
+            }
 
-            var response = await _client.ComplexSearchAsync(request, _apiKey);
+            try
+            {
+                var response = await _client.ComplexSearchAsync(request, _apiKey);
 
-            if (response?.Results == null || !response.Results.Any())
-                return new();
+                if (response?.Results == null || !response.Results.Any())
+                    return new();
 
-            return response.Results.Select(ConvertToRecipeSummaryModel).ToList();
+                return response.Results.Select(ConvertToRecipeSummaryModel).ToList();
+            }
+            catch (ApiException apiEx)
+            {
+                Console.WriteLine($"Spoonacular API error for recipe search: {apiEx.StatusCode} - {apiEx.Message}");
+                if (apiEx.Content != null)
+                {
+                    Console.WriteLine($"Response content: {apiEx.Content}");
+                }
+                
+                // Return empty list instead of throwing - let the UI handle the empty state
+                return new List<RecipeSummaryModel>();
+            }
+            catch (HttpRequestException httpEx)
+            {
+                Console.WriteLine($"Network error while searching recipes: {httpEx.Message}");
+                return new List<RecipeSummaryModel>();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error searching recipes: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                return new List<RecipeSummaryModel>();
+            }
         }
 
         private RecipeSummaryModel ConvertToRecipeSummaryModel(SpoonacularComplexSearchRecipe recipe)
@@ -307,20 +335,48 @@ namespace Kalorhytm.Logic.Services
             bool includeNutrition = false)
         {
             if (string.IsNullOrWhiteSpace(_apiKey))
+            {
+                Console.WriteLine("Spoonacular API key is missing. Cannot fetch random recipes.");
                 return new();
+            }
 
-            var response = await _client.GetRandomRecipesAsync(
-                number,
-                includeTags,
-                excludeTags,
-                includeNutrition,
-                _apiKey
-            );
+            try
+            {
+                var response = await _client.GetRandomRecipesAsync(
+                    number,
+                    includeTags,
+                    excludeTags,
+                    includeNutrition,
+                    _apiKey
+                );
 
-            if (response?.Recipes == null || !response.Recipes.Any())
-                return new();
+                if (response?.Recipes == null || !response.Recipes.Any())
+                    return new();
 
-            return response.Recipes.Select(ConvertToRecipeSummaryModel).ToList();
+                return response.Recipes.Select(ConvertToRecipeSummaryModel).ToList();
+            }
+            catch (ApiException apiEx)
+            {
+                Console.WriteLine($"Spoonacular API error for random recipes: {apiEx.StatusCode} - {apiEx.Message}");
+                if (apiEx.Content != null)
+                {
+                    Console.WriteLine($"Response content: {apiEx.Content}");
+                }
+                
+                // Return empty list instead of throwing - let the UI handle the empty state
+                return new List<RecipeSummaryModel>();
+            }
+            catch (HttpRequestException httpEx)
+            {
+                Console.WriteLine($"Network error while fetching random recipes: {httpEx.Message}");
+                return new List<RecipeSummaryModel>();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting random recipes: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                return new List<RecipeSummaryModel>();
+            }
         }
 
         private RecipeSummaryModel ConvertToRecipeSummaryModel(SpoonacularRandomRecipe recipe)

@@ -1,27 +1,45 @@
-﻿@page "/Account/Manage/PersonalData"
+﻿@using Kalorhytm.WebApp.Components.Shared
+
+@page "/Account/Manage/PersonalData"
 
 @inject IdentityUserAccessor UserAccessor
 
 <PageTitle>Personal Data</PageTitle>
 
-<StatusMessage />
-<h3>Personal Data</h3>
-
-<div class="row">
-    <div class="col-md-6">
-        <p>Your account contains personal data that you have given us. This page allows you to download or delete that data.</p>
-        <p>
-            <strong>Deleting this data will permanently remove your account, and this cannot be recovered.</strong>
-        </p>
-        <form action="Account/Manage/DownloadPersonalData" method="post">
-            <AntiforgeryToken />
-            <button class="btn btn-primary" type="submit">Download</button>
-        </form>
-        <p>
-            <a href="Account/Manage/DeletePersonalData" class="btn btn-danger">Delete</a>
-        </p>
+<Card>
+    <h3 class="text-2xl font-bold text-slate-900 mb-6 tracking-tight">Personal Data</h3>
+    
+    <div class="space-y-6 max-w-2xl">
+        <div class="p-6 bg-slate-50 rounded-xl border border-slate-200">
+            <p class="text-slate-700 mb-4">Your account contains personal data that you have given us. This page allows you to download or delete that data.</p>
+            <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p class="text-red-800 font-semibold text-sm">
+                    ⚠️ Deleting this data will permanently remove your account, and this cannot be recovered.
+                </p>
+            </div>
+        </div>
+        
+        <div class="flex flex-col sm:flex-row gap-4 pt-4 border-t border-slate-100">
+            <form action="Account/Manage/DownloadPersonalData" method="post">
+                <AntiforgeryToken />
+                <Button ButtonType="ButtonType.Submit" Variant="ButtonVariant.Primary">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Download
+                </Button>
+            </form>
+            <a href="Account/Manage/DeletePersonalData">
+                <Button Variant="ButtonVariant.Danger">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                    Delete
+                </Button>
+            </a>
+        </div>
     </div>
-</div>
+</Card>
 
 @code {
     [CascadingParameter]

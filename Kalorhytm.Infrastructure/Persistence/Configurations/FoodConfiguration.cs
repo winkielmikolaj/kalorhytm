@@ -11,7 +11,8 @@ namespace Kalorhytm.Infrastructure.Persistence.Configurations
         {
             builder.ToTable("Food");
             builder.HasKey(e => e.FoodId);
-            builder.Property(e => e.FoodId).ValueGeneratedOnAdd();
+            // FoodId comes from external API (Spoonacular), so it should not be auto-generated
+            builder.Property(e => e.FoodId).ValueGeneratedNever();
         }
     }
 }

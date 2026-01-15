@@ -1,4 +1,6 @@
-﻿@page "/Account/Manage/EnableAuthenticator"
+﻿@using Kalorhytm.WebApp.Components.Shared
+
+@page "/Account/Manage/EnableAuthenticator"
 
 @using System.ComponentModel.DataAnnotations
 @using System.Globalization
@@ -21,49 +23,69 @@
 }
 else
 {
-    <StatusMessage Message="@message" />
-    <h3>Configure authenticator app</h3>
-    <div>
-        <p>To use an authenticator app go through the following steps:</p>
-        <ol class="list">
-            <li>
-                <p>
-                    Download a two-factor authenticator app like Microsoft Authenticator for
-                    <a href="https://go.microsoft.com/fwlink/?Linkid=825072">Android</a> and
-                    <a href="https://go.microsoft.com/fwlink/?Linkid=825073">iOS</a> or
-                    Google Authenticator for
-                    <a href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2&amp;hl=en">Android</a> and
-                    <a href="https://itunes.apple.com/us/app/google-authenticator/id388497605?mt=8">iOS</a>.
-                </p>
-            </li>
-            <li>
-                <p>Scan the QR Code or enter this key <kbd>@sharedKey</kbd> into your two factor authenticator app. Spaces and casing do not matter.</p>
-                <div class="alert alert-info">Learn how to <a href="https://go.microsoft.com/fwlink/?Linkid=852423">enable QR code generation</a>.</div>
-                <div></div>
-                <div data-url="@authenticatorUri"></div>
-            </li>
-            <li>
-                <p>
-                    Once you have scanned the QR code or input the key above, your two factor authentication app will provide you
-                    with a unique code. Enter the code in the confirmation box below.
-                </p>
-                <div class="row">
-                    <div class="col-xl-6">
+    <Card>
+        <h3 class="text-2xl font-bold text-slate-900 mb-4 tracking-tight">Configure authenticator app</h3>
+        
+        <StatusMessage Message="@message" />
+        
+        <div class="space-y-6">
+            <p class="text-slate-600">To use an authenticator app go through the following steps:</p>
+            
+            <ol class="list-decimal list-inside space-y-4 text-slate-600">
+                <li>
+                    <p>
+                        Download a two-factor authenticator app like Microsoft Authenticator for
+                        <a href="https://go.microsoft.com/fwlink/?Linkid=825072" class="text-emerald-600 hover:text-emerald-700 font-medium">Android</a> and
+                        <a href="https://go.microsoft.com/fwlink/?Linkid=825073" class="text-emerald-600 hover:text-emerald-700 font-medium">iOS</a> or
+                        Google Authenticator for
+                        <a href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2&amp;hl=en" class="text-emerald-600 hover:text-emerald-700 font-medium">Android</a> and
+                        <a href="https://itunes.apple.com/us/app/google-authenticator/id388497605?mt=8" class="text-emerald-600 hover:text-emerald-700 font-medium">iOS</a>.
+                    </p>
+                </li>
+                <li>
+                    <p class="mb-2">Scan the QR Code or enter this key <code class="bg-slate-100 px-2 py-1 rounded text-sm font-mono">@sharedKey</code> into your two factor authenticator app. Spaces and casing do not matter.</p>
+                    <div class="p-4 bg-blue-50 border border-blue-200 rounded-xl mb-4">
+                        <p class="text-blue-800 text-sm">
+                            Learn how to <a href="https://go.microsoft.com/fwlink/?Linkid=852423" class="text-blue-900 font-medium underline hover:text-blue-950">enable QR code generation</a>.
+                        </p>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl border border-slate-200">
+                        <div data-url="@authenticatorUri"></div>
+                    </div>
+                </li>
+                <li>
+                    <p class="mb-4">
+                        Once you have scanned the QR code or input the key above, your two factor authentication app will provide you
+                        with a unique code. Enter the code in the confirmation box below.
+                    </p>
+                    <div class="max-w-md">
                         <EditForm Model="Input" FormName="send-code" OnValidSubmit="OnValidSubmitAsync" method="post">
                             <DataAnnotationsValidator />
-                            <div class="form-floating mb-3">
-                                <InputText @bind-Value="Input.Code" id="Input.Code" class="form-control" autocomplete="off" placeholder="Enter the code" />
-                                <label for="Input.Code" class="control-label form-label">Verification Code</label>
-                                <ValidationMessage For="() => Input.Code" class="text-danger" />
+                            <div class="space-y-5">
+                                <div>
+                                    <label for="Input.Code" class="block text-sm font-semibold text-slate-700 mb-1.5 ml-1">Verification Code</label>
+                                    <input type="text" 
+                                           @bind="Input.Code" 
+                                           @bind:event="oninput"
+                                           id="Input.Code" 
+                                           class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-200 placeholder:text-slate-400" 
+                                           autocomplete="off" 
+                                           placeholder="Enter the code" />
+                                    <ValidationMessage For="() => Input.Code" class="text-red-500 text-sm mt-1 flex items-center gap-1" />
+                                </div>
+                                <div class="pt-2">
+                                    <Button ButtonType="ButtonType.Submit" Variant="ButtonVariant.Primary" AdditionalClass="w-full">
+                                        Verify
+                                    </Button>
+                                </div>
                             </div>
-                            <button type="submit" class="w-100 btn btn-lg btn-primary">Verify</button>
-                            <ValidationSummary class="text-danger" role="alert" />
+                            <ValidationSummary class="text-red-500 text-sm mt-4 p-4 bg-red-50 rounded-xl border border-red-200" role="alert" />
                         </EditForm>
                     </div>
-                </div>
-            </li>
-        </ol>
-    </div>
+                </li>
+            </ol>
+        </div>
+    </Card>
 }
 
 @code {
