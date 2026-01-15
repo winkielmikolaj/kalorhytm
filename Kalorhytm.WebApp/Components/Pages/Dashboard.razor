@@ -521,11 +521,16 @@
             </div>
 
             <div class="p-6 flex-1 overflow-y-auto space-y-6">
-                <div class="relative">
-                    <input type="text" @bind="SearchTermModal" @bind:event="oninput" @onkeyup="HandleSearchKeyUp"
-                           placeholder="Enter product name..." 
-                           class="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all outline-none" />
-                    <svg class="w-5 h-5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                <div class="space-y-3">
+                    <div class="relative">
+                        <input type="text" @bind="SearchTermModal"
+                               placeholder="Enter product name..." 
+                               class="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all outline-none" />
+                        <svg class="w-5 h-5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </div>
+                    <Button OnClick="SearchFoodsForModal" Variant="ButtonVariant.Primary">
+                        Search
+                    </Button>
                 </div>
 
                 @if (isSearching)
@@ -650,7 +655,7 @@
     private bool showEditRequirementsModal = false;
     private bool showAddWorkoutModal = false;
     private MealType selectedMealType = MealType.Breakfast;
-    private string searchTerm = "";
+    private string SearchTermModal { get; set; } = "";
     private List<FoodModel> modalSearchResults = new();
     private FoodModel? selectedFoodForModal;
     private double modalQuantity = 100;
@@ -677,19 +682,6 @@
             {
                 _searchTerm = value;
                 _ = Task.Run(async () => await SearchFoods());
-            }
-        }
-    }
-
-    private string SearchTermModal
-    {
-        get => searchTerm;
-        set
-        {
-            if (searchTerm != value)
-            {
-                searchTerm = value;
-                _ = Task.Run(async () => await SearchFoodsForModal());
             }
         }
     }
@@ -1098,7 +1090,7 @@
         Console.WriteLine($"Opening modal for meal type: {mealType}");
         selectedMealType = mealType;
         showModal = true;
-        searchTerm = "";
+        SearchTermModal = "";
         modalSearchResults.Clear();
         selectedFoodForModal = null;
         modalQuantity = 100;
@@ -1112,17 +1104,9 @@
         await InvokeAsync(StateHasChanged);
     }
 
-    private async Task HandleSearchKeyUp(KeyboardEventArgs e)
-    {
-        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(searchTerm))
-        {
-            await SearchFoodsForModal();
-        }
-    }
-
     private async Task SearchFoodsForModal()
     {
-        if (string.IsNullOrWhiteSpace(searchTerm))
+        if (string.IsNullOrWhiteSpace(SearchTermModal))
         {
             modalSearchResults.Clear();
             await InvokeAsync(StateHasChanged);
@@ -1132,7 +1116,7 @@
         isSearching = true;
         try
         {
-            modalSearchResults = await SearchFoodsUseCase.ExecuteAsync(searchTerm);
+            modalSearchResults = await SearchFoodsUseCase.ExecuteAsync(SearchTermModal);
         }
         catch (Exception ex)
         {

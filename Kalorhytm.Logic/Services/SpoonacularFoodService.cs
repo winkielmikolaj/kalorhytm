@@ -49,12 +49,14 @@ namespace Kalorhytm.Logic.Services
                 SpoonacularIngredientSearchResponse? searchResponse;
                 try
                 {
-                    searchResponse = await _client.SearchIngredientsAsync(searchTerm, 10, _apiKey);
+                    // Request a limited number of ingredients to control API usage
+                    const int maxApiIngredients = 5;
+                    searchResponse = await _client.SearchIngredientsAsync(searchTerm, maxApiIngredients, _apiKey);
                 }
                 catch (ApiException apiEx)
                 {
                     Console.WriteLine($"Spoonacular API error: {apiEx.StatusCode} - {apiEx.Message}");
-                    
+
                     // Handle specific HTTP status codes
                     if (apiEx.StatusCode == System.Net.HttpStatusCode.PaymentRequired) // 402
                     {
@@ -68,7 +70,7 @@ namespace Kalorhytm.Logic.Services
                     {
                         Console.WriteLine("Invalid Spoonacular API key. Falling back to demo foods.");
                     }
-                    
+
                     return GetDemoFoods(searchTerm);
                 }
 
@@ -81,30 +83,33 @@ namespace Kalorhytm.Logic.Services
                 Console.WriteLine($"Spoonacular API returned {searchResponse.Results.Count} ingredients");
                 var foods = new List<FoodModel>();
 
-                foreach (var ingredient in searchResponse.Results.Take(10))
+                // Fetch detailed nutrition for a small number of top results so that
+                // the UI can show a meaningful preview without excessive API calls.
+                foreach (var ingredient in searchResponse.Results.Take(5))
                 {
                     try
                     {
-                        // Get detailed information for each ingredient
                         SpoonacularIngredientInformation? ingredientInfo;
                         try
                         {
                             ingredientInfo = await _client.GetIngredientInformationAsync(
-                                ingredient.Id, 
-                                100, 
-                                "gram", 
+                                ingredient.Id,
+                                100,
+                                "gram",
                                 _apiKey);
                         }
                         catch (ApiException apiEx)
                         {
-                            // Skip this ingredient if API returns payment required or other errors
+                            // Skip this ingredient if API returns quota / payment / rate limit issues
                             if (apiEx.StatusCode == System.Net.HttpStatusCode.PaymentRequired ||
                                 apiEx.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
                             {
-                                Console.WriteLine($"Skipping ingredient {ingredient.Id} due to API limits");
+                                Console.WriteLine($"Skipping ingredient {ingredient.Id} due to API limits: {apiEx.StatusCode}");
                                 continue;
                             }
-                            throw; // Re-throw other exceptions
+
+                            Console.WriteLine($"Spoonacular API error for ingredient {ingredient.Id}: {apiEx.StatusCode} - {apiEx.Message}");
+                            continue;
                         }
 
                         if (ingredientInfo?.Nutrition != null)
@@ -124,7 +129,7 @@ namespace Kalorhytm.Logic.Services
 
                 if (!foods.Any())
                 {
-                    Console.WriteLine("No foods converted, falling back to demo foods");
+                    Console.WriteLine("No foods with nutrition data, falling back to demo foods");
                     return GetDemoFoods(searchTerm);
                 }
 

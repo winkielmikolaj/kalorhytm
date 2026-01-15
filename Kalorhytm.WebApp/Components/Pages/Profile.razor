@@ -1,4 +1,4 @@
-﻿@page "/Profile"
+@page "/Profile"
 @rendermode InteractiveServer
 
 @using System.Security.Claims
@@ -101,7 +101,7 @@
                             <h4 class="font-bold text-slate-800 text-lg mb-2 line-clamp-2">@recipe.Title</h4>
                             
                             <div class="mt-auto pt-4 flex justify-between items-center border-t border-slate-50">
-                                <a href="/recipes/recipe-@recipe.Id" class="text-emerald-600 font-semibold text-sm hover:underline">
+                                <a href="/recipes/recipe-@recipe.RecipeId" class="text-emerald-600 font-semibold text-sm hover:underline">
                                     View recipe →
                                 </a>
                                 <button @onclick="() => DeleteRecipe(recipe.Id)" class="text-slate-400 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-50" title="Remove from favorites">

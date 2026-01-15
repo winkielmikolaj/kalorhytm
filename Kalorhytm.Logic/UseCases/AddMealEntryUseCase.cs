@@ -90,31 +90,45 @@ namespace Kalorhytm.Logic.UseCases
             if (quantity <= 0)
                 throw new ArgumentException("Quantity must be greater than 0", nameof(quantity));
 
+            // Only call Spoonacular for full details if the model has no nutrition yet
+            var needsEnrichment =
+                food.Calories <= 0 &&
+                food.Protein <= 0 &&
+                food.Carbohydrates <= 0 &&
+                food.Fat <= 0 &&
+                food.Fiber <= 0 &&
+                food.Sugar <= 0 &&
+                food.Sodium <= 0;
+
+            var fullFood = needsEnrichment
+                ? await _spoonacularFoodService.GetFoodByIdAsync(food.FoodId) ?? food
+                : food;
+
             // Sprawdź czy FoodEntity już istnieje w bazie
-            var existingFood = await _foodRepository.GetByIdAsync(food.FoodId);
+            var existingFood = await _foodRepository.GetByIdAsync(fullFood.FoodId);
             if (existingFood == null)
             {
                 // Dodaj nowe FoodEntity
                 var foodEntity = new FoodEntity
                 {
-                    FoodId = food.FoodId,
-                    Name = food.Name,
-                    Calories = food.Calories,
-                    Protein = food.Protein,
-                    Carbohydrates = food.Carbohydrates,
-                    Fat = food.Fat,
-                    Fiber = food.Fiber,
-                    Sugar = food.Sugar,
-                    Sodium = food.Sodium,
-                    Unit = food.Unit,
-                    ServingSize = food.ServingSize
+                    FoodId = fullFood.FoodId,
+                    Name = fullFood.Name,
+                    Calories = fullFood.Calories,
+                    Protein = fullFood.Protein,
+                    Carbohydrates = fullFood.Carbohydrates,
+                    Fat = fullFood.Fat,
+                    Fiber = fullFood.Fiber,
+                    Sugar = fullFood.Sugar,
+                    Sodium = fullFood.Sodium,
+                    Unit = fullFood.Unit,
+                    ServingSize = fullFood.ServingSize
                 };
                 await _foodRepository.AddAsync(foodEntity);
             }
 
             var mealEntry = new MealEntryEntity
             {
-                FoodId = food.FoodId,
+                FoodId = fullFood.FoodId,
                 Quantity = quantity,
                 MealType = (Domain.Enums.MealType)mealType,
                 Date = date,
@@ -125,8 +139,8 @@ namespace Kalorhytm.Logic.UseCases
             return new MealEntryModel
             {
                 MealEntryId = mealEntry.MealEntryId,
-                FoodId = food.FoodId,
-                Food = food,
+                FoodId = fullFood.FoodId,
+                Food = fullFood,
                 Quantity = quantity,
                 Date = date,
                 MealType = mealType

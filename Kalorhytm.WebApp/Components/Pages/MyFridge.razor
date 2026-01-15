@@ -33,110 +33,141 @@
 <PageTitle>My Fridge</PageTitle>
 
 <div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold text-white mb-8 transition-all duration-300">My Fridge</h1>
+    <h1 class="text-3xl font-bold text-gray-900 mb-8 transition-all duration-300 tracking-tight">
+        My Fridge
+    </h1>
 
-    @* Add Ingredient Section *@
-    <Card Title="Add Ingredients">
-        <Input Label="Ingredient Name" 
-               @bind-Value="newIngredient" 
-               Placeholder="Enter ingredient name..."
-               ErrorMessage="@validationMessageForAddingToFridge" />
-        
-        <div class="flex flex-wrap gap-3">
-            <Button OnClick="AddIngredientsToFridge">
-                Add to Fridge
-            </Button>
-            <Button OnClick="OpenFridge" Variant="ButtonVariant.Secondary">
-                @(buttonForOpenningFridge ? "Close Fridge" : "Open Fridge")
-            </Button>
-        </div>
-    </Card>
+    <!-- Add Ingredient & Search -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        <Card Title="Add Ingredients" AdditionalClass="lg:col-span-2">
+            <div class="space-y-4">
+                <Input Label="Ingredient name"
+                       @bind-Value="newIngredient"
+                       Placeholder="e.g. chicken breast, tomato"
+                       ErrorMessage="@validationMessageForAddingToFridge" />
 
-    @* Fridge Items List *@
-    @if (buttonForOpenningFridge && myFridgeItems.Any())
-    {
-        <Card Title="My Ingredients" AdditionalClass="mt-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                @foreach (var ingredient in myFridgeItems)
-                {
-                    <div class="flex items-center justify-between bg-gray-600 rounded-lg px-4 py-3">
-                        <span class="text-white">@ingredient.Name</span>
-                        <Button OnClick="@(() => DeleteIngredientFromFridge(ingredient.Id))" 
-                                Variant="ButtonVariant.Danger"
-                                AdditionalClass="text-sm">
-                            Delete
-                        </Button>
-                    </div>
-                }
+                <div class="flex flex-wrap gap-3">
+                    <Button OnClick="AddIngredientsToFridge">
+                        Add to Fridge
+                    </Button>
+                    <Button OnClick="OpenFridge" Variant="ButtonVariant.Secondary">
+                        @(buttonForOpenningFridge ? "Hide Ingredients" : "Show Ingredients")
+                    </Button>
+                </div>
             </div>
         </Card>
-    }
 
-    @* Search Recipes by Ingredients *@
-    <Card Title="Search Recipes by Ingredients" AdditionalClass="mt-6">
-        <div class="mb-4">
-            <p class="text-gray-300 mb-4">Search for recipes using ingredients from your fridge.</p>
+        <Card Title="Search Recipes by Ingredients">
+            <p class="text-sm text-gray-500 mb-4">
+                We’ll use the ingredients in your fridge to find matching recipes.
+            </p>
+
+            @if (!string.IsNullOrEmpty(validateMessageForSearching))
+            {
+                <p class="text-sm text-red-500 mb-2">@validateMessageForSearching</p>
+            }
+
             <Button OnClick="SearchRecipes">
                 Search Recipes
             </Button>
-        </div>
-        
-        @if (!string.IsNullOrEmpty(validateMessageForSearching))
-        {
-            <p class="text-red-400 text-sm">@validateMessageForSearching</p>
-        }
-    </Card>
+        </Card>
+    </div>
 
-    @* Recipe Results *@
+    <!-- Fridge Items -->
+    @if (buttonForOpenningFridge)
+    {
+        <div class="mt-6">
+            <Card Title="My Ingredients">
+                @if (myFridgeItems.Any())
+                {
+                    <div class="flex flex-wrap gap-2">
+                        @foreach (var ingredient in myFridgeItems)
+                        {
+                            <div class="inline-flex items-center gap-2 bg-emerald-50 text-emerald-800 px-3 py-1.5 rounded-full border border-emerald-100">
+                                <span class="text-sm font-medium">@ingredient.Name</span>
+                                <button @onclick="() => DeleteIngredientFromFridge(ingredient.Id)"
+                                        class="text-xs text-emerald-500 hover:text-red-500 transition-colors">
+                                    ✕
+                                </button>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-6 text-gray-400 text-sm bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                        No ingredients added yet. Start by adding your first item above.
+                    </div>
+                }
+            </Card>
+        </div>
+    }
+
+    <!-- Recipe Results -->
     @if (recipes != null)
     {
         @if (recipes.Count == 0)
         {
             <Card AdditionalClass="mt-6 text-center">
-                <p class="text-gray-300">No recipes found with your ingredients.</p>
+                <p class="text-gray-500">No recipes found with your current ingredients.</p>
             </Card>
         }
         else
         {
-            <div class="mt-6">
-                <h2 class="text-2xl font-semibold text-white mb-6">Found Recipes</h2>
+            <div class="mt-8">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-2xl font-semibold text-gray-900">Found Recipes</h2>
+                    <p class="text-sm text-gray-500">
+                        @recipes.Count recipe@(recipes.Count == 1 ? "" : "s") found
+                    </p>
+                </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     @foreach (var recipe in recipes)
                     {
                         <Card AdditionalClass="overflow-hidden hover:scale-105 transform transition-all duration-300">
-                            <img class="w-full h-48 object-cover rounded-t-xl -mx-6 -mt-6 mb-4" 
-                                 src="@recipe.ImageUrl" 
-                                 alt="@recipe.Title"/>
-                            <h5 class="text-white font-semibold text-lg mb-2">@recipe.Title</h5>
-                            <div class="flex items-center gap-2 mb-3">
-                                <button @onclick="() => ToggleLike(recipe)" 
-                                        class="text-2xl hover:scale-110 transition-transform duration-200">
+                            <img class="w-full h-48 object-cover rounded-t-xl -mx-6 -mt-6 mb-4"
+                                 src="@recipe.ImageUrl"
+                                 alt="@recipe.Title" />
+
+                            <div class="flex items-start justify-between gap-3 mb-3">
+                                <h5 class="text-gray-900 font-semibold text-lg line-clamp-2">@recipe.Title</h5>
+                                <button @onclick="() => ToggleLike(recipe)"
+                                        class="text-xl hover:scale-110 transition-transform duration-150 focus:outline-none">
                                     @if (_likedRecipesMap.ContainsKey(recipe.RecipeId))
                                     {
-                                        <span style="color: red;">❤️</span>
+                                        <span class="text-red-500">❤️</span>
                                     }
                                     else
                                     {
-                                        <span>🤍</span>
+                                        <span class="opacity-60 hover:opacity-100">🤍</span>
                                     }
                                 </button>
-                                <span class="text-gray-300">@recipe.Likes likes</span>
                             </div>
-                            <div class="mb-4 space-y-2">
-                                <p class="text-sm text-gray-300">
-                                    <span class="font-medium text-green-400">Used:</span> @string.Join(", ", recipe.UsedIngredients)
+
+                            <div class="flex items-center gap-2 mb-4 text-sm text-gray-500">
+                                <span class="font-semibold text-gray-700">@recipe.Likes</span>
+                                <span>likes</span>
+                            </div>
+
+                            <div class="mb-4 space-y-1.5 text-sm">
+                                <p class="text-gray-600">
+                                    <span class="font-semibold text-emerald-600">Used:</span>
+                                    <span class="ml-1">@string.Join(", ", recipe.UsedIngredients)</span>
                                 </p>
-                                <p class="text-sm text-gray-300">
-                                    <span class="font-medium text-orange-400">Missing:</span> @string.Join(", ", recipe.MissedIngredients)
+                                <p class="text-gray-600">
+                                    <span class="font-semibold text-orange-500">Missing:</span>
+                                    <span class="ml-1">@string.Join(", ", recipe.MissedIngredients)</span>
                                 </p>
                             </div>
-                            <div class="flex flex-wrap gap-2">
-                                <Button OnClick="@(() => SaveToFavourites(recipe))" 
-                                        Variant="ButtonVariant.Outline"
+
+                            <div class="flex flex-wrap gap-2 mt-2">
+                                <Button OnClick="@(() => GoToRecipeDetails(recipe.RecipeId))"
+                                        Variant="ButtonVariant.Secondary"
                                         AdditionalClass="text-sm">
-                                    Save Recipe
+                                    View Details
                                 </Button>
-                                <Button OnClick="@(() => ShowAddRecipeModal(recipe))" 
+                                <Button OnClick="@(() => ShowAddRecipeModal(recipe))"
                                         AdditionalClass="text-sm">
                                     Add to Meal
                                 </Button>
@@ -150,7 +181,9 @@
     else
     {
         <Card AdditionalClass="mt-6 text-center">
-            <p class="text-gray-300">Enter ingredients to search for recipes.</p>
+            <p class="text-gray-500">
+                Add a few ingredients to your fridge and click <span class="font-semibold">Search Recipes</span> to get suggestions.
+            </p>
         </Card>
     }
 </div>
@@ -158,25 +191,23 @@
 @* Add Recipe to Meal Modal *@
 @if (showAddRecipeModal && selectedRecipe != null)
 {
-    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" 
-         @onclick="CloseAddRecipeModal"
-         @onkeydown="@(e => { if (e.Key == "Escape") CloseAddRecipeModal(); })">
-        <div class="bg-gray-700 rounded-xl p-6 w-96 max-w-[90vw] shadow-2xl" 
+    <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in"
+         @onclick="CloseAddRecipeModal">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden relative"
              @onclick:stopPropagation="true">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-semibold text-white">Add Recipe to Meal</h3>
-                <button @onclick="CloseAddRecipeModal" 
-                        class="text-gray-400 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 rounded">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <h3 class="text-xl font-bold text-slate-800">Add Recipe to Meal</h3>
+                <button @onclick="CloseAddRecipeModal"
+                        class="text-slate-400 hover:text-slate-600 bg-white p-2 rounded-full shadow-sm hover:shadow transition">
+                    ✕
                 </button>
             </div>
-            <div class="space-y-4">
+
+            <div class="p-6 space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-2">Meal Type:</label>
-                    <select @bind="selectedMealTypeForRecipe" 
-                            class="w-full bg-gray-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                    <label class="block text-sm font-semibold text-slate-700 mb-1.5 ml-1">Meal type</label>
+                    <select @bind="selectedMealTypeForRecipe"
+                            class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-200">
                         <option value="@MealType.Breakfast">Breakfast</option>
                         <option value="@MealType.SecondBreakfast">Second Breakfast</option>
                         <option value="@MealType.Lunch">Lunch</option>
@@ -184,12 +215,12 @@
                         <option value="@MealType.Dinner">Dinner</option>
                     </select>
                 </div>
-                <div class="flex gap-2">
-                    <Button OnClick="AddRecipeToMeal" AdditionalClass="flex-1">
-                        Add to Meal
-                    </Button>
-                    <Button OnClick="CloseAddRecipeModal" Variant="ButtonVariant.Secondary" AdditionalClass="flex-1">
+                <div class="flex gap-3 justify-end pt-2">
+                    <Button Variant="ButtonVariant.Secondary" OnClick="CloseAddRecipeModal">
                         Cancel
+                    </Button>
+                    <Button Variant="ButtonVariant.Primary" OnClick="AddRecipeToMeal">
+                        Add to Meal
                     </Button>
                 </div>
             </div>
